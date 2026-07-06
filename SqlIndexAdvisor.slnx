@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SqlIndexAdvisor.Cli/SqlIndexAdvisor.Cli.csproj" />
+    <Project Path="src/SqlIndexAdvisor.Core/SqlIndexAdvisor.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SqlIndexAdvisor.Tests/SqlIndexAdvisor.Tests.csproj" />
+  </Folder>
+</Solution>
