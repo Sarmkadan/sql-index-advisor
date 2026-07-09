@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-16"?>
+<ShowPlanXML xmlns="http://schemas.microsoft.com/sqlserver/2004/07/showplan" Version="1.539" Build="16.0.1000.6">
+  <BatchSequence>
+    <Batch>
+      <Statements>
+        <StmtSimple StatementText="SELECT OrderId, CustomerId, Total FROM dbo.Orders WHERE Status = 'open' AND CreatedAt > '2026-01-01'"
+                    StatementId="1" StatementCompId="1" StatementType="SELECT"
+                    StatementSubTreeCost="4.812" StatementEstRows="1200">
+          <QueryPlan CachedPlanSize="24" CompileTime="3" CompileCPU="3" CompileMemory="200">
+            <MissingIndexes>
+              <MissingIndexGroup Impact="82.4711">
+                <MissingIndex Database="[Shop]" Schema="[dbo]" Table="[Orders]">
+                  <ColumnGroup Usage="EQUALITY">
+                    <Column Name="[Status]" ColumnId="4" />
+                  </ColumnGroup>
+                  <ColumnGroup Usage="INEQUALITY">
+                    <Column Name="[CreatedAt]" ColumnId="5" />
+                  </ColumnGroup>
+                  <ColumnGroup Usage="INCLUDE">
+                    <Column Name="[CustomerId]" ColumnId="2" />
+                    <Column Name="[Total]" ColumnId="3" />
+                  </ColumnGroup>
+                </MissingIndex>
+              </MissingIndexGroup>
+            </MissingIndexes>
+            <RelOp NodeId="0" PhysicalOp="Clustered Index Scan" LogicalOp="Clustered Index Scan"
+                   EstimateRows="1200" EstimatedTotalSubtreeCost="4.812">
+              <OutputList>
+                <ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="OrderId" />
+                <ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="CustomerId" />
+                <ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="Total" />
+              </OutputList>
+              <IndexScan Ordered="false">
+                <Object Database="[Shop]" Schema="[dbo]" Table="[Orders]" Index="[PK_Orders]" IndexKind="Clustered" />
+                <Predicate>
+                  <ScalarOperator ScalarString="[Shop].[dbo].[Orders].[Status]='open' AND [Shop].[dbo].[Orders].[CreatedAt]>'2026-01-01'">
+                    <ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="Status" />
+                    <ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="CreatedAt" />
+                  </ScalarOperator>
+                </Predicate>
+              </IndexScan>
+            </RelOp>
+          </QueryPlan>
+        </StmtSimple>
+      </Statements>
+    </Batch>
+  </BatchSequence>
+</ShowPlanXML>

@@ -1,0 +1,17 @@
+[
+  {
+    "Plan": {
+      "Node Type": "Index Only Scan",
+      "Scan Direction": "Forward",
+      "Index Name": "ix_invoices_customer",
+      "Relation Name": "invoices",
+      "Alias": "i",
+      "Startup Cost": 0.42,
+      "Total Cost": 8.61,
+      "Plan Rows": 12,
+      "Plan Width": 16,
+      "Output": ["customer_id", "amount"],
+      "Index Cond": "(customer_id = 4471)"
+    }
+  }
+]
