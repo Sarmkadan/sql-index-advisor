@@ -112,6 +112,12 @@ rule it is the node's share of statement cost scaled by a rough selectivity
 factor (how few rows the filter keeps versus how many it reads). It is a
 ranking aid, nothing more.
 
+## Architecture
+
+The full write-up - component breakdown, design decisions and their
+trade-offs, extension points - lives in
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
 ## Project layout
 
 ```
