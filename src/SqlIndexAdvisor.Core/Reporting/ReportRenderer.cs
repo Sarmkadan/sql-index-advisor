@@ -6,6 +6,9 @@ namespace SqlIndexAdvisor.Core.Reporting;
 
 public static class ReportRenderer
 {
+    // JsonSerializerOptions caches type metadata; new-ing it per call throws that away.
+    private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
+
     public static string RenderText(ExecutionPlan plan, IReadOnlyList<IndexRecommendation> recs)
     {
         var sb = new StringBuilder();
@@ -55,6 +58,6 @@ public static class ReportRenderer
                 reasons = r.Reasons
             })
         };
-        return JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true });
+        return JsonSerializer.Serialize(payload, JsonOptions);
     }
 }
