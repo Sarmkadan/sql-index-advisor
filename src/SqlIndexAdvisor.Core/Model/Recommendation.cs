@@ -43,11 +43,11 @@ public sealed class IndexRecommendation
 
         if (IncludeColumns.Count > 0)
         {
-            if (dialect == PlanDialect.SqlServer)
-                sb.Append(" INCLUDE (").Append(string.Join(", ", IncludeColumns)).Append(')');
-            else
-                // Postgres spells covering columns as INCLUDE too (11+), same syntax.
-                sb.Append(" INCLUDE (").Append(string.Join(", ", IncludeColumns)).Append(')');
+            // Same syntax in both dialects: Postgres spells covering columns
+            // as INCLUDE too (11+). The dialect parameter stays so a future
+            // dialect with different syntax has somewhere to branch.
+            _ = dialect;
+            sb.Append(" INCLUDE (").Append(string.Join(", ", IncludeColumns)).Append(')');
         }
 
         sb.Append(';');
