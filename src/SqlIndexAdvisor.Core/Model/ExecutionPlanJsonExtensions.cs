@@ -22,7 +22,9 @@ public static class ExecutionPlanJsonExtensions
     {
         ArgumentNullException.ThrowIfNull(value);
 
-        var options = indented ? new JsonSerializerOptions(Options) { WriteIndented = true } : Options;
+        var options = indented
+            ? new JsonSerializerOptions(Options) { WriteIndented = true }
+            : Options;
         return JsonSerializer.Serialize(value, options);
     }
 
@@ -30,8 +32,9 @@ public static class ExecutionPlanJsonExtensions
     /// Converts a JSON string to an <see cref="ExecutionPlan"/>.
     /// </summary>
     /// <param name="json">The JSON string to convert.</param>
-    /// <returns>An <see cref="ExecutionPlan"/> represented by <paramref name="json"/>; or null if <paramref name="json"/> is null or empty.</returns>
-    /// <exception cref="ArgumentException"><paramref name="json"/> is null or empty.</exception>
+    /// <returns>An <see cref="ExecutionPlan"/> represented by <paramref name="json"/>; or null if <paramref name="json"/> is null, empty, or whitespace.</returns>
+    /// <exception cref="ArgumentException"><paramref name="json"/> is null, empty, or consists only of whitespace.</exception>
+    /// <exception cref="JsonException">The JSON is invalid or cannot be deserialized to an <see cref="ExecutionPlan"/>.</exception>
     public static ExecutionPlan? FromJson(string json)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
@@ -45,7 +48,7 @@ public static class ExecutionPlanJsonExtensions
     /// <param name="json">The JSON string to convert.</param>
     /// <param name="value">When this method returns, contains the <see cref="ExecutionPlan"/> represented by <paramref name="json"/>, if conversion succeeded; otherwise, null.</param>
     /// <returns>true if <paramref name="json"/> was converted successfully; otherwise, false.</returns>
-    /// <exception cref="ArgumentException"><paramref name="json"/> is null or empty.</exception>
+    /// <exception cref="ArgumentException"><paramref name="json"/> is null, empty, or consists only of whitespace.</exception>
     public static bool TryFromJson(string json, out ExecutionPlan? value)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
