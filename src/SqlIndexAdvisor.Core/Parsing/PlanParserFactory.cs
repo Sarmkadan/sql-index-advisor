@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using SqlIndexAdvisor.Core.Model;
 
 namespace SqlIndexAdvisor.Core.Parsing;
@@ -7,6 +8,7 @@ namespace SqlIndexAdvisor.Core.Parsing;
 /// that each parser's CanParse is cheap and mutually exclusive in practice
 /// (XML starts with '<', JSON with '[' or '{').
 /// </summary>
+[JsonSerializable(typeof(PlanParserFactory))]
 public sealed class PlanParserFactory
 {
     private readonly IReadOnlyList<IPlanParser> _parsers;
