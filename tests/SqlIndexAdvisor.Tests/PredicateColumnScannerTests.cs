@@ -3,8 +3,14 @@ using Xunit;
 
 namespace SqlIndexAdvisor.Tests;
 
+/// <summary>
+/// Tests for the <see cref="PredicateColumnScanner"/> class.
+/// </summary>
 public class PredicateColumnScannerTests
 {
+    /// <summary>
+    /// Verifies that the <see cref="PredicateColumnScanner.Scan(string)"/> method picks up equality columns.
+    /// </summary>
     [Fact]
     public void PicksUpEqualityColumns()
     {
@@ -13,6 +19,9 @@ public class PredicateColumnScannerTests
         Assert.Contains("is_active", cols);
     }
 
+    /// <summary>
+    /// Verifies that the <see cref="PredicateColumnScanner.Scan(string)"/> method strips alias prefix.
+    /// </summary>
     [Fact]
     public void StripsAliasPrefix()
     {
@@ -20,6 +29,9 @@ public class PredicateColumnScannerTests
         Assert.Equal(new[] { "status" }, cols);
     }
 
+    /// <summary>
+    /// Verifies that the <see cref="PredicateColumnScanner.Scan(string)"/> method ignores boolean keywords.
+    /// </summary>
     [Fact]
     public void IgnoresBooleanKeywords()
     {
@@ -28,6 +40,9 @@ public class PredicateColumnScannerTests
         Assert.Equal(new[] { "a", "b" }, cols);
     }
 
+    /// <summary>
+    /// Verifies that the <see cref="PredicateColumnScanner.Scan(string)"/> method handles range and in operators.
+    /// </summary>
     [Fact]
     public void HandlesRangeAndInOperators()
     {
