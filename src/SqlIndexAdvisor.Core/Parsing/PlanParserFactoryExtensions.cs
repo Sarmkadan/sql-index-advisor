@@ -97,11 +97,7 @@ public static class PlanParserFactoryExtensions
     {
         ArgumentNullException.ThrowIfNull(factory);
 
-        return factory.GetRegisteredParserNames()
-            .Select(name => factory.Resolve("<?>"))
-            .Where(p => p is not null)
-            .ToList()
-            .AsReadOnly();
+        return factory.GetRegisteredParsersInternal();
     }
 
     /// <summary>
@@ -131,9 +127,3 @@ public static class PlanParserFactoryExtensions
     }
 }
 
-// Internal interface to expose the parsers collection for extension methods
-// This allows the extension methods to access the internal parsers without reflection
-internal interface IPlanParserFactoryInternal
-{
-    IReadOnlyList<IPlanParser> GetParsers();
-}

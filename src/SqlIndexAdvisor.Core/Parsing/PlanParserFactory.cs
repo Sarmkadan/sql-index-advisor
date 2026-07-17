@@ -31,4 +31,6 @@ public sealed class PlanParserFactory
     }
 
     public ExecutionPlan Parse(string content) => Resolve(content).Parse(content);
+
+    internal IReadOnlyList<IPlanParser> GetRegisteredParsersInternal() => _parsers;
 }
