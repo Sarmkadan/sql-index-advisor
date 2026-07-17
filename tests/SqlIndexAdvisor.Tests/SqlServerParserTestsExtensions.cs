@@ -9,17 +9,21 @@ using Xunit;
 namespace SqlIndexAdvisor.Tests;
 
 /// <summary>
-/// Extension methods for <see cref="SqlServerParserTests"/> that provide additional test utilities
-/// for working with SQL Server execution plans and parser functionality.
+/// Provides extension methods for creating and parsing SQL Server execution plan test data.
 /// </summary>
+/// <remarks>
+/// This class contains utility methods for generating test execution plans with various characteristics
+/// (missing indexes, scan operations, costs) and parsing them into <see cref="ExecutionPlan"/> objects
+/// for testing SQL Server parser functionality.
+/// </remarks>
 public static class SqlServerParserTestsExtensions
 {
     /// <summary>
     /// Creates a test SQL Server execution plan XML string with the specified cost.
     /// </summary>
-    /// <param name="_">The test instance (discarded).</param>
+    /// <param name="_">The test instance.</param>
     /// <param name="cost">The estimated total cost value for the plan.</param>
-    /// <returns>A SQL Server execution plan XML string.</returns>
+    /// <returns>A SQL Server execution plan XML string with a clustered index scan operation.</returns>
     /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="cost"/> is negative.</exception>
     public static string CreateTestPlanXml(this SqlServerParserTests _, double cost)
     {
@@ -28,30 +32,31 @@ public static class SqlServerParserTestsExtensions
             throw new ArgumentOutOfRangeException(nameof(cost), "Cost must be non-negative");
         }
 
+        var costStr = cost.ToString(CultureInfo.InvariantCulture);
         return $"<?xml version=\"1.0\" encoding=\"utf-16\"?>" +
-            $"<ShowPlanXML xmlns=\"http://schemas.microsoft.com/sqlserver/2004/07/showplan\">" +
-            $"<BatchSequence><Batch><Statements>" +
-            $"<StmtSimple StatementText=\"SELECT * FROM dbo.Orders WHERE Status='open'\" StatementSubTreeCost=\"" + cost.ToString(CultureInfo.InvariantCulture) + $"\">" +
-            $"<QueryPlan>" +
-            $"<MissingIndexes>" +
-            $"<MissingIndexGroup Impact=\"80\">" +
-            $"<MissingIndex Table=\"[Orders]\" Schema=\"[dbo]\">" +
-            $"<ColumnGroup Usage=\"EQUALITY\"><Column Name=\"[Status]\" /></ColumnGroup>" +
-            $"<ColumnGroup Usage=\"INCLUDE\"><Column Name=\"[Total]\" /></ColumnGroup>" +
-            $"</MissingIndex>" +
-            $"</MissingIndexGroup>" +
-            $"</MissingIndexes>" +
-            $"<RelOp PhysicalOp=\"Clustered Index Scan\" EstimateRows=\"1000\" EstimatedTotalSubtreeCost=\"" + cost.ToString(CultureInfo.InvariantCulture) + $"\">" +
-            $"<OutputList><ColumnReference Table=\"[Orders]\" Column=\"Total\" /></OutputList>" +
-            $"<IndexScan>" +
-            $"<Object Schema=\"[dbo]\" Table=\"[Orders]\" Index=\"[PK_Orders]\" />" +
-            $"<Predicate><ScalarOperator><ColumnReference Table=\"[Orders]\" Column=\"Status\" /></ScalarOperator></Predicate>" +
-            $"</IndexScan>" +
-            $"</RelOp>" +
-            $"</QueryPlan>" +
-            $"</StmtSimple>" +
-            $"</Statements></Batch></BatchSequence>" +
-            $"</ShowPlanXML>";
+               $"<ShowPlanXML xmlns=\"http://schemas.microsoft.com/sqlserver/2004/07/showplan\">" +
+               $"<BatchSequence><Batch><Statements>" +
+               $"<StmtSimple StatementText=\"SELECT * FROM dbo.Orders WHERE Status='open'\" StatementSubTreeCost=\"" + costStr + $"\">" +
+               $"<QueryPlan>" +
+               $"<MissingIndexes>" +
+               $"<MissingIndexGroup Impact=\"80\">" +
+               $"<MissingIndex Table=\"[Orders]\" Schema=\"[dbo]\">" +
+               $"<ColumnGroup Usage=\"EQUALITY\"><Column Name=\"[Status]\" /></ColumnGroup>" +
+               $"<ColumnGroup Usage=\"INCLUDE\"><Column Name=\"[Total]\" /></ColumnGroup>" +
+               $"</MissingIndex>" +
+               $"</MissingIndexGroup>" +
+               $"</MissingIndexes>" +
+               $"<RelOp PhysicalOp=\"Clustered Index Scan\" EstimateRows=\"1000\" EstimatedTotalSubtreeCost=\"" + costStr + $"\">" +
+               $"<OutputList><ColumnReference Table=\"[Orders]\" Column=\"Total\" /></OutputList>" +
+               $"<IndexScan>" +
+               $"<Object Schema=\"[dbo]\" Table=\"[Orders]\" Index=\"[PK_Orders]\" />" +
+               $"<Predicate><ScalarOperator><ColumnReference Table=\"[Orders]\" Column=\"Status\" /></ScalarOperator></Predicate>" +
+               $"</IndexScan>" +
+               $"</RelOp>" +
+               $"</QueryPlan>" +
+               $"</StmtSimple>" +
+               $"</Statements></Batch></BatchSequence>" +
+               $"</ShowPlanXML>";
     }
 
     /// <summary>
@@ -82,12 +87,11 @@ public static class SqlServerParserTestsExtensions
         ArgumentNullException.ThrowIfNull(test);
         ArgumentNullException.ThrowIfNull(plan);
 
-        if (plan.Nodes.Count == 0)
+        return plan.Nodes.Count switch
         {
-            throw new ArgumentException("Execution plan has no nodes", nameof(plan));
-        }
-
-        return plan.Nodes[0];
+            0 => throw new ArgumentException("Execution plan has no nodes", nameof(plan)),
+            _ => plan.Nodes[0]
+        };
     }
 
     /// <summary>
@@ -116,41 +120,40 @@ public static class SqlServerParserTestsExtensions
         ArgumentNullException.ThrowIfNull(equalityColumns, nameof(equalityColumns));
         ArgumentNullException.ThrowIfNull(includeColumns, nameof(includeColumns));
 
-        if (impactPercent < 0)
+        if (impactPercent is < 0 or > 100)
         {
-            throw new ArgumentOutOfRangeException(nameof(impactPercent), "Impact percent must be non-negative");
-        }
-
-        if (impactPercent > 100)
-        {
-            throw new ArgumentOutOfRangeException(nameof(impactPercent), "Impact percent must be <= 100");
+            throw new ArgumentOutOfRangeException(nameof(impactPercent), impactPercent, "Impact percent must be between 0 and 100");
         }
 
         var equalityColumnsXml = string.Join("", equalityColumns.Select(c => $"<Column Name=\"[{c}]\" />"));
         var includeColumnsXml = string.Join("", includeColumns.Select(c => $"<Column Name=\"[{c}]\" />"));
 
         return $"<?xml version=\"1.0\" encoding=\"utf-16\"?>" +
-            $"<ShowPlanXML xmlns=\"http://schemas.microsoft.com/sqlserver/2004/07/showplan\">" +
-            $"<BatchSequence><Batch><Statements>" +
-            $"<StmtSimple StatementText=\"SELECT * FROM " + schemaName + "." + tableName + "\" StatementSubTreeCost=\"2.5\">" +
-            $"<QueryPlan>" +
-            $"<MissingIndexes>" +
-            $"<MissingIndexGroup Impact=\"" + impactPercent + "\">" +
-            $"<MissingIndex Table=\"[" + tableName + "]\" Schema=\"[" + schemaName + "]\">" +
-            $"<ColumnGroup Usage=\"EQUALITY\">" + equalityColumnsXml + $"</ColumnGroup>" +
-            $"<ColumnGroup Usage=\"INCLUDE\">" + includeColumnsXml + $"</ColumnGroup>" +
-            $"</MissingIndex>" +
-            $"</MissingIndexGroup>" +
-            $"</MissingIndexes>" +
-            $"<RelOp PhysicalOp=\"Clustered Index Scan\" EstimateRows=\"500\" EstimatedTotalSubtreeCost=\"2.5\">" +
-            $"<OutputList><ColumnReference Table=\"[" + schemaName + "].[" + tableName + "]\" Column=\"Id\" /></OutputList>" +
-            $"<IndexScan>" +
-            $"<Object Schema=\"[" + schemaName + "]\" Table=\"[" + tableName + "]\" Index=\"[PK_" + tableName + "]\" />" +
-            $"</IndexScan>" +
-            $"</RelOp>" +
-            $"</QueryPlan>" +
-            $"</StmtSimple>" +
-            $"</Statements></Batch></BatchSequence>" +
-            $"</ShowPlanXML>";
+               $"<ShowPlanXML xmlns=\"http://schemas.microsoft.com/sqlserver/2004/07/showplan\">" +
+               $"<BatchSequence><Batch><Statements>" +
+               $"<StmtSimple StatementText=\"SELECT * FROM " + schemaName + "." + tableName + "\" StatementSubTreeCost=\"2.5\">" +
+               $"<QueryPlan>" +
+               $"<MissingIndexes>" +
+               $"<MissingIndexGroup Impact=\"" + impactPercent + "\">" +
+               $"<MissingIndex Table=\"[" + tableName + "]\" Schema=\"[" + schemaName + "]\">" +
+               $"<ColumnGroup Usage=\"EQUALITY\">" +
+               equalityColumnsXml +
+               $"</ColumnGroup>" +
+               $"<ColumnGroup Usage=\"INCLUDE\">" +
+               includeColumnsXml +
+               $"</ColumnGroup>" +
+               $"</MissingIndex>" +
+               $"</MissingIndexGroup>" +
+               $"</MissingIndexes>" +
+               $"<RelOp PhysicalOp=\"Clustered Index Scan\" EstimateRows=\"500\" EstimatedTotalSubtreeCost=\"2.5\">" +
+               $"<OutputList><ColumnReference Table=\"[" + schemaName + "].[" + tableName + "]\" Column=\"Id\" /></OutputList>" +
+               $"<IndexScan>" +
+               $"<Object Schema=\"[" + schemaName + "]\" Table=\"[" + tableName + "]\" Index=\"[PK_" + tableName + "]\" />" +
+               $"</IndexScan>" +
+               $"</RelOp>" +
+               $"</QueryPlan>" +
+               $"</StmtSimple>" +
+               $"</Statements></Batch></BatchSequence>" +
+               $"</ShowPlanXML>";
     }
 }
