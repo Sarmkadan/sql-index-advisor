@@ -40,7 +40,13 @@ public static class PostgresParserTestsExtensions
     {
         ArgumentNullException.ThrowIfNull(plan);
         ArgumentException.ThrowIfNullOrEmpty(operatorName);
-        return plan.Nodes.Single(node => node.Operator == operatorName);
+
+        return plan.Nodes.Count switch
+        {
+            0 => throw new InvalidOperationException($"No nodes found in execution plan."),
+            1 when plan.Nodes[0].Operator == operatorName => plan.Nodes[0],
+            _ => plan.Nodes.Single(node => node.Operator == operatorName)
+        };
     }
 
     /// <summary>
@@ -53,8 +59,7 @@ public static class PostgresParserTestsExtensions
     public static IReadOnlyList<string> GetPredicateColumns(this PostgresParserTests _, PlanNode node)
     {
         ArgumentNullException.ThrowIfNull(node);
-        // The model already exposes PredicateColumns as an IReadOnlyList<string>.
-        return node.PredicateColumns;
+        return node.PredicateColumns.AsReadOnly();
     }
 
     /// <summary>
@@ -69,6 +74,7 @@ public static class PostgresParserTestsExtensions
     {
         ArgumentNullException.ThrowIfNull(node);
         ArgumentNullException.ThrowIfNull(expectedColumns);
+
         foreach (var column in expectedColumns)
         {
             Xunit.Assert.Contains(column, node.PredicateColumns);
