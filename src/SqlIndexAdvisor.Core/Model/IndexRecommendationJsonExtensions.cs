@@ -23,7 +23,7 @@ public static class IndexRecommendationJsonExtensions
     {
         ArgumentNullException.ThrowIfNull(value);
 
-        var options = indented ? Options with { WriteIndented = true } : Options;
+        var options = indented ? new JsonSerializerOptions(Options) { WriteIndented = true } : Options;
         return JsonSerializer.Serialize(value, options);
     }
 
