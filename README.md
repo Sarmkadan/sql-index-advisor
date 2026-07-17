@@ -320,6 +320,58 @@ The example demonstrates how to use the extension methods to analyze execution p
 - Postgres predicate parsing is string-based; unusual expression formatting can
   cause a column to be missed. When in doubt, read the reasons it prints.
 
+## IndexRecommendation
+
+`IndexRecommendation` represents a single indexing opportunity discovered by the recommendation engine. It captures the table and columns to index, the estimated performance benefit, and the reasoning behind the suggestion so you can quickly validate whether the index is appropriate for your workload.
+
+Each recommendation is produced by an `IIndexRule` (e.g., `EngineHintRule` or `FullScanWithFilterRule`) and contains enough information to generate a `CREATE INDEX` statement via the `ToCreateStatement` helper.
+
+**Example usage**
+
+```csharp
+using System;
+using System.Collections.Generic;
+using SqlIndexAdvisor.Core.Model;
+
+class Example
+{
+    static void Main()
+    {
+        // Create a recommendation for a frequently filtered orders table
+        var recommendation = new IndexRecommendation
+        {
+            Table = "dbo.Orders",
+            KeyColumns = new List<string> { "Status", "CreatedAt" },
+            IncludeColumns = new List<string> { "CustomerId", "Total", "ShippingAddress" },
+            EstimatedImpactPercent = 82.5,
+            Confidence = Confidence.High,
+            Reasons = new List<string>
+            {
+                "Clustered Index Scan on dbo.Orders carries a filter on (Status, CreatedAt) and is ~100% of statement cost.",
+                "Adding this index would eliminate the scan and allow the query to use an index seek."
+            },
+            SuggestedName = "IX_Orders_Status_CreatedAt"
+        };
+
+        // Generate the CREATE INDEX statement
+        string createStatement = recommendation.ToCreateStatement();
+        Console.WriteLine(createStatement);
+        /*
+        Output:
+        CREATE INDEX IX_Orders_Status_CreatedAt ON dbo.Orders (Status, CreatedAt) INCLUDE (CustomerId, Total, ShippingAddress);
+        */
+
+        // Access properties
+        Console.WriteLine($"Table: {recommendation.Table}");
+        Console.WriteLine($"Key columns: {string.Join(", ", recommendation.KeyColumns)}");
+        Console.WriteLine($"Include columns: {string.Join(", ", recommendation.IncludeColumns)}");
+        Console.WriteLine($"Estimated impact: {recommendation.EstimatedImpactPercent:P1}");
+        Console.WriteLine($"Confidence: {recommendation.Confidence}");
+        Console.WriteLine($"Suggested name: {recommendation.SuggestedName}");
+    }
+}
+```
+
 ## License
 
 MIT.
