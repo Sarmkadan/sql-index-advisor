@@ -4,12 +4,23 @@ using SqlIndexAdvisor.Core.Model;
 
 namespace SqlIndexAdvisor.Core.Reporting;
 
+/// <summary>
+/// Provides rendering capabilities for execution plans and index recommendations into various output formats.
+/// </summary>
 public static class ReportRenderer
 {
-    // JsonSerializerOptions caches type metadata; new-ing it per call throws that away.
+    /// <summary>
+/// JSON serialization options configured for human-readable output with proper indentation.
+/// </summary>
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
-    public static string RenderText(ExecutionPlan plan, IReadOnlyList<IndexRecommendation> recs)
+    	/// <summary>
+	/// Renders an execution plan and its index recommendations as a human-readable text report.
+	/// </summary>
+	/// <param name="plan">The execution plan containing dialect and cost information.</param>
+	/// <param name="recs">The list of index recommendations to include in the report.</param>
+	/// <returns>A formatted text report string.</returns>
+	public static string RenderText(ExecutionPlan plan, IReadOnlyList<IndexRecommendation> recs)
     {
         var sb = new StringBuilder();
         sb.AppendLine($"Dialect      : {plan.Dialect}");
@@ -40,7 +51,13 @@ public static class ReportRenderer
         return sb.ToString();
     }
 
-    public static string RenderJson(ExecutionPlan plan, IReadOnlyList<IndexRecommendation> recs)
+    	/// <summary>
+	/// Renders an execution plan and its index recommendations as a JSON string.
+	/// </summary>
+	/// <param name="plan">The execution plan containing dialect and cost information.</param>
+	/// <param name="recs">The list of index recommendations to include in the report.</param>
+	/// <returns>A JSON-formatted report string.</returns>
+	public static string RenderJson(ExecutionPlan plan, IReadOnlyList<IndexRecommendation> recs)
     {
         var payload = new
         {
