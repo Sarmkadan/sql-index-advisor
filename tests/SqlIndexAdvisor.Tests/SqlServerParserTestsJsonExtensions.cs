@@ -24,9 +24,7 @@ public static class SqlServerParserTestsJsonExtensions
     public static string ToJson(this SqlServerParserTests value, bool indented = false)
     {
         ArgumentNullException.ThrowIfNull(value);
-
-        var options = indented ? new JsonSerializerOptions(Options) { WriteIndented = true } : Options;
-        return JsonSerializer.Serialize(value, options);
+        return JsonSerializer.Serialize(value, indented ? new JsonSerializerOptions(Options) { WriteIndented = true } : Options);
     }
 
     /// <summary>
