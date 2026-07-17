@@ -196,7 +196,18 @@ public static class ExecutionPlanValidation
         }
     }
 
-    private static void ValidateStringCollection(IEnumerable<string> collection, string collectionPath, List<string> problems, int index)
+    /// <summary>
+    /// Validates that a collection of strings contains no null or empty entries.
+    /// </summary>
+    /// <param name="collection">The collection to validate.</param>
+    /// <param name="collectionPath">The path/identifier for error messages.</param>
+    /// <param name="problems">The list to accumulate validation problems.</param>
+    /// <param name="index">The node/missing index index for context in error messages.</param>
+    private static void ValidateStringCollection(
+        IEnumerable<string> collection,
+        string collectionPath,
+        List<string> problems,
+        int index)
     {
         if (collection is null)
         {
