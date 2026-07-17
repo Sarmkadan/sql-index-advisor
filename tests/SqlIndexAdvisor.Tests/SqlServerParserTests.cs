@@ -4,6 +4,9 @@ using Xunit;
 
 namespace SqlIndexAdvisor.Tests;
 
+/// <summary>
+/// Contains unit tests for parsing SQL Server execution plans using the <see cref="SqlServerXmlPlanParser"/> class.
+/// </summary>
 public class SqlServerParserTests
 {
     private const string Plan = """
@@ -33,6 +36,9 @@ public class SqlServerParserTests
     </ShowPlanXML>
     """;
 
+    /// <summary>
+    /// Tests that <see cref="SqlServerXmlPlanParser"/> correctly identifies SQL Server XML execution plans.
+    /// </summary>
     [Fact]
     public void DetectsFormat()
     {
@@ -40,6 +46,9 @@ public class SqlServerParserTests
         Assert.False(new PostgresJsonPlanParser().CanParse(Plan));
     }
 
+    /// <summary>
+    /// Tests that <see cref="SqlServerXmlPlanParser"/> correctly parses SQL Server XML execution plan metadata.
+    /// </summary>
     [Fact]
     public void ParsesDialectAndCost()
     {
@@ -49,6 +58,9 @@ public class SqlServerParserTests
         Assert.Single(plan.Nodes);
     }
 
+    /// <summary>
+    /// Tests that <see cref="SqlServerXmlPlanParser"/> correctly extracts missing index recommendations from SQL Server XML execution plans.
+    /// </summary>
     [Fact]
     public void ExtractsEngineMissingIndex()
     {
@@ -60,6 +72,9 @@ public class SqlServerParserTests
         Assert.Equal(80, hint.ImpactPercent);
     }
 
+    /// <summary>
+    /// Tests that <see cref="SqlServerXmlPlanParser"/> correctly extracts predicate and output columns from SQL Server XML execution plan nodes.
+    /// </summary>
     [Fact]
     public void ExtractsScanPredicateColumns()
     {
