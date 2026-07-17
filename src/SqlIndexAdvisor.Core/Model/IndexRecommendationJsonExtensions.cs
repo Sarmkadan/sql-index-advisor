@@ -6,7 +6,7 @@ namespace SqlIndexAdvisor.Core.Model;
 
 public static class IndexRecommendationJsonExtensions
 {
-    private static readonly JsonSerializerOptions Options = new JsonSerializerOptions(JsonSerializerDefaults.Web)
+    private static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web)
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = false,
@@ -22,16 +22,14 @@ public static class IndexRecommendationJsonExtensions
     public static string ToJson(this IndexRecommendation value, bool indented = false)
     {
         ArgumentNullException.ThrowIfNull(value);
-
-        var options = indented ? new JsonSerializerOptions(Options) { WriteIndented = true } : Options;
-        return JsonSerializer.Serialize(value, options);
+        return JsonSerializer.Serialize(value, indented ? new JsonSerializerOptions(Options) { WriteIndented = true } : Options);
     }
 
     /// <summary>
     /// Converts a JSON string to an <see cref="IndexRecommendation"/>.
     /// </summary>
     /// <param name="json">The JSON string to convert.</param>
-    /// <returns>An <see cref="IndexRecommendation"/> represented by <paramref name="json"/>; or null if <paramref name="json"/> is null or empty.</returns>
+    /// <returns>An <see cref="IndexRecommendation"/> represented by <paramref name="json"/>.</returns>
     /// <exception cref="ArgumentException"><paramref name="json"/> is null or empty.</exception>
     public static IndexRecommendation? FromJson(string json)
     {
@@ -47,6 +45,7 @@ public static class IndexRecommendationJsonExtensions
     /// <param name="value">When this method returns, contains the <see cref="IndexRecommendation"/> represented by <paramref name="json"/>, if conversion succeeded; otherwise, null.</param>
     /// <returns>true if <paramref name="json"/> was converted successfully; otherwise, false.</returns>
     /// <exception cref="ArgumentException"><paramref name="json"/> is null or empty.</exception>
+    /// <exception cref="JsonException">Thrown when the JSON is malformed and cannot be deserialized.</exception>
     public static bool TryFromJson(string json, out IndexRecommendation? value)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
