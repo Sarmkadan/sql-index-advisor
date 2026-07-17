@@ -174,6 +174,76 @@ The snippet demonstrates the most common scenarios: safe single‑plan parsing,
 batch parsing, capability checks, introspection of registered parsers, and
 custom parser selection.
 
+
+## ExecutionPlanExtensions
+
+`ExecutionPlanExtensions` provides a set of extension methods for analyzing execution plans and identifying indexing opportunities. These methods help you programmatically inspect scan operations, predicate columns, output columns, and engine-provided missing index hints to build custom analysis or reporting tools.
+
+**Example usage**
+
+```csharp
+using System;
+using System.Linq;
+using SqlIndexAdvisor.Core.Model;
+
+class Example
+{
+    static void Main()
+    {
+        // Assume we have a parsed execution plan
+        var factory = new PlanParserFactory();
+        string sqlServerPlan = File.ReadAllText("samples/sqlserver_orders_scan.sqlplan");
+        
+        if (factory.TryParse(sqlServerPlan, out ExecutionPlan? plan))
+        {
+            // Analyze scan operations
+            var scanCandidates = plan.GetScanCandidates();
+            Console.WriteLine($"Found {scanCandidates.Count()} scan candidates");
+            
+            // Get total cost of all scans
+            double totalScanCost = plan.GetTotalScanCost();
+            Console.WriteLine($"Total scan cost: {totalScanCost:F3}");
+            
+            // Identify tables being scanned
+            var scannedTables = plan.GetScannedTables().ToList();
+            Console.WriteLine($"Scanned tables: {string.Join(", ", scannedTables)}");
+            
+            // Find columns used in predicates (good index key candidates)
+            var predicateColumns = plan.GetPredicateColumns().ToList();
+            Console.WriteLine($"Predicate columns: {string.Join(", ", predicateColumns)}");
+            
+            // Find columns that could be INCLUDE columns
+            var includeCandidates = plan.GetIncludeCandidateColumns().ToList();
+            Console.WriteLine($"Include candidate columns: {string.Join(", ", includeCandidates)}");
+            
+            // Check if there are indexable scans
+            bool hasIndexableScans = plan.HasIndexableScans();
+            Console.WriteLine($"Has indexable scans: {hasIndexableScans}");
+            
+            // Get the highest cost scan
+            var highestCostScan = plan.GetHighestCostScan();
+            if (highestCostScan != null)
+            {
+                Console.WriteLine($"Highest cost scan: {highestCostScan.TableName} ({highestCostScan.RelativeCost:P0})");
+            }
+            
+            // Check engine missing index hints
+            var equalityColumns = plan.GetMissingIndexEqualityColumns().ToList();
+            var includeColumns = plan.GetMissingIndexIncludeColumns().ToList();
+            Console.WriteLine($"Engine suggests {equalityColumns.Count} equality columns and {includeColumns.Count} include columns");
+            
+            // Find columns already covered by scans
+            var coveredColumns = plan.GetAlreadyCoveredColumns().ToList();
+            Console.WriteLine($"Columns already covered: {string.Join(", ", coveredColumns)}");
+        }
+    }
+}
+```
+
+The example demonstrates how to use the extension methods to analyze execution plans programmatically, extract indexing opportunities, and work with both scan-based analysis and engine-provided missing index hints.
+
+
+
 ## Limits / not done yet
 
 - No column-order awareness beyond equality-before-inequality. It will not
