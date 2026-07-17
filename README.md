@@ -372,6 +372,65 @@ class Example
 }
 ```
 
+## RecommendationEngineTestsExtensions
+
+`RecommendationEngineTestsExtensions` provides a set of extension methods for testing index recommendation scenarios. These methods help you create test execution plans, build index recommendations, and assert on recommendation properties in a fluent and readable way. The extensions are particularly useful when writing unit tests for custom index rules or recommendation engine behavior.
+
+**Example usage**
+
+```csharp
+using System;
+using SqlIndexAdvisor.Core.Model;
+using SqlIndexAdvisor.Tests;
+using Xunit;
+
+class Example
+{
+    static void Main()
+    {
+        // Create test execution plans for different scenarios
+        
+        // 1️⃣ Create a sequential scan plan (Postgres)
+        var seqScanPlan = "users".CreateSeqScanPlan(PlanDialect.Postgres);
+        Console.WriteLine($"Created sequential scan plan with {seqScanPlan.Nodes.Count} node(s).");
+        
+        // 2️⃣ Create a clustered index scan plan (SQL Server)
+        var clusteredScanPlan = "dbo.Orders".CreateClusteredIndexScanPlan(PlanDialect.SqlServer);
+        Console.WriteLine($"Created clustered index scan plan with {clusteredScanPlan.Nodes.Count} node(s).");
+        
+        // 3️⃣ Create an index recommendation directly
+        var recommendation = "dbo.Orders".CreateIndexRecommendation(
+            keyColumns: new[] { "Status", "CreatedAt" },
+            includeColumns: new[] { "CustomerId", "Total" }
+        );
+        
+        Console.WriteLine($"Created recommendation for table: {recommendation.Table}");
+        Console.WriteLine($"Key columns: {string.Join(", ", recommendation.KeyColumns)}");
+        Console.WriteLine($"Include columns: {string.Join(", ", recommendation.IncludeColumns)}");
+        
+        // 4️⃣ Generate a CREATE INDEX statement and extract its components
+        string createStatement = recommendation.ToCreateStatement();
+        Console.WriteLine($"\nGenerated statement: {createStatement}");
+        
+        string indexName = createStatement.GetIndexName();
+        string tableName = createStatement.GetTableName();
+        var keyColumns = createStatement.GetKeyColumns();
+        var includeColumns = createStatement.GetIncludeColumns();
+        
+        Console.WriteLine($"Index name: {indexName}");
+        Console.WriteLine($"Table name: {tableName}");
+        Console.WriteLine($"Key columns: {string.Join(", ", keyColumns)}");
+        Console.WriteLine($"Include columns: {string.Join(", ", includeColumns)}");
+        
+        // 5️⃣ Use fluent assertions (in test context)
+        var assertion = Assert.Simple();
+        recommendation.HasConfidence(Confidence.High, recommendation);
+        recommendation.HasKeyColumns(new[] { "Status", "CreatedAt" }, recommendation);
+        recommendation.HasIncludeColumns(new[] { "CustomerId", "Total" }, recommendation);
+    }
+}
+```
+
 ## License
 
 MIT.
