@@ -8,7 +8,7 @@ namespace SqlIndexAdvisor.Tests;
 /// </summary>
 public static class PostgresParserTestsJsonExtensions
 {
-    private static readonly JsonSerializerOptions Options = new()
+    private static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web)
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = false
@@ -24,9 +24,7 @@ public static class PostgresParserTestsJsonExtensions
     public static string ToJson(this PostgresParserTests value, bool indented = false)
     {
         ArgumentNullException.ThrowIfNull(value);
-
-        var options = indented ? new JsonSerializerOptions(Options) { WriteIndented = true } : Options;
-        return JsonSerializer.Serialize(value, options);
+        return JsonSerializer.Serialize(value, indented ? new JsonSerializerOptions(Options) { WriteIndented = true } : Options);
     }
 
     /// <summary>
