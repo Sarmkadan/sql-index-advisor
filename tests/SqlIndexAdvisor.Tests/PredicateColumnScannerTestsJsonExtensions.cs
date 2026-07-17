@@ -1,6 +1,5 @@
 using System;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace SqlIndexAdvisor.Tests
 {
@@ -9,7 +8,7 @@ namespace SqlIndexAdvisor.Tests
     /// </summary>
     public static class PredicateColumnScannerTestsJsonExtensions
     {
-        private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web)
+        private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web)
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         };
@@ -24,7 +23,12 @@ namespace SqlIndexAdvisor.Tests
         public static string ToJson(this PredicateColumnScannerTests value, bool indented = false)
         {
             ArgumentNullException.ThrowIfNull(value);
-            return JsonSerializer.Serialize(value, _jsonOptions);
+            var options = _jsonOptions;
+            if (indented)
+            {
+                options = new JsonSerializerOptions(_jsonOptions) { WriteIndented = true };
+            }
+            return JsonSerializer.Serialize(value, options);
         }
 
         /// <summary>
@@ -67,5 +71,6 @@ namespace SqlIndexAdvisor.Tests
                 return false;
             }
         }
+
     }
 }
