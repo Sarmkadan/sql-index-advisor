@@ -158,7 +158,8 @@ public static class ExecutionPlanExtensions
 
         return plan.Nodes
             .Where(node => node.IsScan)
-            .MaxBy(node => node.RelativeCost);
+            .OrderByDescending(node => node.RelativeCost)
+        .FirstOrDefault();
     }
 
     /// <summary>
@@ -176,7 +177,8 @@ public static class ExecutionPlanExtensions
 
         return plan.Nodes
             .Where(node => node.IsScan)
-            .SelectMany(node => node.OutputColumns.Where(col => predicateColumns.Contains(col)))
+            .SelectMany(node => node.OutputColumns)
+        .Where(col => !string.IsNullOrEmpty(col) && predicateColumns.Contains(col))
             .Distinct(StringComparer.OrdinalIgnoreCase);
     }
 }
