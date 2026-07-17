@@ -7,7 +7,8 @@ using Xunit;
 namespace SqlIndexAdvisor.Tests;
 
 /// <summary>
-/// Extension methods that make it easier to work with <see cref="PredicateColumnScannerTests"/> in unit tests.
+/// Provides extension methods that simplify working with <see cref="PredicateColumnScanner"/> in unit tests
+/// by wrapping its scanning functionality with fluent assertion helpers.
 /// </summary>
 public static class PredicateColumnScannerTestsExtensions
 {
@@ -15,8 +16,8 @@ public static class PredicateColumnScannerTestsExtensions
     /// Scans the supplied <paramref name="expression"/> for column identifiers using <see cref="PredicateColumnScanner"/>.
     /// </summary>
     /// <param name="_">The test instance (unused, required for extension method syntax).</param>
-    /// <param name="expression">The predicate expression to scan.</param>
-    /// <returns>An <see cref="IReadOnlyList{T}"/> containing the column names found, in the order they appear.</returns>
+    /// <param name="expression">The predicate expression to scan for column references.</param>
+    /// <returns>An <see cref="IReadOnlyList{T}"/> containing the column names found, in the order they appear in the expression.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="_"/> is <c>null</c>.</exception>
     /// <exception cref="ArgumentException">Thrown when <paramref name="expression"/> is <c>null</c> or empty.</exception>
     public static IReadOnlyList<string> ScanColumns(this PredicateColumnScannerTests _, string expression)
@@ -24,7 +25,7 @@ public static class PredicateColumnScannerTestsExtensions
         ArgumentNullException.ThrowIfNull(_);
         ArgumentException.ThrowIfNullOrEmpty(expression);
 
-        // PredicateColumnScanner returns IEnumerable<string>; materialise as a read‑only list.
+        // PredicateColumnScanner returns IEnumerable<string>; materialize as a read-only list.
         return PredicateColumnScanner.Scan(expression).ToList().AsReadOnly();
     }
 
@@ -32,8 +33,8 @@ public static class PredicateColumnScannerTestsExtensions
     /// Asserts that the <paramref name="expression"/> contains all of the <paramref name="expected"/> column names.
     /// </summary>
     /// <param name="_">The test instance (unused).</param>
-    /// <param name="expression">The predicate expression to scan.</param>
-    /// <param name="expected">Column names that must be present.</param>
+    /// <param name="expression">The predicate expression to scan for column references.</param>
+    /// <param name="expected">Column names that must be present in the scanned expression.</param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="_"/> or <paramref name="expected"/> is <c>null</c>.</exception>
     /// <exception cref="ArgumentException">Thrown when <paramref name="expression"/> is <c>null</c> or empty.</exception>
     public static void AssertContainsColumns(this PredicateColumnScannerTests _, string expression, params string[] expected)
@@ -53,8 +54,8 @@ public static class PredicateColumnScannerTestsExtensions
     /// Asserts that the <paramref name="expression"/> does not contain any of the <paramref name="notExpected"/> column names.
     /// </summary>
     /// <param name="_">The test instance (unused).</param>
-    /// <param name="expression">The predicate expression to scan.</param>
-    /// <param name="notExpected">Column names that must be absent.</param>
+    /// <param name="expression">The predicate expression to scan for column references.</param>
+    /// <param name="notExpected">Column names that must not be present in the scanned expression.</param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="_"/> or <paramref name="notExpected"/> is <c>null</c>.</exception>
     /// <exception cref="ArgumentException">Thrown when <paramref name="expression"/> is <c>null</c> or empty.</exception>
     public static void AssertNoColumns(this PredicateColumnScannerTests _, string expression, params string[] notExpected)
