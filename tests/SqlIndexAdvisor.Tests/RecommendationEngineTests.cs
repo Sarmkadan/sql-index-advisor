@@ -3,10 +3,16 @@ using SqlIndexAdvisor.Core.Model;
 using SqlIndexAdvisor.Core.Rules;
 using Xunit;
 
+/// <summary>
+/// Tests for the RecommendationEngine class.
+/// </summary>
 namespace SqlIndexAdvisor.Tests;
 
 public class RecommendationEngineTests
 {
+    /// <summary>
+    /// Verifies that a Seq Scan with a filter produces a recommendation.
+    /// </summary>
     [Fact]
     public void SeqScanWithFilterProducesRecommendation()
     {
@@ -39,6 +45,9 @@ public class RecommendationEngineTests
         Assert.Equal(Confidence.High, rec.Confidence);
     }
 
+    /// <summary>
+    /// Verifies that a cheap scan is ignored.
+    /// </summary>
     [Fact]
     public void CheapScanIsIgnored()
     {
@@ -59,6 +68,9 @@ public class RecommendationEngineTests
         Assert.Empty(new RecommendationEngine().Analyze(plan));
     }
 
+    /// <summary>
+    /// Verifies that engine hints and scans on the same keys are merged.
+    /// </summary>
     [Fact]
     public void EngineHintAndScanOnSameKeysAreMerged()
     {
@@ -102,6 +114,9 @@ public class RecommendationEngineTests
         Assert.True(rec.Reasons.Count >= 2);
     }
 
+    /// <summary>
+    /// Verifies that the create statement includes keys and includes.
+    /// </summary>
     [Fact]
     public void CreateStatementIncludesKeysAndIncludes()
     {
