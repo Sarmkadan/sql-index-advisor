@@ -105,27 +105,74 @@ plan file ──► PlanParserFactory ──► ExecutionPlan (normalized) ─�
    absorbs the other's includes and reasons), then orders by confidence and
    estimated impact.
 
-## Impact estimate - what the number means
+## PlanParserFactoryExtensions
 
-For engine hints it is simply the optimizer's reported impact. For the scan
-rule it is the node's share of statement cost scaled by a rough selectivity
-factor (how few rows the filter keeps versus how many it reads). It is a
-ranking aid, nothing more.
+`PlanParserFactoryExtensions` provides a set of handy extension methods for
+`PlanParserFactory`. They let you try parsing safely, batch‑parse many plans,
+check whether content is parsable, enumerate registered parsers, and even
+choose a parser manually with a custom selector.
 
-## Architecture
+**Example usage**
 
-The full write-up - component breakdown, design decisions and their
-trade-offs, extension points - lives in
-[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+```csharp
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using SqlIndexAdvisor.Core.Model;
+using SqlIndexAdvisor.Core.Parsing;
 
-## Project layout
+class Example
+{
+    static void Main()
+    {
+        var factory = new PlanParserFactory();
 
+        // 1️⃣ Try to parse a single plan safely
+        string content = File.ReadAllText("samples/sqlserver_orders_scan.sqlplan");
+        if (factory.TryParse(content, out ExecutionPlan? plan))
+        {
+            Console.WriteLine($"Parsed plan with {plan.Nodes.Count} nodes.");
+        }
+        else
+        {
+            Console.WriteLine("Failed to parse the plan.");
+        }
+
+        // 2️⃣ Parse many plans from a collection of (sourceId, content) tuples
+        var manyPlans = factory.ParseMany(new[]
+        {
+            ("plan1", content),
+            ("plan2", File.ReadAllText("samples/postgres_users_seqscan.json"))
+        });
+
+        foreach (var (sourceId, execPlan) in manyPlans)
+        {
+            Console.WriteLine($"{sourceId}: {execPlan.Nodes.Count} nodes");
+        }
+
+        // 3️⃣ Quick check whether some content could be parsed at all
+        bool canParse = factory.CanParse(content);
+        Console.WriteLine($"Can parse content? {canParse}");
+
+        // 4️⃣ List the names of all registered parsers
+        IReadOnlyList<string> parserNames = factory.GetRegisteredParserNames();
+        Console.WriteLine("Registered parsers: " + string.Join(", ", parserNames));
+
+        // 5️⃣ Get the actual parser instances
+        IReadOnlyList<IPlanParser> parsers = factory.GetRegisteredParsers();
+
+        // 6️⃣ Parse using a custom selector (e.g., prefer the SQL Server parser)
+        ExecutionPlan customPlan = factory.ParseWith(content, available =>
+            available.FirstOrDefault(p => p is SqlServerXmlPlanParser));
+        Console.WriteLine($"Custom parsed plan has {customPlan.Nodes.Count} nodes.");
+    }
+}
 ```
-src/SqlIndexAdvisor.Core   parsing, model, rules, reporting (the library)
-src/SqlIndexAdvisor.Cli    thin command-line front end
-tests/SqlIndexAdvisor.Tests xUnit tests for parsers and the engine
-samples/                   example plans for both dialects
-```
+
+The snippet demonstrates the most common scenarios: safe single‑plan parsing,
+batch parsing, capability checks, introspection of registered parsers, and
+custom parser selection.
 
 ## Limits / not done yet
 
