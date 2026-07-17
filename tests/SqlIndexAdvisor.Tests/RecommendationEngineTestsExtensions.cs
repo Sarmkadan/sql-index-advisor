@@ -15,6 +15,8 @@ public static class RecommendationEngineTestsExtensions
     /// </summary>
     /// <param name="assertion">The assertion context.</param>
     /// <param name="expectedKeys">The expected key columns.</param>
+    /// <param name="recommendation">The index recommendation to assert against.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="expectedKeys"/> or <paramref name="recommendation"/> is <see langword="null"/>.</exception>
     /// <exception cref="Xunit.Sdk.EqualException">Thrown when the key columns do not match.</exception>
     public static void HasKeyColumns(this Assert assertion, string[] expectedKeys, IndexRecommendation recommendation)
     {
@@ -29,6 +31,8 @@ public static class RecommendationEngineTestsExtensions
     /// </summary>
     /// <param name="assertion">The assertion context.</param>
     /// <param name="expectedIncludes">The expected include columns.</param>
+    /// <param name="recommendation">The index recommendation to assert against.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="expectedIncludes"/> or <paramref name="recommendation"/> is <see langword="null"/>.</exception>
     /// <exception cref="Xunit.Sdk.EqualException">Thrown when the include columns do not match.</exception>
     public static void HasIncludeColumns(this Assert assertion, string[] expectedIncludes, IndexRecommendation recommendation)
     {
@@ -43,6 +47,8 @@ public static class RecommendationEngineTestsExtensions
     /// </summary>
     /// <param name="assertion">The assertion context.</param>
     /// <param name="expectedConfidence">The expected confidence level.</param>
+    /// <param name="recommendation">The index recommendation to assert against.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="recommendation"/> is <see langword="null"/>.</exception>
     /// <exception cref="Xunit.Sdk.EqualException">Thrown when the confidence does not match.</exception>
     public static void HasConfidence(this Assert assertion, Confidence expectedConfidence, IndexRecommendation recommendation)
     {
@@ -57,9 +63,10 @@ public static class RecommendationEngineTestsExtensions
     /// <param name="tableName">The table name.</param>
     /// <param name="dialect">The SQL dialect. Defaults to Postgres.</param>
     /// <returns>A new execution plan with a sequential scan node.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="tableName"/> is <see langword="null"/>, empty, or whitespace.</exception>
     public static ExecutionPlan CreateSeqScanPlan(this string tableName, PlanDialect dialect = PlanDialect.Postgres)
     {
-        ArgumentException.ThrowIfNullOrEmpty(tableName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(tableName);
 
         return new ExecutionPlan
         {
@@ -86,11 +93,12 @@ public static class RecommendationEngineTestsExtensions
     /// <param name="tableName">The table name.</param>
     /// <param name="dialect">The SQL dialect. Defaults to SqlServer.</param>
     /// <returns>A new execution plan with a clustered index scan node.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="tableName"/> is <see langword="null"/>, empty, or whitespace.</exception>
     public static ExecutionPlan CreateClusteredIndexScanPlan(
         this string tableName,
         PlanDialect dialect = PlanDialect.SqlServer)
     {
-        ArgumentException.ThrowIfNullOrEmpty(tableName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(tableName);
 
         return new ExecutionPlan
         {
@@ -119,12 +127,14 @@ public static class RecommendationEngineTestsExtensions
     /// <param name="keyColumns">The key columns.</param>
     /// <param name="includeColumns">The include columns.</param>
     /// <returns>A new index recommendation.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="tableName"/> is <see langword="null"/>, empty, or whitespace.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="keyColumns"/> is <see langword="null"/>.</exception>
     public static IndexRecommendation CreateIndexRecommendation(
         this string tableName,
         string[] keyColumns,
         string[]? includeColumns = null)
     {
-        ArgumentException.ThrowIfNullOrEmpty(tableName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(tableName);
         ArgumentNullException.ThrowIfNull(keyColumns);
 
         return new IndexRecommendation
@@ -141,9 +151,10 @@ public static class RecommendationEngineTestsExtensions
     /// <param name="createStatement">The CREATE INDEX statement.</param>
     /// <returns>The index name (e.g., "IX_Orders_Status_CreatedAt").</returns>
     /// <exception cref="ArgumentException">Thrown when the statement is not a valid CREATE INDEX.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="createStatement"/> is <see langword="null"/>.</exception>
     public static string GetIndexName(this string createStatement)
     {
-        ArgumentException.ThrowIfNullOrEmpty(createStatement);
+        ArgumentException.ThrowIfNullOrWhiteSpace(createStatement);
 
         const string prefix = "CREATE INDEX ";
         if (!createStatement.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
@@ -166,9 +177,10 @@ public static class RecommendationEngineTestsExtensions
     /// <param name="createStatement">The CREATE INDEX statement.</param>
     /// <returns>The table name.</returns>
     /// <exception cref="ArgumentException">Thrown when the statement is not a valid CREATE INDEX.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="createStatement"/> is <see langword="null"/>.</exception>
     public static string GetTableName(this string createStatement)
     {
-        ArgumentException.ThrowIfNullOrEmpty(createStatement);
+        ArgumentException.ThrowIfNullOrWhiteSpace(createStatement);
 
         const string onPrefix = " ON ";
         var indexOfOn = createStatement.IndexOf(onPrefix, StringComparison.OrdinalIgnoreCase);
@@ -188,9 +200,10 @@ public static class RecommendationEngineTestsExtensions
     /// <param name="createStatement">The CREATE INDEX statement.</param>
     /// <returns>The key columns.</returns>
     /// <exception cref="ArgumentException">Thrown when the statement is not a valid CREATE INDEX.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="createStatement"/> is <see langword="null"/>.</exception>
     public static IReadOnlyList<string> GetKeyColumns(this string createStatement)
     {
-        ArgumentException.ThrowIfNullOrEmpty(createStatement);
+        ArgumentException.ThrowIfNullOrWhiteSpace(createStatement);
 
         var columnsStart = createStatement.IndexOf('(');
         var columnsEnd = createStatement.IndexOf(')', columnsStart);
@@ -209,9 +222,10 @@ public static class RecommendationEngineTestsExtensions
     /// <param name="createStatement">The CREATE INDEX statement.</param>
     /// <returns>The include columns, or empty list if none.</returns>
     /// <exception cref="ArgumentException">Thrown when the statement is not a valid CREATE INDEX.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="createStatement"/> is <see langword="null"/>.</exception>
     public static IReadOnlyList<string> GetIncludeColumns(this string createStatement)
     {
-        ArgumentException.ThrowIfNullOrEmpty(createStatement);
+        ArgumentException.ThrowIfNullOrWhiteSpace(createStatement);
 
         const string includePrefix = "INCLUDE (";
         var indexOfInclude = createStatement.IndexOf(includePrefix, StringComparison.OrdinalIgnoreCase);
@@ -228,6 +242,7 @@ public static class RecommendationEngineTestsExtensions
         }
 
         var columnsText = createStatement.Substring(columnsStart, columnsEnd - columnsStart);
-        return columnsText.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries);
+        var columns = columnsText.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries);
+        return columns.Length == 0 ? Array.Empty<string>() : columns;
     }
 }
