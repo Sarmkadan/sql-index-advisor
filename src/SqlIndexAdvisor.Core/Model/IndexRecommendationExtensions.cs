@@ -23,9 +23,8 @@ public static class IndexRecommendationExtensions
         ArgumentNullException.ThrowIfNull(recommendation);
         ArgumentException.ThrowIfNullOrEmpty(columnName);
 
-        var comparison = StringComparison.OrdinalIgnoreCase;
-        return recommendation.KeyColumns.Any(c => c.Equals(columnName, comparison)) ||
-               recommendation.IncludeColumns.Any(c => c.Equals(columnName, comparison));
+        return recommendation.KeyColumns.Contains(columnName, StringComparer.OrdinalIgnoreCase) ||
+               recommendation.IncludeColumns.Contains(columnName, StringComparer.OrdinalIgnoreCase);
     }
 
     /// <summary>
@@ -37,7 +36,6 @@ public static class IndexRecommendationExtensions
     public static int GetTotalColumnCount(this IndexRecommendation recommendation)
     {
         ArgumentNullException.ThrowIfNull(recommendation);
-
         return recommendation.KeyColumns.Count + recommendation.IncludeColumns.Count;
     }
 
@@ -68,12 +66,11 @@ public static class IndexRecommendationExtensions
     {
         ArgumentNullException.ThrowIfNull(recommendation);
 
-        var keyCols = string.Join(", ", recommendation.KeyColumns);
         var includeCols = recommendation.IncludeColumns.Count > 0
             ? $" INCLUDE ({string.Join(", ", recommendation.IncludeColumns)})"
             : string.Empty;
 
-        return $"{recommendation.SuggestedName()} on {recommendation.Table} ({keyCols}){includeCols} " +
+        return $"{recommendation.SuggestedName()} on {recommendation.Table} ({string.Join(", ", recommendation.KeyColumns)}){includeCols} " +
                $"- {recommendation.EstimatedImpactPercent.ToString("F1", CultureInfo.InvariantCulture)}% impact";
     }
 
@@ -82,8 +79,10 @@ public static class IndexRecommendationExtensions
     /// </summary>
     /// <param name="columns">The list of column names.</param>
     /// <returns>A formatted string of columns.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="columns"/> is null.</exception>
     private static string FormatColumns(IReadOnlyList<string> columns)
     {
+        ArgumentNullException.ThrowIfNull(columns);
         return columns.Count > 0
             ? string.Join(", ", columns)
             : "(none)";
