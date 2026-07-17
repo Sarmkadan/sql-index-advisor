@@ -1,5 +1,3 @@
-using System.Globalization;
-
 namespace SqlIndexAdvisor.Core.Model;
 
 /// <summary>
@@ -13,7 +11,7 @@ public static class IndexRecommendationValidation
     /// </summary>
     /// <param name="value">The recommendation to validate.</param>
     /// <returns>A list of validation problems; empty if valid.</returns>
-    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="value"/> is null.</exception>
     public static IReadOnlyList<string> Validate(this IndexRecommendation value)
     {
         ArgumentNullException.ThrowIfNull(value);
@@ -37,27 +35,17 @@ public static class IndexRecommendationValidation
         }
         else
         {
-            foreach (var column in value.KeyColumns)
-            {
-                if (string.IsNullOrWhiteSpace(column))
-                {
-                    problems.Add("All KeyColumns must be non-empty strings.");
-                    break;
-                }
-            }
+            problems.AddRange(value.KeyColumns
+                .Where(column => string.IsNullOrWhiteSpace(column))
+                .Select(_ => "All KeyColumns must be non-empty strings."));
         }
 
         // Validate IncludeColumns (optional)
         if (value.IncludeColumns is not null)
         {
-            foreach (var column in value.IncludeColumns)
-            {
-                if (string.IsNullOrWhiteSpace(column))
-                {
-                    problems.Add("All IncludeColumns must be non-empty strings.");
-                    break;
-                }
-            }
+            problems.AddRange(value.IncludeColumns
+                .Where(column => string.IsNullOrWhiteSpace(column))
+                .Select(_ => "All IncludeColumns must be non-empty strings."));
         }
 
         // Validate EstimatedImpactPercent
@@ -72,14 +60,9 @@ public static class IndexRecommendationValidation
         // Validate Reasons (optional)
         if (value.Reasons is not null)
         {
-            foreach (var reason in value.Reasons)
-            {
-                if (string.IsNullOrWhiteSpace(reason))
-                {
-                    problems.Add("All Reasons must be non-empty strings.");
-                    break;
-                }
-            }
+            problems.AddRange(value.Reasons
+                .Where(reason => string.IsNullOrWhiteSpace(reason))
+                .Select(_ => "All Reasons must be non-empty strings."));
         }
 
         // Validate SuggestedName (computed property, but validate its components were valid)
@@ -93,18 +76,15 @@ public static class IndexRecommendationValidation
     /// </summary>
     /// <param name="value">The recommendation to check.</param>
     /// <returns>True if valid; otherwise, false.</returns>
-    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
-    public static bool IsValid(this IndexRecommendation value)
-    {
-        return Validate(value).Count == 0;
-    }
+    /// <exception cref="ArgumentNullException"><paramref name="value"/> is null.</exception>
+    public static bool IsValid(this IndexRecommendation value) => Validate(value).Count == 0;
 
     /// <summary>
     /// Ensures that an <see cref="IndexRecommendation"/> instance is valid, throwing an <see cref="ArgumentException"/>
     /// with detailed validation messages if it is not.
     /// </summary>
     /// <param name="value">The recommendation to validate.</param>
-    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="value"/> is null.</exception>
     /// <exception cref="ArgumentException">Thrown if <paramref name="value"/> is invalid, with a detailed message.</exception>
     public static void EnsureValid(this IndexRecommendation value)
     {
