@@ -175,6 +175,73 @@ batch parsing, capability checks, introspection of registered parsers, and
 custom parser selection.
 
 
+## ExecutionPlan
+
+Represents a normalized execution plan that both SQL Server XML and PostgreSQL JSON plans are flattened into. This common shape allows the rules engine to work with a single data structure regardless of the source dialect.
+
+The `ExecutionPlan` contains metadata about the query (dialect, statement text, estimated cost), the plan tree (`Nodes`), and any engine-provided missing index hints (`EngineMissingIndexes`).
+
+
+**Example usage**
+
+```csharp
+using System;
+using System.IO;
+using SqlIndexAdvisor.Core.Model;
+using SqlIndexAdvisor.Core.Parsing;
+
+class Example
+{
+    static void Main()
+    {
+        var factory = new PlanParserFactory();
+        
+        // Parse a SQL Server execution plan
+        string sqlServerPlan = File.ReadAllText("samples/sqlserver_orders_scan.sqlplan");
+        
+        if (factory.TryParse(sqlServerPlan, out ExecutionPlan? plan))
+        {
+            Console.WriteLine($"Plan dialect: {plan.Dialect}");
+            Console.WriteLine($"Statement: {plan.StatementText}");
+            Console.WriteLine($"Total cost: {plan.EstimatedTotalCost:F3}");
+            Console.WriteLine($"Nodes in plan: {plan.Nodes.Count}");
+            Console.WriteLine($"Missing index hints: {plan.EngineMissingIndexes.Count}");
+            
+            // Access scan nodes
+            var scanNodes = plan.Nodes.Where(n => n.IsScan).ToList();
+            Console.WriteLine($"Scan operations: {scanNodes.Count}");
+            
+            // Analyze highest cost node
+            var highestCostNode = plan.Nodes
+                .Where(n => n.RelativeCost > 0)
+                .OrderByDescending(n => n.RelativeCost)
+                .FirstOrDefault();
+            
+            if (highestCostNode != null)
+            {
+                Console.WriteLine($"Highest cost node: {highestCostNode.Operator}");
+                Console.WriteLine($"  Table: {highestCostNode.TableName}");
+                Console.WriteLine($"  Cost: {highestCostNode.RelativeCost:P0}");
+                Console.WriteLine($"  Rows: {highestCostNode.EstimatedRows:N0}");
+                Console.WriteLine($"  Predicate columns: {string.Join(", ", highestCostNode.PredicateColumns)}");
+                Console.WriteLine($"  Output columns: {string.Join(", ", highestCostNode.OutputColumns)}");
+            }
+            
+            // Access engine missing index hints
+            foreach (var hint in plan.EngineMissingIndexes)
+            {
+                Console.WriteLine($"\nEngine missing index hint:");
+                Console.WriteLine($"  Table: {hint.Table}");
+                Console.WriteLine($"  Impact: {hint.ImpactPercent:P1}");
+                Console.WriteLine($"  Equality columns: {string.Join(", ", hint.EqualityColumns)}");
+                Console.WriteLine($"  Inequality columns: {string.Join(", ", hint.InequalityColumns)}");
+                Console.WriteLine($"  Include columns: {string.Join(", ", hint.IncludeColumns)}");
+            }
+        }
+    }
+}
+```
+
 ## ExecutionPlanExtensions
 
 `ExecutionPlanExtensions` provides a set of extension methods for analyzing execution plans and identifying indexing opportunities. These methods help you programmatically inspect scan operations, predicate columns, output columns, and engine-provided missing index hints to build custom analysis or reporting tools.
