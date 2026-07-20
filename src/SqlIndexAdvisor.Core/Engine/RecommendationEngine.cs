@@ -14,7 +14,7 @@ public sealed class RecommendationEngine
     private readonly IReadOnlyList<IIndexRule> _rules;
 
     public RecommendationEngine()
-        : this(new IIndexRule[] { new EngineHintRule(), new FullScanWithFilterRule() })
+        : this(new IIndexRule[] { new EngineHintRule(), new FullScanWithFilterRule(), new ExpensiveSortRule() })
     {
     }
 

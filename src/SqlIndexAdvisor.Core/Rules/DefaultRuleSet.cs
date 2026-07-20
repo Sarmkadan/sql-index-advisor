@@ -11,13 +11,14 @@ public static class DefaultRuleSet
 {
     /// <summary>
     /// The default rule set includes the existing full‑scan rule, the key‑lookup rule,
-    /// and the join-with-full-scan rule.
+    /// and the join-with-full-scan rule, and the expensive-sort rule.
     /// </summary>
     public static IEnumerable<IIndexRule> Rules => new IIndexRule[]
     {
         new FullScanWithFilterRule(),
         new KeyLookupRule(),
         new ImplicitConversionRule(),
-        new MissingJoinIndexRule()
+        new MissingJoinIndexRule(),
+    new ExpensiveSortRule(),
     };
 }
