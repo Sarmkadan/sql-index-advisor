@@ -6,15 +6,15 @@ const string Usage = """
 sql-index-advisor - recommend missing indexes from a query execution plan
 
 USAGE:
-    sql-index-advisor <plan-file> [--format text|json|html] [--min-impact <n>]
-    sql-index-advisor --stdin [--format text|json|html]
+    sql-index-advisor <plan-file> [--format text|json|html|csv] [--min-impact <n>]
+    sql-index-advisor --stdin [--format text|json|html|csv]
 
 ARGUMENTS:
     <plan-file>        Path to a SQL Server showplan XML or Postgres EXPLAIN (FORMAT JSON) file.
 
 OPTIONS:
     --stdin            Read the plan from standard input instead of a file.
-    --format <fmt>     Output format: text (default), json, or html.
+    --format <fmt>     Output format: text (default), json, html, or csv.
     --min-impact <n>   Hide recommendations below this estimated impact percent.
     -h, --help         Show this help.
 """;
@@ -71,8 +71,8 @@ static int Run(string[] args)
         }
     }
 
-    if (format != "text" && format != "json" && format != "html")
-        throw new ArgumentException($"--format must be 'text', 'json', or 'html', got '{format}'.");
+    if (format != "text" && format != "json" && format != "html" && format != "csv")
+        throw new ArgumentException($"--format must be 'text', 'json', 'html', or 'csv', got '{format}'.");
 
     string content;
     if (useStdin)
@@ -103,6 +103,7 @@ static int Run(string[] args)
     {
         "json" => ReportRenderer.RenderJson(plan, recs),
         "html" => HtmlReportRenderer.RenderHtml(plan, recs),
+        "csv"  => CsvReportRenderer.RenderCsv(plan, recs),
         _ => ReportRenderer.RenderText(plan, recs),
     };
 
