@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using System.Reflection;
 using SqlIndexAdvisor.Core.Model;
 
 namespace SqlIndexAdvisor.Core.Reporting;
@@ -10,17 +11,17 @@ namespace SqlIndexAdvisor.Core.Reporting;
 public static class ReportRenderer
 {
     /// <summary>
-/// JSON serialization options configured for human-readable output with proper indentation.
-/// </summary>
+    /// JSON serialization options configured for human‑readable output with proper indentation.
+    /// </summary>
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
-    	/// <summary>
-	/// Renders an execution plan and its index recommendations as a human-readable text report.
-	/// </summary>
-	/// <param name="plan">The execution plan containing dialect and cost information.</param>
-	/// <param name="recs">The list of index recommendations to include in the report.</param>
-	/// <returns>A formatted text report string.</returns>
-	public static string RenderText(ExecutionPlan plan, IReadOnlyList<IndexRecommendation> recs)
+    /// <summary>
+    /// Renders an execution plan and its index recommendations as a human‑readable text report.
+    /// </summary>
+    /// <param name="plan">The execution plan containing dialect and cost information.</param>
+    /// <param name="recs">The list of index recommendations to include in the report.</param>
+    /// <returns>A formatted text report string.</returns>
+    public static string RenderText(ExecutionPlan plan, IReadOnlyList<IndexRecommendation> recs)
     {
         var sb = new StringBuilder();
         sb.AppendLine($"Dialect      : {plan.Dialect}");
@@ -51,14 +52,26 @@ public static class ReportRenderer
         return sb.ToString();
     }
 
-    	/// <summary>
-	/// Renders an execution plan and its index recommendations as a JSON string.
-	/// </summary>
-	/// <param name="plan">The execution plan containing dialect and cost information.</param>
-	/// <param name="recs">The list of index recommendations to include in the report.</param>
-	/// <returns>A JSON-formatted report string.</returns>
-	public static string RenderJson(ExecutionPlan plan, IReadOnlyList<IndexRecommendation> recs)
+    /// <summary>
+    /// Renders an execution plan and its index recommendations as a JSON string.
+    /// The JSON includes table, key columns, include columns, estimated impact, confidence,
+    /// the generated CREATE statement, reasons, and the originating rule (if available).
+    /// </summary>
+    /// <param name="plan">The execution plan containing dialect and cost information.</param>
+    /// <param name="recs">The list of index recommendations to include in the report.</param>
+    /// <returns>A JSON‑formatted report string.</returns>
+    public static string RenderJson(ExecutionPlan plan, IReadOnlyList<IndexRecommendation> recs)
     {
+        // Helper to obtain the originating rule name via reflection.
+        // This avoids a hard compile‑time dependency on a property that may not exist in older versions.
+        static string? GetOriginatingRule(IndexRecommendation rec)
+        {
+            // Common property names used in the project.
+            var prop = rec.GetType().GetProperty("OriginatingRule", BindingFlags.Public | BindingFlags.Instance)
+                       ?? rec.GetType().GetProperty("Rule", BindingFlags.Public | BindingFlags.Instance);
+            return prop?.GetValue(rec) as string;
+        }
+
         var payload = new
         {
             dialect = plan.Dialect.ToString(),
@@ -72,7 +85,8 @@ public static class ReportRenderer
                 estimatedImpactPercent = r.EstimatedImpactPercent,
                 confidence = r.Confidence.ToString(),
                 createStatement = r.ToCreateStatement(plan.Dialect),
-                reasons = r.Reasons
+                reasons = r.Reasons,
+                originatingRule = GetOriginatingRule(r)
             })
         };
         return JsonSerializer.Serialize(payload, JsonOptions);
