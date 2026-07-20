@@ -1,5 +1,6 @@
 using System.Text;
 using System.Linq;
+using System.Collections.Generic;
 using SqlIndexAdvisor.Core.Model;
 
 namespace SqlIndexAdvisor.Core.Reporting;
@@ -74,7 +75,8 @@ public static class HtmlReportRenderer
         int i = 1;
         foreach (var r in recs)
         {
-            var confidenceStr = r.Confidence?.ToString() ?? "unknown";
+            // Confidence is an enum (non‑nullable), so we just call ToString().
+            var confidenceStr = r.Confidence.ToString();
             var cssClass = ConfidenceToCssClass(confidenceStr);
             sb.AppendLine($"<tr class=\"{cssClass}\">");
             sb.AppendLine($"<td>{i}</td>");
