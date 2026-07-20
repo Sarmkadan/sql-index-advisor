@@ -16,6 +16,7 @@ public static class DefaultRuleSet
     public static IEnumerable<IIndexRule> Rules => new IIndexRule[]
     {
         new FullScanWithFilterRule(),
-        new KeyLookupRule()
+        new KeyLookupRule(),
+        new ImplicitConversionRule()
     };
 }
