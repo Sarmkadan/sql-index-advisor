@@ -10,13 +10,14 @@ namespace SqlIndexAdvisor.Core.Rules;
 public static class DefaultRuleSet
 {
     /// <summary>
-    /// The default rule set includes the existing full‑scan rule and the newly
-    /// added key‑lookup rule.
+    /// The default rule set includes the existing full‑scan rule, the key‑lookup rule,
+    /// and the join-with-full-scan rule.
     /// </summary>
     public static IEnumerable<IIndexRule> Rules => new IIndexRule[]
     {
         new FullScanWithFilterRule(),
         new KeyLookupRule(),
-        new ImplicitConversionRule()
+        new ImplicitConversionRule(),
+        new MissingJoinIndexRule()
     };
 }
