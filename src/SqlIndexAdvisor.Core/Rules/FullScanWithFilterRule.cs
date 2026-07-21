@@ -42,6 +42,7 @@ public sealed class FullScanWithFilterRule : IIndexRule
                 KeyColumns = node.PredicateColumns.ToList(),
                 IncludeColumns = include,
                 EstimatedImpactPercent = EstimateImpact(node),
+                SourceNodeCost = node.RelativeCost,
                 Confidence = confidence,
                 Reasons =
                 {

@@ -45,6 +45,7 @@ public sealed class ImplicitConversionRule : IIndexRule
                 KeyColumns = conversionColumns,
                 IncludeColumns = [],
                 EstimatedImpactPercent = EstimateImpact(plan.Nodes.FirstOrDefault()),
+                SourceNodeCost = EstimateImpact(plan.Nodes.FirstOrDefault()) / 100.0,
                 Confidence = confidence,
                 Reasons = new List<string>
                 {

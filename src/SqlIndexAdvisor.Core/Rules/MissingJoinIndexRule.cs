@@ -65,6 +65,7 @@ public sealed class MissingJoinIndexRule : IIndexRule
                 KeyColumns = node.PredicateColumns.ToList(),
                 IncludeColumns = include,
                 EstimatedImpactPercent = Math.Round(node.RelativeCost * 100.0, 1),
+                SourceNodeCost = node.RelativeCost,
                 Confidence = confidence,
                 Reasons = new List<string>
                 {

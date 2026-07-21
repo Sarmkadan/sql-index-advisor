@@ -22,6 +22,9 @@ public sealed class IndexRecommendation
     /// <summary>0..100. Rough share of statement cost we expect this to remove.</summary>
     public double EstimatedImpactPercent { get; init; }
 
+        /// <summary>Fraction of the whole statement cost attributed to the source plan node (0..1).</summary>
+        public double SourceNodeCost { get; init; }
+
     public Confidence Confidence { get; init; }
 
     /// <summary>Which rule(s) fired to produce this recommendation.</summary>

@@ -56,6 +56,7 @@ public sealed class ExpensiveSortRule : IIndexRule
                 KeyColumns = sortColumns,
                 IncludeColumns = includeColumns,
                 EstimatedImpactPercent = EstimateImpact(node),
+                SourceNodeCost = node.RelativeCost,
                 Confidence = confidence,
                 Reasons = new List<string>
                 {

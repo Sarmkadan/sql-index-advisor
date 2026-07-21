@@ -52,6 +52,7 @@ public sealed class KeyLookupRule : IIndexRule
                 KeyColumns = equalityColumns.ToList(),
                 IncludeColumns = include,
                 EstimatedImpactPercent = Math.Round(node.RelativeCost * 100.0, 1),
+                SourceNodeCost = node.RelativeCost,
                 Confidence = confidence,
                 Reasons =
                 {

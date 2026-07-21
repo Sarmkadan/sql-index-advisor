@@ -27,6 +27,7 @@ public sealed class EngineHintRule : IIndexRule
                 KeyColumns = keys,
                 IncludeColumns = hint.IncludeColumns.Where(c => !keys.Contains(c)).ToList(),
                 EstimatedImpactPercent = hint.ImpactPercent,
+                SourceNodeCost = hint.ImpactPercent / 100.0,
                 Confidence = Confidence.High,
                 Reasons = { $"Optimizer reported a missing index with {hint.ImpactPercent:0.#}% estimated impact." }
             };
