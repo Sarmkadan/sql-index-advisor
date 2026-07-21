@@ -7,10 +7,12 @@ sql-index-advisor - recommend missing indexes from a query execution plan
 
 USAGE:
     sql-index-advisor <plan-file> [--format text|json|html|csv] [--min-impact <n>]
+sql-index-advisor - [--format text|json|html|csv] < input.json
     sql-index-advisor --stdin [--format text|json|html|csv]
 
 ARGUMENTS:
     <plan-file>        Path to a SQL Server showplan XML or Postgres EXPLAIN (FORMAT JSON) file.
+            Use "-" to read from standard input.
 
 OPTIONS:
     --stdin            Read the plan from standard input instead of a file.
@@ -75,7 +77,7 @@ static int Run(string[] args)
         throw new ArgumentException($"--format must be 'text', 'json', 'html', or 'csv', got '{format}'.");
 
     string content;
-    if (useStdin)
+if (useStdin || path == "-")
     {
         content = Console.In.ReadToEnd();
     }
