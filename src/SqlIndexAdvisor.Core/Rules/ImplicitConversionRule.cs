@@ -7,16 +7,20 @@ namespace SqlIndexAdvisor.Core.Rules;
 /// Flags CONVERT_IMPLICIT operations in SQL Server and type-mismatch casts in Postgres.
 /// Recommends aligning column/parameter types to enable index seeks.
 /// </summary>
-public sealed class ImplicitConversionRule : IIndexRule
+public sealed class ImplicitConversionRule : PlanNodeVisitorBase
 {
-    public string Name => "implicit-conversion";
+    public override string Name => "implicit-conversion";
 
-    public IEnumerable<IndexRecommendation> Evaluate(ExecutionPlan plan)
+    protected override bool ShouldVisit(PlanNode node) => false; // Doesn't visit nodes directly
+
+    protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node) => Array.Empty<IndexRecommendation>();
+
+    public override IEnumerable<IndexRecommendation> Evaluate(ExecutionPlan plan)
     {
-        // Check the statement text for implicit conversions
+        // Get conversion columns from statement text
         var conversionColumns = FindImplicitConversionColumns(plan);
         if (conversionColumns.Count == 0)
-            yield break;
+            return Array.Empty<IndexRecommendation>();
 
         // Find all tables involved in the plan
         var tablesInPlan = plan.Nodes
@@ -26,6 +30,11 @@ public sealed class ImplicitConversionRule : IIndexRule
             .ToList();
 
         // If we have tables in the plan, associate the conversions with them
+        if (tablesInPlan.Count == 0)
+            return Array.Empty<IndexRecommendation>();
+
+        var recommendations = new List<IndexRecommendation>();
+
         foreach (var table in tablesInPlan)
         {
             var confidence = plan.Nodes
@@ -39,11 +48,11 @@ public sealed class ImplicitConversionRule : IIndexRule
                 _ => Confidence.Low
             };
 
-            yield return new IndexRecommendation
+            recommendations.Add(new IndexRecommendation
             {
                 Table = table,
                 KeyColumns = conversionColumns,
-                IncludeColumns = [],
+                IncludeColumns = new List<string>(),
                 EstimatedImpactPercent = EstimateImpact(plan.Nodes.FirstOrDefault()),
                 SourceNodeCost = EstimateImpact(plan.Nodes.FirstOrDefault()) / 100.0,
                 Confidence = confidence,
@@ -51,8 +60,10 @@ public sealed class ImplicitConversionRule : IIndexRule
                 {
                     $"Query contains implicit conversion(s) on column(s): {string.Join(", ", conversionColumns)}"
                 }
-            };
+            });
         }
+
+        return recommendations;
     }
 
     private static List<string> FindImplicitConversionColumns(ExecutionPlan plan)
@@ -204,9 +215,11 @@ public sealed class ImplicitConversionRule : IIndexRule
     /// Estimates impact: implicit conversions can prevent index usage entirely,
     /// forcing scans. Impact scales with the cost of the node.
     /// </summary>
-    private static double EstimateImpact(PlanNode node)
+    private static double EstimateImpact(PlanNode? node)
     {
         // Implicit conversions are often performance killers - high impact
-        return Math.Round(node.RelativeCost * 100.0, 1);
+        // Use a default if node is null
+        var cost = node?.RelativeCost ?? 0.5;
+        return Math.Round(cost * 100.0, 1);
     }
 }

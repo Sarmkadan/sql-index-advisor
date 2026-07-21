@@ -8,20 +8,27 @@ namespace SqlIndexAdvisor.Core.Rules;
 /// them itself. Equality columns come first, then inequality, matching the
 /// standard leading-column ordering guidance.
 /// </summary>
-public sealed class EngineHintRule : IIndexRule
+public sealed class EngineHintRule : PlanNodeVisitorBase
 {
-    public string Name => "engine-hint";
+    public override string Name => "engine-hint";
 
-    public IEnumerable<IndexRecommendation> Evaluate(ExecutionPlan plan)
+    protected override bool ShouldVisit(PlanNode node) => false; // Engine hints don't visit nodes
+
+    protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node) => Array.Empty<IndexRecommendation>();
+
+    public override IEnumerable<IndexRecommendation> Evaluate(ExecutionPlan plan)
     {
+        var recommendations = new List<IndexRecommendation>();
+
         foreach (var hint in plan.EngineMissingIndexes)
         {
             var keys = new List<string>();
             keys.AddRange(hint.EqualityColumns);
             keys.AddRange(hint.InequalityColumns.Where(c => !keys.Contains(c)));
-            if (keys.Count == 0) continue;
+            if (keys.Count == 0)
+                continue;
 
-            yield return new IndexRecommendation
+            recommendations.Add(new IndexRecommendation
             {
                 Table = hint.Table,
                 KeyColumns = keys,
@@ -29,8 +36,12 @@ public sealed class EngineHintRule : IIndexRule
                 EstimatedImpactPercent = hint.ImpactPercent,
                 SourceNodeCost = hint.ImpactPercent / 100.0,
                 Confidence = Confidence.High,
-                Reasons = { $"Optimizer reported a missing index with {hint.ImpactPercent:0.#}% estimated impact." }
-            };
+                Reasons = {
+                    $"Optimizer reported a missing index with {hint.ImpactPercent:0.#}% estimated impact."
+                }
+            });
         }
+
+        return recommendations;
     }
 }

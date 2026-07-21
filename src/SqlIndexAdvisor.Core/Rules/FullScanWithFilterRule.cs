@@ -9,48 +9,45 @@ namespace SqlIndexAdvisor.Core.Rules;
 /// columns become the index key; the scan's output columns become INCLUDE
 /// candidates so the index can cover the query.
 /// </summary>
-public sealed class FullScanWithFilterRule : IIndexRule
+public sealed class FullScanWithFilterRule : PlanNodeVisitorBase
 {
-    public string Name => "scan-with-filter";
-
     // A scan cheaper than this share of the statement isn't worth an index.
     private const double MinRelativeCost = 0.10;
 
-    public IEnumerable<IndexRecommendation> Evaluate(ExecutionPlan plan)
+    protected override bool ShouldVisit(PlanNode node)
     {
-        foreach (var node in plan.Nodes)
+        return LooksLikeFullScan(node)
+            && !string.IsNullOrEmpty(node.TableName)
+            && node.PredicateColumns.Count > 0
+            && node.RelativeCost >= MinRelativeCost;
+    }
+
+    protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node)
+    {
+        var include = node.OutputColumns
+            .Where(c => !node.PredicateColumns.Contains(c))
+            .ToList();
+
+        var confidence = node.RelativeCost switch
         {
-            if (!LooksLikeFullScan(node)) continue;
-            if (string.IsNullOrEmpty(node.TableName)) continue;
-            if (node.PredicateColumns.Count == 0) continue;
-            if (node.RelativeCost < MinRelativeCost) continue;
+            >= 0.60 => Confidence.High,
+            >= 0.30 => Confidence.Medium,
+            _ => Confidence.Low
+        };
 
-            var include = node.OutputColumns
-                .Where(c => !node.PredicateColumns.Contains(c))
-                .ToList();
-
-            var confidence = node.RelativeCost switch
-            {
-                >= 0.60 => Confidence.High,
-                >= 0.30 => Confidence.Medium,
-                _ => Confidence.Low
-            };
-
-            yield return new IndexRecommendation
-            {
-                Table = node.TableName!,
-                KeyColumns = node.PredicateColumns.ToList(),
-                IncludeColumns = include,
-                EstimatedImpactPercent = EstimateImpact(node),
-                SourceNodeCost = node.RelativeCost,
-                Confidence = confidence,
-                Reasons =
-                {
-                    $"{node.Operator} on {node.TableName} carries a filter on " +
-                    $"({string.Join(", ", node.PredicateColumns)}) and is ~{node.RelativeCost * 100:0}% of statement cost."
-                }
-            };
-        }
+        yield return new IndexRecommendation
+        {
+            Table = node.TableName!,
+            KeyColumns = node.PredicateColumns.ToList(),
+            IncludeColumns = include,
+            EstimatedImpactPercent = EstimateImpact(node),
+            SourceNodeCost = node.RelativeCost,
+            Confidence = confidence,
+            Reasons = {
+                $"{node.Operator} on {node.TableName} carries a filter on " +
+                $"({string.Join(", ", node.PredicateColumns)}) and is ~{node.RelativeCost * 100:0}% of statement cost."
+            }
+        };
     }
 
     private static bool LooksLikeFullScan(PlanNode node)

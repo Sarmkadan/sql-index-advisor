@@ -10,61 +10,55 @@ namespace SqlIndexAdvisor.Core.Rules;
 /// referenced in ORDER BY (or the top-level Sort's columns) and includes any
 /// additional columns the query needs so the index can cover it.
 /// </summary>
-public sealed class ExpensiveSortRule : IIndexRule
+public sealed class ExpensiveSortRule : PlanNodeVisitorBase
 {
-    public string Name => "expensive-sort";
-
     // A sort cheaper than this share of the statement isn't worth an index.
     private const double MinRelativeCost = 0.15;
 
     // If the sort is responsible for most of the cost, mark it High confidence.
     private const double HighConfidenceThreshold = 0.50;
 
-    public IEnumerable<IndexRecommendation> Evaluate(ExecutionPlan plan)
+    protected override bool ShouldVisit(PlanNode node)
     {
-        foreach (var node in plan.Nodes)
+        return IsSortOperation(node) && node.RelativeCost >= MinRelativeCost;
+    }
+
+    protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node)
+    {
+        // Extract columns from the Sort operation
+        var sortColumns = ExtractSortColumns(node);
+        if (sortColumns.Count == 0)
+            yield break;
+
+        // Determine which table this sort is operating on (if any)
+        var tableName = DetermineTableForSort(node, GetParentChain(node));
+        if (string.IsNullOrEmpty(tableName))
+            yield break;
+
+        // Build include columns from the output of this node
+        var includeColumns = BuildIncludeColumns(node, sortColumns);
+
+        var confidence = node.RelativeCost switch
         {
-            if (!IsSortOperation(node))
-                continue;
+            >= HighConfidenceThreshold => Confidence.High,
+            >= MinRelativeCost => Confidence.Medium,
+            _ => Confidence.Low
+        };
 
-            if (node.RelativeCost < MinRelativeCost)
-                continue;
-
-            // Extract columns from the Sort operation
-            var sortColumns = ExtractSortColumns(node);
-            if (sortColumns.Count == 0)
-                continue;
-
-            // Determine which table this sort is operating on (if any)
-            var tableName = DetermineTableForSort(node, plan);
-            if (string.IsNullOrEmpty(tableName))
-                continue;
-
-            // Build include columns from the output of this node
-            var includeColumns = BuildIncludeColumns(node, sortColumns);
-
-            var confidence = node.RelativeCost switch
+        yield return new IndexRecommendation
+        {
+            Table = tableName,
+            KeyColumns = sortColumns,
+            IncludeColumns = includeColumns,
+            EstimatedImpactPercent = EstimateImpact(node),
+            SourceNodeCost = node.RelativeCost,
+            Confidence = confidence,
+            Reasons = new List<string>
             {
-                >= HighConfidenceThreshold => Confidence.High,
-                >= MinRelativeCost => Confidence.Medium,
-                _ => Confidence.Low
-            };
-
-            yield return new IndexRecommendation
-            {
-                Table = tableName,
-                KeyColumns = sortColumns,
-                IncludeColumns = includeColumns,
-                EstimatedImpactPercent = EstimateImpact(node),
-                SourceNodeCost = node.RelativeCost,
-                Confidence = confidence,
-                Reasons = new List<string>
-                {
-                    $"Sort operation ({node.Operator}) on {tableName} is ~{node.RelativeCost * 100:0}% of statement cost. " +
-                    $"Creating an index on ({string.Join(", ", sortColumns)}) can eliminate or reduce this expensive sort."
-                }
-            };
-        }
+                $"Sort operation ({node.Operator}) on {tableName} is ~{node.RelativeCost * 100:0}% of statement cost. " +
+                $"Creating an index on ({string.Join(", ", sortColumns)}) can eliminate or reduce this expensive sort."
+            }
+        };
     }
 
     private static bool IsSortOperation(PlanNode node)
@@ -102,7 +96,7 @@ public sealed class ExpensiveSortRule : IIndexRule
             .ToList();
     }
 
-    private static string DetermineTableForSort(PlanNode node, ExecutionPlan plan)
+    private static string DetermineTableForSort(PlanNode node, IEnumerable<PlanNode> parentChain)
     {
         // Try to find the table this sort is operating on
         // Look at the node's table if available
@@ -110,21 +104,17 @@ public sealed class ExpensiveSortRule : IIndexRule
             return node.TableName!;
 
         // Walk up the tree to find a scan node that feeds into this sort
-        var current = node.Parent;
-        while (current != null)
+        foreach (var parent in parentChain)
         {
-            if (!string.IsNullOrEmpty(current.TableName))
-                return current.TableName!;
+            if (!string.IsNullOrEmpty(parent.TableName))
+                return parent.TableName!;
 
             // If we hit another sort/top operation, keep looking
-            if (current.Operator.StartsWith("Sort", StringComparison.OrdinalIgnoreCase) ||
-                current.Operator.StartsWith("Top", StringComparison.OrdinalIgnoreCase))
+            if (parent.Operator.StartsWith("Sort", StringComparison.OrdinalIgnoreCase) ||
+                parent.Operator.StartsWith("Top", StringComparison.OrdinalIgnoreCase))
             {
-                current = current.Parent;
                 continue;
             }
-
-            current = current.Parent;
         }
 
         // If no table found, use a generic name based on the operator
