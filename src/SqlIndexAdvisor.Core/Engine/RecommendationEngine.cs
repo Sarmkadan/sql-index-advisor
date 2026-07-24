@@ -14,7 +14,7 @@ public sealed class RecommendationEngine
     private readonly IReadOnlyList<IIndexRule> _rules;
 
     public RecommendationEngine()
-        : this(DefaultRuleSet.Rules)
+        : this(DefaultRules.All())
     {
     }
 
