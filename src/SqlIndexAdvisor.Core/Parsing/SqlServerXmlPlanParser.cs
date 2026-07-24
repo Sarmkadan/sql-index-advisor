@@ -1,3 +1,4 @@
+using System.Xml;
 using System.Xml.Linq;
 using SqlIndexAdvisor.Core.Model;
 
@@ -12,6 +13,8 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
 {
     public bool CanParse(string content)
     {
+        ArgumentException.ThrowIfNullOrEmpty(content);
+
         var trimmed = content.TrimStart();
         if (!trimmed.StartsWith('<')) return false;
         return trimmed.Contains("ShowPlanXML", StringComparison.OrdinalIgnoreCase)
@@ -20,12 +23,32 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
 
     public ExecutionPlan Parse(string content)
     {
+        ArgumentException.ThrowIfNullOrEmpty(content);
+
         XDocument doc;
         try
         {
-            doc = XDocument.Parse(content);
+            // Harden against XXE and large documents
+            var settings = new XmlReaderSettings
+            {
+                DtdProcessing = DtdProcessing.Prohibit,
+                XmlResolver = null,
+                MaxCharactersInDocument = 10_000_000,
+                MaxCharactersFromEntities = 1_000_000
+            };
+
+            using var reader = XmlReader.Create(new StringReader(content), settings);
+            doc = XDocument.Load(reader);
         }
-        catch (Exception ex)
+        catch (XmlException ex)
+        {
+            // Provide context about the file type to help users diagnose issues
+            throw new PlanParseException(
+                $"Failed to parse SQL Server execution plan XML at line {ex.LineNumber}, position {ex.LinePosition}. "
+                +"The file may be a saved .sqlplan wrapper rather than raw ShowPlanXML. "
+                +"Verify the file contains valid SQL Server showplan XML.", ex);
+        }
+        catch (Exception ex) when (ex is not PlanParseException)
         {
             throw new PlanParseException("Content is not well-formed XML.", ex);
         }
