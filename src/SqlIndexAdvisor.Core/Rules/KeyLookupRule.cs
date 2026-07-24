@@ -9,67 +9,77 @@ namespace SqlIndexAdvisor.Core.Rules;
 /// </summary>
 public sealed class KeyLookupRule : PlanNodeVisitorBase
 {
-    // A lookup cheaper than this share of the statement isn't worth an index.
-    private const double MinRelativeCost = 0.10;
+// A lookup cheaper than this share of the statement isn't worth an index.
+private const double MinRelativeCost = 0.10;
 
-    protected override bool ShouldVisit(PlanNode node)
-    {
-        // Look for a key‑lookup (or RID‑lookup) operator.
-        return IsKeyLookup(node)
-            && !string.IsNullOrEmpty(node.TableName)
-            && node.Parent != null
-            && node.RelativeCost >= MinRelativeCost;
-    }
+protected override bool ShouldVisit(PlanNode node)
+{
+// Look for a key‑lookup (or RID‑lookup) operator.
+return IsKeyLookup(node)
+&& !string.IsNullOrEmpty(node.TableName)
+&& node.Parent != null
+&& node.RelativeCost >= MinRelativeCost;
+}
 
-    protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node) =>
-        throw new NotSupportedException("Key lookup analysis needs the whole plan; the plan-aware overload is used.");
+protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node) =>
+throw new NotSupportedException("Key lookup analysis needs the whole plan; the plan-aware overload is used.");
 
-    protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node, ExecutionPlan plan)
-    {
-        // In showplan the lookup hangs off a join (usually Nested Loops) whose
-        // other input is the index seek that supplies the equality predicates.
-        // Prefer that sibling seek; fall back to the join node's own predicate.
-        var seek = plan.Nodes.FirstOrDefault(n =>
-            !ReferenceEquals(n, node)
-            && ReferenceEquals(n.Parent, node.Parent)
-            && n.Operator.Contains("Seek", StringComparison.OrdinalIgnoreCase)
-            && n.PredicateColumns.Count > 0);
+protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node, ExecutionPlan plan)
+{
+// In showplan the lookup hangs off a join (usually Nested Loops) whose
+// other input is the index seek that supplies the equality predicates.
+// Prefer that sibling seek; fall back to the join node's own predicate.
+var seek = plan.Nodes.FirstOrDefault(n =>
+!ReferenceEquals(n, node)
+&& ReferenceEquals(n.Parent, node.Parent)
+&& n.Operator.Contains("Seek", StringComparison.OrdinalIgnoreCase)
+&& n.PredicateColumns.Count > 0);
 
-        var equalityColumns = seek?.PredicateColumns ?? node.Parent!.PredicateColumns;
-        if (equalityColumns.Count == 0)
-            yield break;
+if (seek == null)
+{
+seek = node.Parent!;
+}
 
-        // Columns output by the lookup that are not already part of the key become INCLUDE.
-        var include = node.OutputColumns
-            .Where(c => !equalityColumns.Contains(c))
-            .ToList();
+var equalityColumns = seek.PredicateColumns;
+if (equalityColumns.Count == 0)
+yield break;
 
-        var confidence = node.RelativeCost switch
-        {
-            >= 0.60 => Confidence.High,
-            >= 0.30 => Confidence.Medium,
-            _ => Confidence.Low
-        };
+// Columns output by the lookup that are not already part of the key become INCLUDE.
+var include = node.OutputColumns
+.Where(c => !equalityColumns.Contains(c))
+.ToList();
 
-        yield return new IndexRecommendation
-        {
-            Table = node.TableName!,
-            KeyColumns = equalityColumns.ToList(),
-            IncludeColumns = include,
-            EstimatedImpactPercent = Math.Round(node.RelativeCost * 100.0, 1),
-            SourceNodeCost = node.RelativeCost,
-            Confidence = confidence,
-            Reasons = {
-                $"{node.Operator} on {node.TableName} follows an index seek with equality on " +
-                $"({string.Join(", ", equalityColumns)}) and then performs a lookup; a covering index could avoid the extra lookup."
-            }
-        };
-    }
+var confidence = node.RelativeCost switch
+{
+>= 0.60 => Confidence.High,
+>= 0.30 => Confidence.Medium,
+_ => Confidence.Low
+};
 
-    private static bool IsKeyLookup(PlanNode node)
-    {
-        var op = node.Operator;
-        return op.Contains("Key Lookup", StringComparison.OrdinalIgnoreCase) ||
-               op.Contains("RID Lookup", StringComparison.OrdinalIgnoreCase);
-    }
+// Use the existing index name from the seek node if available, to suggest
+// widening that index with INCLUDE columns rather than creating a new index.
+var existingIndexName = seek.IndexName;
+
+yield return new IndexRecommendation
+{
+Table = node.TableName!,
+KeyColumns = equalityColumns.ToList(),
+IncludeColumns = include,
+ExistingIndexName = existingIndexName,
+EstimatedImpactPercent = Math.Round(node.RelativeCost * 100.0, 1),
+SourceNodeCost = node.RelativeCost,
+Confidence = confidence,
+Reasons = {
+$"{node.Operator} on {node.TableName} follows an index seek with equality on " +
+$"({string.Join(", ", equalityColumns)}) and then performs a lookup; a covering index could avoid the extra lookup."
+}
+};
+}
+
+private static bool IsKeyLookup(PlanNode node)
+{
+var op = node.Operator;
+return op.Contains("Key Lookup", StringComparison.OrdinalIgnoreCase) ||
+op.Contains("RID Lookup", StringComparison.OrdinalIgnoreCase);
+}
 }
