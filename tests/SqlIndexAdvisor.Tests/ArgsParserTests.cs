@@ -180,13 +180,14 @@ public class ArgsParserTests
     }
 
     [Fact]
-    public void Parse_FilePath_ReturnsPath()
+    public void Parse_FilePath_ReturnsNormalizedPath()
     {
         // Act
         var result = ArgsParser.Parse(new[] { "test.xml" });
 
-        // Assert
-        Assert.Equal("test.xml", result.Path);
+        // Assert - path should be normalized to absolute path
+        Assert.NotNull(result.Path);
+        Assert.EndsWith("test.xml", result.Path);
         Assert.False(result.UseStdin);
         Assert.Equal("text", result.Format);
         Assert.Equal(0, result.MinImpact);
@@ -206,24 +207,26 @@ public class ArgsParserTests
     }
 
     [Fact]
-    public void Parse_FilePathWithFormat_ReturnsPathAndFormat()
+    public void Parse_FilePathWithFormat_ReturnsNormalizedPathAndFormat()
     {
         // Act
         var result = ArgsParser.Parse(new[] { "test.xml", "--format", "json" });
 
-        // Assert
-        Assert.Equal("test.xml", result.Path);
+        // Assert - path should be normalized to absolute path
+        Assert.NotNull(result.Path);
+        Assert.EndsWith("test.xml", result.Path);
         Assert.Equal("json", result.Format);
     }
 
     [Fact]
-    public void Parse_FilePathWithMinImpact_ReturnsPathAndMinImpact()
+    public void Parse_FilePathWithMinImpact_ReturnsNormalizedPathAndMinImpact()
     {
         // Act
         var result = ArgsParser.Parse(new[] { "test.xml", "--min-impact", "25" });
 
-        // Assert
-        Assert.Equal("test.xml", result.Path);
+        // Assert - path should be normalized to absolute path
+        Assert.NotNull(result.Path);
+        Assert.EndsWith("test.xml", result.Path);
         Assert.Equal(25, result.MinImpact);
     }
 
@@ -249,11 +252,83 @@ public class ArgsParserTests
         // Act
         var result = ArgsParser.Parse(new[] { "test.xml", "--format", "csv", "--min-impact", "10.5" });
 
-        // Assert
-        Assert.Equal("test.xml", result.Path);
+        // Assert - path should be normalized to absolute path
+        Assert.NotNull(result.Path);
+        Assert.EndsWith("test.xml", result.Path);
         Assert.Equal("csv", result.Format);
         Assert.Equal(10.5, result.MinImpact);
         Assert.False(result.UseStdin);
+    }
+
+    [Fact]
+    public void Parse_PathWithParentDirectoryTraversal_ThrowsArgumentException()
+    {
+        // Act & Assert
+        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { "../test.xml" }));
+        Assert.Contains("Path traversal sequences (..) are not allowed", ex.Message);
+    }
+
+    [Fact]
+    public void Parse_PathWithNestedParentDirectoryTraversal_ThrowsArgumentException()
+    {
+        // Act & Assert
+        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { "../../test.xml" }));
+        Assert.Contains("Path traversal sequences (..) are not allowed", ex.Message);
+    }
+
+    [Fact]
+    public void Parse_PathWithParentDirectoryInMiddle_ThrowsArgumentException()
+    {
+        // Act & Assert
+        // Note: Path.GetFullPath resolves ".." in the middle, so we need to check before normalization
+        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { "subdir\\..\\test.xml" }));
+        Assert.Contains("Path traversal sequences (..) are not allowed", ex.Message);
+    }
+
+    [Fact]
+    public void Parse_AbsolutePathOutsideCurrentDirectory_ThrowsArgumentException()
+    {
+        // Act & Assert
+        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { "/etc/passwd" }));
+        Assert.Contains("Paths outside the current directory are not allowed", ex.Message);
+    }
+
+    [Fact]
+    public void Parse_UncPath_ThrowsArgumentException()
+    {
+        // Act & Assert
+        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { "\\\\server\\share\\file.txt" }));
+        Assert.Contains("UNC paths are not allowed", ex.Message);
+    }
+
+    [Fact]
+    public void Parse_PathWithForwardSlashUnc_ThrowsArgumentException()
+    {
+        // Act & Assert
+        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { "//server/share/file.txt" }));
+        Assert.Contains("UNC paths are not allowed", ex.Message);
+    }
+
+    [Fact]
+    public void Parse_ValidRelativePath_ReturnsNormalizedPath()
+    {
+        // Act
+        var result = ArgsParser.Parse(new[] { "./test.xml" });
+
+        // Assert - path should be normalized to absolute path starting with current directory
+        Assert.NotNull(result.Path);
+        Assert.StartsWith(Path.GetFullPath("."), result.Path);
+        Assert.EndsWith("test.xml", result.Path);
+    }
+
+    [Fact]
+    public void Parse_ValidSimplePath_ReturnsPath()
+    {
+        // Act
+        var result = ArgsParser.Parse(new[] { "test.xml" });
+
+        // Assert
+        Assert.Equal(Path.GetFullPath("test.xml"), result.Path);
     }
 
     [Fact]

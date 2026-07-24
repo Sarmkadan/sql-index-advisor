@@ -1,3 +1,4 @@
+using System.Security;
 using System.Text;
 
 namespace SqlIndexAdvisor.Core.ArgsParsing;
@@ -20,6 +21,8 @@ public static class ArgsParser
 
     public static ParseResult Parse(string[] args)
     {
+        ArgumentNullException.ThrowIfNull(args);
+
         if (args.Length == 0)
             return ParseResult.Help(Usage);
 
@@ -54,7 +57,7 @@ public static class ArgsParser
                 default:
                     if (a.StartsWith('-') && a != "-")
                         throw new ArgumentException($"unknown option '{a}'.");
-                    path = a;
+                    path = ValidateAndResolvePath(a);
                     break;
             }
         }
@@ -76,14 +79,71 @@ public static class ArgsParser
     }
 
     /// <summary>
+    /// Validates and resolves a file path to prevent path traversal attacks.
+    /// </summary>
+    /// <param name="path">The input path to validate.</param>
+    /// <returns>The resolved and validated absolute path.</returns>
+    /// <exception cref="ArgumentException">Thrown when path traversal is detected or path is invalid.</exception>
+    /// <exception cref="SecurityException">Thrown when path is outside allowed boundaries.</exception>
+    private static string ValidateAndResolvePath(string path)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(path);
+
+        if (path == "-")
+            return path;
+
+        // Normalize path separators for consistent checking
+        var normalizedInput = path.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar);
+
+        // Check for path traversal sequences (..) before normalization
+        // These are security-sensitive patterns that should be rejected
+        var segments = normalizedInput.Split(new[] { Path.DirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
+        var depth = 0;
+        foreach (var segment in segments)
+        {
+            if (segment == "..")
+            {
+                // Any parent traversal (..) is a security risk
+                throw new ArgumentException($"Path traversal sequences (..) are not allowed. Got: {path}");
+            }
+            else if (segment != ".")
+            {
+                depth++;
+            }
+        }
+
+
+        // Check for UNC paths (network paths) which could be used for unintended access
+        if (normalizedInput.StartsWith("\\\\") || normalizedInput.StartsWith("//"))
+            throw new ArgumentException($"UNC paths are not allowed. Got: {path}");
+
+        // Normalize path separators and resolve relative paths
+        var fullPath = Path.GetFullPath(path);
+
+        // Check for absolute paths that are not rooted in the current directory
+        // (GetFullPath should convert relative to absolute, so this catches attempts to go outside)
+        var currentDir = Path.GetFullPath(".");
+        if (Path.IsPathRooted(fullPath) &&
+            !fullPath.StartsWith(currentDir, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException($"Paths outside the current directory are not allowed. Got: {path}");
+        }
+
+        return fullPath;
+    }
+
+    /// <summary>
     /// Reads file content with automatic encoding detection (handles BOM for UTF-8, UTF-16, UTF-32).
     /// </summary>
     /// <param name="path">File path, or "-" for stdin.</param>
     /// <returns>Decoded file content.</returns>
     /// <exception cref="FileNotFoundException">Thrown when file doesn't exist and path is not "-".</exception>
     /// <exception cref="IOException">Thrown when file cannot be read.</exception>
+    /// <exception cref="ArgumentException">Thrown when path validation fails.</exception>
     public static string ReadFileWithEncoding(string path)
     {
+        ArgumentException.ThrowIfNullOrEmpty(path);
+
         if (path == "-")
         {
             // Read from stdin - use UTF-8 encoding
@@ -104,19 +164,19 @@ public static class ArgsParser
 sql-index-advisor - recommend missing indexes from a query execution plan
 
 USAGE:
-  sql-index-advisor <plan-file> [--format text|json|html|csv] [--min-impact <n>] [--fail-on-findings]
-  sql-index-advisor - [--format text|json|html|csv] < input.json
-  sql-index-advisor --stdin [--format text|json|html|csv] [--fail-on-findings]
+sql-index-advisor <plan-file> [--format text|json|html|csv] [--min-impact <n>] [--fail-on-findings]
+sql-index-advisor - [--format text|json|html|csv] < input.json
+sql-index-advisor --stdin [--format text|json|html|csv] [--fail-on-findings]
 
 ARGUMENTS:
-  <plan-file> Path to a SQL Server showplan XML or Postgres EXPLAIN (FORMAT JSON) file.
-              Use "-" to read from standard input.
+<plan-file> Path to a SQL Server showplan XML or Postgres EXPLAIN (FORMAT JSON) file.
+Use "-" to read from standard input.
 
 OPTIONS:
-  --stdin           Read the plan from standard input instead of a file.
-  --format <fmt>    Output format: text (default), json, html, or csv.
-  --min-impact <n> Hide recommendations below this estimated impact percent.
-  --fail-on-findings Exit with code 1 if recommendations are found, 0 otherwise.
-  -h, --help        Show this help.
+--stdin Read the plan from standard input instead of a file.
+--format <fmt> Output format: text (default), json, html, or csv.
+--min-impact <n> Hide recommendations below this estimated impact percent.
+--fail-on-findings Exit with code 1 if recommendations are found, 0 otherwise.
+-h, --help Show this help.
 """;
 }
