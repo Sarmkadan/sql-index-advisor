@@ -1,3 +1,4 @@
+using System.Text;
 using SqlIndexAdvisor.Core.ArgsParsing;
 using Xunit;
 
@@ -266,5 +267,119 @@ public class ArgsParserTests
         Assert.True(result.UseStdin);
         Assert.Equal("html", result.Format);
         Assert.Equal(75, result.MinImpact);
+    }
+
+    [Fact]
+    public void ReadFileWithEncoding_Stdin_ReturnsContent()
+    {
+        // Arrange
+        var testContent = "test content";
+        var stdinBackup = Console.OpenStandardInput();
+        try
+        {
+            using var inputStream = new MemoryStream(Encoding.UTF8.GetBytes(testContent));
+            Console.SetIn(new StreamReader(inputStream));
+
+            // Act
+            var result = ArgsParser.ReadFileWithEncoding("-");
+
+            // Assert
+            Assert.Equal(testContent, result);
+        }
+        finally
+        {
+            Console.SetIn(new StreamReader(stdinBackup));
+        }
+    }
+
+    [Fact]
+    public void ReadFileWithEncoding_FileWithUtf8Bom_ReturnsCorrectContent()
+    {
+        // Arrange
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            // Write UTF-8 with BOM
+            File.WriteAllText(tempFile, "test content", Encoding.UTF8);
+
+            // Act
+            var result = ArgsParser.ReadFileWithEncoding(tempFile);
+
+            // Assert
+            Assert.Equal("test content", result);
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+                File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public void ReadFileWithEncoding_FileWithUtf16LeBom_ReturnsCorrectContent()
+    {
+        // Arrange
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            // Write UTF-16 LE with BOM
+            File.WriteAllText(tempFile, "test content", Encoding.Unicode);
+
+            // Act
+            var result = ArgsParser.ReadFileWithEncoding(tempFile);
+
+            // Assert
+            Assert.Equal("test content", result);
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+                File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public void ReadFileWithEncoding_FileWithUtf16BeBom_ReturnsCorrectContent()
+    {
+        // Arrange
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            // Write UTF-16 BE with BOM
+            File.WriteAllText(tempFile, "test content", Encoding.BigEndianUnicode);
+
+            // Act
+            var result = ArgsParser.ReadFileWithEncoding(tempFile);
+
+            // Assert
+            Assert.Equal("test content", result);
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+                File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public void ReadFileWithEncoding_NonExistentFile_ThrowsFileNotFoundException()
+    {
+        // Act & Assert
+        Assert.Throws<FileNotFoundException>(() => ArgsParser.ReadFileWithEncoding("non-existent-file.txt"));
+    }
+
+    [Fact]
+    public void ReadFileWithEncoding_Utf16LeSqlplan_ReturnsCorrectContent()
+    {
+        // Arrange
+        var testFile = "samples/sqlserver_orders_scan_utf16le.sqlplan";
+
+        // Act
+        var result = ArgsParser.ReadFileWithEncoding(testFile);
+
+        // Assert
+        Assert.NotEmpty(result);
+        Assert.Contains("ShowPlanXML", result);
+        Assert.Contains("MissingIndexes", result);
     }
 }

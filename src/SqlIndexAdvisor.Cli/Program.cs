@@ -31,13 +31,11 @@ static int Run(string[] args)
     string content;
     if (parseResult.UseStdin || parseResult.Path == "-")
     {
-        content = Console.In.ReadToEnd();
+        content = ArgsParser.ReadFileWithEncoding("-");
     }
     else if (parseResult.Path is not null)
     {
-        if (!File.Exists(parseResult.Path))
-            throw new FileNotFoundException($"plan file not found: {parseResult.Path}");
-        content = File.ReadAllText(parseResult.Path);
+        content = ArgsParser.ReadFileWithEncoding(parseResult.Path);
     }
     else
     {
