@@ -36,6 +36,7 @@ public sealed class EngineHintRule : PlanNodeVisitorBase
                 EstimatedImpactPercent = hint.ImpactPercent,
                 SourceNodeCost = hint.ImpactPercent / 100.0,
                 Confidence = Confidence.High,
+                Rule = Name,
                 Reasons = {
                     $"Optimizer reported a missing index with {hint.ImpactPercent:0.#}% estimated impact."
                 }

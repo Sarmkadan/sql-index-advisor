@@ -4,7 +4,7 @@ namespace SqlIndexAdvisor.Core.Rules;
 
 /// <summary>
 /// The workhorse rule. Flags a table scan (SQL Server "Table Scan"/"Clustered
-/// Index Scan", Postgres "Seq Scan") that carries a filter predicate and is
+/// Index Scan", Postgres "Seq Scan") that carries a filter predicate and is 8
 /// responsible for a meaningful chunk of the statement cost. The filtered
 /// columns become the index key; the scan's output columns become INCLUDE
 /// candidates so the index can cover the query.
@@ -43,6 +43,7 @@ public sealed class FullScanWithFilterRule : PlanNodeVisitorBase
             EstimatedImpactPercent = EstimateImpact(node),
             SourceNodeCost = node.RelativeCost,
             Confidence = confidence,
+            Rule = Name,
             Reasons = {
                 $"{node.Operator} on {node.TableName} carries a filter on " +
                 $"({string.Join(", ", node.PredicateColumns)}) and is ~{node.RelativeCost * 100:0}% of statement cost."
