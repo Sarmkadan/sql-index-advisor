@@ -35,6 +35,7 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
         var totalCost = ParseDouble(stmt?.Attribute("StatementSubTreeCost")?.Value);
 
         var nodes = new List<PlanNode>();
+        var byElement = new Dictionary<XElement, PlanNode>();
         var relOps = Descendants(doc.Root, "RelOp").ToList();
         foreach (var relOp in relOps)
         {
@@ -53,6 +54,16 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
                 OutputColumns = FindOutputColumns(relOp)
             };
             nodes.Add(node);
+            byElement[relOp] = node;
+        }
+
+        // Wire parent pointers: the parent of a RelOp is its nearest ancestor RelOp.
+        // Rules that reason about tree shape (key lookups, join inner sides) need this.
+        foreach (var (relOp, node) in byElement)
+        {
+            var parentEl = relOp.Ancestors().FirstOrDefault(a => a.Name.LocalName == "RelOp");
+            if (parentEl is not null && byElement.TryGetValue(parentEl, out var parentNode))
+                node.Parent = parentNode;
         }
 
         var engineHints = ParseMissingIndexes(doc.Root);

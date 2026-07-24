@@ -14,7 +14,7 @@ public sealed class RecommendationEngine
     private readonly IReadOnlyList<IIndexRule> _rules;
 
     public RecommendationEngine()
-        : this(new IIndexRule[] { new EngineHintRule(), new FullScanWithFilterRule(), new ExpensiveSortRule() })
+        : this(DefaultRuleSet.Rules)
     {
     }
 
@@ -22,7 +22,15 @@ public sealed class RecommendationEngine
 
     public IReadOnlyList<IndexRecommendation> Analyze(ExecutionPlan plan)
     {
-        var raw = _rules.SelectMany(r => r.Evaluate(plan)).ToList();
+        var raw = new List<IndexRecommendation>();
+        foreach (var rule in _rules)
+        {
+            foreach (var rec in rule.Evaluate(plan))
+            {
+                rec.Rule ??= rule.Name;
+                raw.Add(rec);
+            }
+        }
         var merged = RecommendationMerger.Merge(raw);
         return merged
             .OrderByDescending(r => r.Confidence)

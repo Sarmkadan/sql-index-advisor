@@ -10,15 +10,16 @@ namespace SqlIndexAdvisor.Core.Rules;
 public static class DefaultRuleSet
 {
     /// <summary>
-    /// The default rule set includes the existing full‑scan rule, the key‑lookup rule,
-    /// and the join-with-full-scan rule, and the expensive-sort rule.
+    /// The default rule set: engine-emitted missing-index hints first (highest
+    /// confidence), then the heuristic rules over the plan tree.
     /// </summary>
     public static IEnumerable<IIndexRule> Rules => new IIndexRule[]
     {
+        new EngineHintRule(),
         new FullScanWithFilterRule(),
         new KeyLookupRule(),
         new ImplicitConversionRule(),
         new MissingJoinIndexRule(),
-    new ExpensiveSortRule(),
+        new ExpensiveSortRule(),
     };
 }

@@ -1,6 +1,5 @@
 using System.Text;
 using System.Text.Json;
-using System.Reflection;
 using SqlIndexAdvisor.Core.Model;
 
 namespace SqlIndexAdvisor.Core.Reporting;
@@ -62,16 +61,6 @@ public static class ReportRenderer
     /// <returns>A JSON‑formatted report string.</returns>
     public static string RenderJson(ExecutionPlan plan, IReadOnlyList<IndexRecommendation> recs)
     {
-        // Helper to obtain the originating rule name via reflection.
-        // This avoids a hard compile‑time dependency on a property that may not exist in older versions.
-        static string? GetOriginatingRule(IndexRecommendation rec)
-        {
-            // Common property names used in the project.
-            var prop = rec.GetType().GetProperty("OriginatingRule", BindingFlags.Public | BindingFlags.Instance)
-                       ?? rec.GetType().GetProperty("Rule", BindingFlags.Public | BindingFlags.Instance);
-            return prop?.GetValue(rec) as string;
-        }
-
         var payload = new
         {
             dialect = plan.Dialect.ToString(),
@@ -86,7 +75,7 @@ public static class ReportRenderer
                 confidence = r.Confidence.ToString(),
                 createStatement = r.ToCreateStatement(plan.Dialect),
                 reasons = r.Reasons,
-                originatingRule = GetOriginatingRule(r)
+                originatingRule = r.Rule
             })
         };
         return JsonSerializer.Serialize(payload, JsonOptions);

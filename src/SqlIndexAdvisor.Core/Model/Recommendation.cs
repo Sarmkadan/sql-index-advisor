@@ -27,6 +27,9 @@ public sealed class IndexRecommendation
 
     public Confidence Confidence { get; init; }
 
+    /// <summary>Name of the rule that produced this recommendation. Stamped by the engine.</summary>
+    public string? Rule { get; set; }
+
     /// <summary>Which rule(s) fired to produce this recommendation.</summary>
     public List<string> Reasons { get; init; } = new();
 

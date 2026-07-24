@@ -23,7 +23,10 @@ public sealed class ExpensiveSortRule : PlanNodeVisitorBase
         return IsSortOperation(node) && node.RelativeCost >= MinRelativeCost;
     }
 
-    protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node)
+    protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node) =>
+        throw new NotSupportedException("Sort analysis needs the whole plan; the plan-aware overload is used.");
+
+    protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node, ExecutionPlan plan)
     {
         // Extract columns from the Sort operation
         var sortColumns = ExtractSortColumns(node);
@@ -31,7 +34,7 @@ public sealed class ExpensiveSortRule : PlanNodeVisitorBase
             yield break;
 
         // Determine which table this sort is operating on (if any)
-        var tableName = DetermineTableForSort(node, GetParentChain(node));
+        var tableName = DetermineTableForSort(node, plan);
         if (string.IsNullOrEmpty(tableName))
             yield break;
 
@@ -96,29 +99,23 @@ public sealed class ExpensiveSortRule : PlanNodeVisitorBase
             .ToList();
     }
 
-    private static string DetermineTableForSort(PlanNode node, IEnumerable<PlanNode> parentChain)
+    private static string? DetermineTableForSort(PlanNode node, ExecutionPlan plan)
     {
         // Try to find the table this sort is operating on
         // Look at the node's table if available
         if (!string.IsNullOrEmpty(node.TableName))
             return node.TableName!;
 
-        // Walk up the tree to find a scan node that feeds into this sort
-        foreach (var parent in parentChain)
-        {
-            if (!string.IsNullOrEmpty(parent.TableName))
-                return parent.TableName!;
+        // The rows being sorted come from below the sort in the tree. If exactly
+        // one table feeds the sort we can attribute the index to it; if the sort
+        // consumes several tables (e.g. above a join) we cannot pick one honestly.
+        var tables = GetDescendants(node, plan)
+            .Where(d => !string.IsNullOrEmpty(d.TableName))
+            .Select(d => d.TableName!)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
 
-            // If we hit another sort/top operation, keep looking
-            if (parent.Operator.StartsWith("Sort", StringComparison.OrdinalIgnoreCase) ||
-                parent.Operator.StartsWith("Top", StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-        }
-
-        // If no table found, use a generic name based on the operator
-        return node.Operator.Split(' ')[0];
+        return tables.Count == 1 ? tables[0] : null;
     }
 
     private static List<string> BuildIncludeColumns(PlanNode node, List<string> keyColumns)

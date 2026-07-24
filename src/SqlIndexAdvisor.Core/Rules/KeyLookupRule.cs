@@ -21,11 +21,21 @@ public sealed class KeyLookupRule : PlanNodeVisitorBase
             && node.RelativeCost >= MinRelativeCost;
     }
 
-    protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node)
+    protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node) =>
+        throw new NotSupportedException("Key lookup analysis needs the whole plan; the plan-aware overload is used.");
+
+    protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node, ExecutionPlan plan)
     {
-        // The parent should be the index seek that supplies the equality predicates.
-        var parent = node.Parent!;
-        var equalityColumns = parent.PredicateColumns;
+        // In showplan the lookup hangs off a join (usually Nested Loops) whose
+        // other input is the index seek that supplies the equality predicates.
+        // Prefer that sibling seek; fall back to the join node's own predicate.
+        var seek = plan.Nodes.FirstOrDefault(n =>
+            !ReferenceEquals(n, node)
+            && ReferenceEquals(n.Parent, node.Parent)
+            && n.Operator.Contains("Seek", StringComparison.OrdinalIgnoreCase)
+            && n.PredicateColumns.Count > 0);
+
+        var equalityColumns = seek?.PredicateColumns ?? node.Parent!.PredicateColumns;
         if (equalityColumns.Count == 0)
             yield break;
 
