@@ -11,9 +11,21 @@ namespace SqlIndexAdvisor.Core.Parsing;
 /// </summary>
 public sealed class SqlServerXmlPlanParser : IPlanParser
 {
+    // --------------------------------------------------------------------
+    // Limits to protect against untrusted input that could otherwise cause
+    // excessive memory usage or stack overflow.
+    // --------------------------------------------------------------------
+    private const int MaxFileSizeBytes = 10 * 1024 * 1024; // 10 MiB
+    private const int MaxNestingDepth = 1_000; // reasonable depth for a plan
+
+    /// <summary>
+    /// Determines whether the supplied content looks like a SQL Server XML plan.
+    /// </summary>
+    /// <param name="content">The raw plan text.</param>
+    /// <returns>True if the content appears to be a SQL Server XML plan; otherwise false.</returns>
     public bool CanParse(string content)
     {
-        ArgumentException.ThrowIfNullOrEmpty(content);
+        ArgumentNullException.ThrowIfNull(content);
 
         var trimmed = content.TrimStart();
         if (!trimmed.StartsWith('<')) return false;
@@ -21,9 +33,21 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
             || trimmed.Contains("StmtSimple", StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// Parses a SQL Server XML execution plan into an <see cref="ExecutionPlan"/>.
+    /// </summary>
+    /// <param name="content">The XML plan text.</param>
+    /// <returns>An <see cref="ExecutionPlan"/> representing the parsed plan.</returns>
+    /// <exception cref="PlanParseException">
+    /// Thrown when the input exceeds size or nesting limits, or when the XML is malformed.
+    /// </exception>
     public ExecutionPlan Parse(string content)
     {
-        ArgumentException.ThrowIfNullOrEmpty(content);
+        ArgumentNullException.ThrowIfNull(content);
+
+        if (content.Length > MaxFileSizeBytes)
+            throw new PlanParseException(
+                $"Plan file size exceeds the allowed limit of {MaxFileSizeBytes} bytes.");
 
         XDocument doc;
         try
@@ -45,8 +69,8 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
             // Provide context about the file type to help users diagnose issues
             throw new PlanParseException(
                 $"Failed to parse SQL Server execution plan XML at line {ex.LineNumber}, position {ex.LinePosition}. "
-                +"The file may be a saved .sqlplan wrapper rather than raw ShowPlanXML. "
-                +"Verify the file contains valid SQL Server showplan XML.", ex);
+                + "The file may be a saved .sqlplan wrapper rather than raw ShowPlanXML. "
+                + "Verify the file contains valid SQL Server showplan XML.", ex);
         }
         catch (Exception ex) when (ex is not PlanParseException)
         {
@@ -60,6 +84,17 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
         var nodes = new List<PlanNode>();
         var byElement = new Dictionary<XElement, PlanNode>();
         var relOps = Descendants(doc.Root, "RelOp").ToList();
+
+        // Verify nesting depth before we start building nodes.
+        foreach (var relOp in relOps)
+        {
+            var depth = relOp.Ancestors()
+                .Count(a => a.Name.LocalName == "RelOp") + 1; // +1 for the current node
+            if (depth > MaxNestingDepth)
+                throw new PlanParseException(
+                    $"Plan nesting depth exceeds the allowed limit of {MaxNestingDepth} levels.");
+        }
+
         foreach (var relOp in relOps)
         {
             var estRows = ParseDouble(relOp.Attribute("EstimateRows")?.Value);
@@ -103,6 +138,8 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
 
     private static List<EngineMissingIndex> ParseMissingIndexes(XElement? root)
     {
+        ArgumentNullException.ThrowIfNull(root);
+
         var result = new List<EngineMissingIndex>();
         foreach (var group in Descendants(root, "MissingIndexGroup"))
         {
@@ -144,6 +181,8 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
 
     private static string? FindObjectName(XElement relOp)
     {
+        ArgumentNullException.ThrowIfNull(relOp);
+
         var obj = Descendants(relOp, "Object").FirstOrDefault();
         if (obj is null) return null;
         var table = obj.Attribute("Table")?.Value?.Trim('[', ']');
@@ -154,12 +193,16 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
 
     private static string? FindIndexName(XElement relOp)
     {
+        ArgumentNullException.ThrowIfNull(relOp);
+
         var obj = Descendants(relOp, "Object").FirstOrDefault();
         return obj?.Attribute("Index")?.Value?.Trim('[', ']');
     }
 
     private static List<string> FindPredicateColumns(XElement relOp)
     {
+        ArgumentNullException.ThrowIfNull(relOp);
+
         // Only look at predicates directly under this RelOp, not nested RelOps.
         var cols = new List<string>();
         foreach (var pred in DirectDescendantsBeforeNestedRelOp(relOp, "Predicate"))
@@ -176,6 +219,8 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
 
     private static List<string> FindOutputColumns(XElement relOp)
     {
+        ArgumentNullException.ThrowIfNull(relOp);
+
         var cols = new List<string>();
         var outputList = DirectDescendantsBeforeNestedRelOp(relOp, "OutputList").FirstOrDefault();
         if (outputList is null) return cols;
@@ -196,6 +241,8 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
     // Predicates/outputs of child RelOps should not leak up into the parent.
     private static IEnumerable<XElement> DirectDescendantsBeforeNestedRelOp(XElement relOp, string localName)
     {
+        ArgumentNullException.ThrowIfNull(relOp);
+
         foreach (var el in relOp.Elements())
         {
             if (el.Name.LocalName == "RelOp") continue; // skip the child operator subtree
