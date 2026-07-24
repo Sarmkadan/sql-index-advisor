@@ -55,6 +55,7 @@ public static class RecommendationMerger
                 IncludeColumns = includes,
                 EstimatedImpactPercent = Math.Max(winner.EstimatedImpactPercent, loser.EstimatedImpactPercent),
                 Confidence = (Confidence)Math.Max((int)winner.Confidence, (int)loser.Confidence),
+                Rule = winner.Rule ?? loser.Rule,
                 Reasons = reasons
             };
         }

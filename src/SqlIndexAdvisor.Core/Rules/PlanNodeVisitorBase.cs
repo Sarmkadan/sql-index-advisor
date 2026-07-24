@@ -17,10 +17,9 @@ public abstract class PlanNodeVisitorBase : IIndexRule
         // Visit all nodes once using the visitor pattern
         foreach (var node in plan.Nodes)
         {
-            var result = Visit(node);
-            if (result != null)
+            if (ShouldVisit(node))
             {
-                recommendations.AddRange(result);
+                recommendations.AddRange(VisitCore(node, plan));
             }
         }
 
@@ -28,17 +27,12 @@ public abstract class PlanNodeVisitorBase : IIndexRule
     }
 
     /// <summary>
-    /// Called for each node in the plan tree.
-    /// Returns recommendations for nodes this visitor cares about, or null to skip.
+    /// Plan-aware visit hook. Rules that need to look at siblings or descendants
+    /// (anything beyond the parent chain) override this; the default delegates to
+    /// the node-only overload.
     /// </summary>
-    protected virtual IEnumerable<IndexRecommendation>? Visit(PlanNode node)
-    {
-        if (ShouldVisit(node))
-        {
-            return VisitCore(node);
-        }
-        return null;
-    }
+    protected virtual IEnumerable<IndexRecommendation> VisitCore(PlanNode node, ExecutionPlan plan) =>
+        VisitCore(node);
 
     /// <summary>
     /// Determines whether this visitor should process the given node.
@@ -55,6 +49,13 @@ public abstract class PlanNodeVisitorBase : IIndexRule
     /// <summary>
     /// Gets the chain of parent nodes from the current node up to the root.
     /// </summary>
+    /// <summary>
+    /// Gets all nodes in the plan that sit below the given node in the tree
+    /// (i.e. whose parent chain passes through it).
+    /// </summary>
+    protected static IEnumerable<PlanNode> GetDescendants(PlanNode node, ExecutionPlan plan) =>
+        plan.Nodes.Where(n => GetParentChain(n).Contains(node));
+
     protected static IEnumerable<PlanNode> GetParentChain(PlanNode node)
     {
         var current = node.Parent;
