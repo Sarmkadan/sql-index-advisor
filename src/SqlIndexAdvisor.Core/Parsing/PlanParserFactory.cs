@@ -1,4 +1,4 @@
-using System.Text.Json.Serialization;
+using System;
 using SqlIndexAdvisor.Core.Model;
 
 namespace SqlIndexAdvisor.Core.Parsing;
@@ -8,7 +8,6 @@ namespace SqlIndexAdvisor.Core.Parsing;
 /// that each parser's CanParse is cheap and mutually exclusive in practice
 /// (XML starts with '<', JSON with '[' or '{').
 /// </summary>
-[JsonSerializable(typeof(PlanParserFactory))]
 public sealed class PlanParserFactory
 {
     private readonly IReadOnlyList<IPlanParser> _parsers;
@@ -27,8 +26,14 @@ public sealed class PlanParserFactory
     {
         var parser = _parsers.FirstOrDefault(p => p.CanParse(content));
         if (parser is null)
+        {
+            var attemptedParsers = _parsers.Select(p => p.GetType().Name).ToList();
             throw new PlanParseException(
-                "Could not detect plan format. Expected SQL Server showplan XML or Postgres EXPLAIN (FORMAT JSON).");
+                $"Could not detect plan format. Content starts with '{content.TrimStart()[..Math.Min(20, content.TrimStart().Length)]}...'. " +
+                "Expected SQL Server showplan XML (starting with '<' and containing 'ShowPlanXML' or 'StmtSimple') " +
+                "or PostgreSQL JSON plan (starting with '[' or '{' and containing 'Plan' property). " +
+                $"Tried parsers: {string.Join(", ", attemptedParsers)}.");
+        }
         return parser;
     }
 
