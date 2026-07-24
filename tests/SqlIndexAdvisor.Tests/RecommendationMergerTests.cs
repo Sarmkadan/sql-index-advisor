@@ -55,7 +55,7 @@ public class RecommendationMergerTests
         Assert.Equal(Confidence.High, result.Confidence);
 
         // Verify reasons were merged
-        Assert.Equal(2, result.Reasons.Count);
+        Assert.Equal(3, result.Reasons.Count);
     }
 
     [Fact]
@@ -102,7 +102,7 @@ public class RecommendationMergerTests
         Assert.Equal(Confidence.High, result.Confidence);
 
         // Reasons should be merged
-        Assert.Equal(2, result.Reasons.Count);
+        Assert.Equal(3, result.Reasons.Count);
     }
 
     [Fact]
@@ -380,7 +380,7 @@ public class RecommendationMergerTests
         Assert.Equal(80.0, result.EstimatedImpactPercent);
         Assert.Equal(Confidence.High, result.Confidence);
 
-        // Verify all reasons were merged
-        Assert.Equal(3, result.Reasons.Count);
+        // Verify all reasons were merged (3 original + 2 heuristic notes from 2 merges)
+        Assert.Equal(5, result.Reasons.Count);
     }
 }
