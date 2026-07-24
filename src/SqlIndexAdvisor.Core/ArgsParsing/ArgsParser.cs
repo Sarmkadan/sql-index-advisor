@@ -36,6 +36,11 @@ public static class ArgsParser
         public bool IsError => ErrorMessage is not null;
 
         /// <summary>
+        /// Gets a value indicating whether parsing succeeded without help or error.
+        /// </summary>
+        public bool IsSuccess => !ShouldShowHelp && !IsError;
+
+        /// <summary>
         /// Optional help text to display.
         /// </summary>
         public string? HelpMessage { get; init; }
@@ -77,14 +82,19 @@ public static class ArgsParser
     {
         ArgumentNullException.ThrowIfNull(args);
 
+        // No arguments – show help (usage) immediately.
         if (args.Length == 0)
             return ParseResult.Help(Usage);
 
         var useStdin = false;
         var format = "text";
         var failOnFindings = false;
-        double minImpact = 0;
+        var minImpact = 0.0;
         string? path = null;
+
+        // Flags that are mutually exclusive – we track their presence to detect conflicts.
+        var sqlServerFlag = false;
+        var postgresFlag = false;
 
         try
         {
@@ -96,31 +106,65 @@ public static class ArgsParser
                     case "--stdin":
                         useStdin = true;
                         break;
+
+                    case "--plan":
+                        // Explicit plan flag – expects a value.
+                        var planPath = RequireValue(args, ref i, "--plan");
+                        if (path is not null)
+                            throw new ArgumentException("multiple plan sources specified (positional argument and --plan).");
+                        path = ValidateAndResolvePath(planPath);
+                        break;
+
                     case "--format":
                         format = RequireValue(args, ref i, "--format").ToLowerInvariant();
                         break;
+
                     case "--min-impact":
                         var raw = RequireValue(args, ref i, "--min-impact");
                         if (!double.TryParse(raw, System.Globalization.CultureInfo.InvariantCulture, out minImpact))
                             throw new ArgumentException($"--min-impact expects a number, got '{raw}'.");
                         break;
+
                     case "--fail-on-findings":
                         failOnFindings = true;
                         break;
+
+                    case "--sqlserver":
+                        sqlServerFlag = true;
+                        break;
+
+                    case "--postgres":
+                        postgresFlag = true;
+                        break;
+
+                    case "--version":
+                        // Version is treated as a help screen that only shows version info.
+                        return ParseResult.Help($"sql-index-advisor version {Version}");
+
                     case "-h":
                     case "--help":
                         return ParseResult.Help(Usage);
+
                     default:
+                        // Positional argument – treat as plan file unless it looks like an unknown option.
                         if (a.StartsWith('-') && a != "-")
                             throw new ArgumentException($"unknown option '{a}'.");
+                        if (path is not null)
+                            throw new ArgumentException("multiple plan sources specified.");
                         path = ValidateAndResolvePath(a);
                         break;
                 }
             }
 
-            if (format != "text" && format != "json" && format != "html" && format != "csv")
+            // Validate mutually exclusive database flags.
+            if (sqlServerFlag && postgresFlag)
+                throw new ArgumentException("cannot specify both --sqlserver and --postgres.");
+
+            // Validate format.
+            if (format is not ("text" or "json" or "html" or "csv"))
                 throw new ArgumentException($"--format must be 'text', 'json', 'html', or 'csv', got '{format}'.");
 
+            // Validate stdin vs file path conflict.
             if (useStdin && path is not null)
                 throw new ArgumentException("cannot specify both --stdin and a file path.");
 
@@ -163,10 +207,10 @@ public static class ArgsParser
         if (path == "-")
             return path;
 
-        // Normalize path separators for consistent checking
+        // Normalize path separators for consistent checking.
         var normalizedInput = path.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar);
 
-        // Check for path traversal sequences (..) before normalization
+        // Check for path traversal sequences (..) before normalization.
         var segments = normalizedInput.Split(new[] { Path.DirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
         foreach (var segment in segments)
         {
@@ -174,14 +218,14 @@ public static class ArgsParser
                 throw new ArgumentException($"Path traversal sequences (..) are not allowed. Got: {path}");
         }
 
-        // Disallow UNC/network paths
+        // Disallow UNC/network paths.
         if (normalizedInput.StartsWith("\\\\") || normalizedInput.StartsWith("//"))
             throw new ArgumentException($"UNC paths are not allowed. Got: {path}");
 
-        // Resolve to absolute path
+        // Resolve to absolute path.
         var fullPath = Path.GetFullPath(path);
 
-        // Ensure the path stays within the current directory
+        // Ensure the path stays within the current directory.
         var currentDir = Path.GetFullPath(".");
         if (Path.IsPathRooted(fullPath) &&
             !fullPath.StartsWith(currentDir, StringComparison.OrdinalIgnoreCase))
@@ -218,6 +262,11 @@ public static class ArgsParser
         return fileReader.ReadToEnd();
     }
 
+    /// <summary>
+    /// Current version of the tool (hard‑coded for now; can be replaced by a build‑time constant).
+    /// </summary>
+    private const string Version = "1.0.0";
+
     private const string Usage = """
 sql-index-advisor - recommend missing indexes from a query execution plan
 
@@ -232,9 +281,13 @@ Use "-" to read from standard input.
 
 OPTIONS:
 --stdin Read the plan from standard input instead of a file.
+--plan <path> Explicitly specify the plan file (alternative to positional argument).
 --format <fmt> Output format: text (default), json, html, or csv.
 --min-impact <n> Hide recommendations below this estimated impact percent.
 --fail-on-findings Exit with code 1 if recommendations are found, 0 otherwise.
+--sqlserver Use SQL Server specific parsing (mutually exclusive with --postgres).
+--postgres Use PostgreSQL specific parsing (mutually exclusive with --sqlserver).
+--version Show version information.
 -h, --help Show this help.
 """;
 }
