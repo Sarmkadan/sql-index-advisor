@@ -55,12 +55,17 @@ static int Run(string[] args)
 
     string output = parseResult.Format switch
     {
-        "json" => ReportRenderer.RenderJson(plan, recs),
+        "json" => ReportRenderer.RenderJson(plan, recs, parseResult.SchemaVersion),
         "html" => HtmlReportRenderer.RenderHtml(plan, recs),
         "csv" => CsvReportRenderer.RenderCsv(plan, recs),
         _ => ReportRenderer.RenderText(plan, recs),
     };
 
     Console.WriteLine(output);
-    return 0;
+
+    // Exit code logic:
+    // 0 = success, no findings (or findings ignored with --fail-on-findings false)
+    // 1 = findings present and --fail-on-findings is true
+    // 2 = parse error (already handled in catch block)
+    return parseResult.FailOnFindings && recs.Count > 0 ? 1 : 0;
 }
