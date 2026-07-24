@@ -12,20 +12,32 @@ public sealed class PostgresJsonPlanParser : IPlanParser
 {
     public bool CanParse(string content)
     {
+        ArgumentException.ThrowIfNullOrEmpty(content);
+
         var trimmed = content.TrimStart();
-        if (trimmed.Length == 0 || (trimmed[0] != '[' && trimmed[0] != '{')) return false;
+        if (trimmed.Length == 0 || (trimmed[0] != '[' && trimmed[0] != '{'))
+            return false;
         return trimmed.Contains("\"Node Type\"", StringComparison.OrdinalIgnoreCase)
             || trimmed.Contains("\"Plan\"", StringComparison.OrdinalIgnoreCase);
     }
 
     public ExecutionPlan Parse(string content)
     {
+        ArgumentException.ThrowIfNullOrEmpty(content);
+
         JsonDocument doc;
         try
         {
-            doc = JsonDocument.Parse(content);
+            // Use JsonDocument.ParseOptions to be more lenient with malformed JSON
+            // but still throw on truly invalid input
+            var options = new JsonDocumentOptions
+            {
+                AllowTrailingCommas = true,
+                CommentHandling = JsonCommentHandling.Skip
+            };
+            doc = JsonDocument.Parse(content, options);
         }
-        catch (Exception ex)
+        catch (JsonException ex)
         {
             throw new PlanParseException("Content is not valid JSON.", ex);
         }
