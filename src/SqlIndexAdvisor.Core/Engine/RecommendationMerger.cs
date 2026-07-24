@@ -5,6 +5,8 @@ namespace SqlIndexAdvisor.Core.Engine;
 /// <summary>
 /// Merges duplicate index recommendations for the same table where one column set is a prefix of another.
 /// Keeps the wider index (with more key columns) and merges include columns from both recommendations.
+/// Also suppresses index recommendations (Kind = CreateIndex) on columns that have implicit conversions
+/// (SchemaFix recommendations) to prevent suggesting indexes that won't be used due to conversions.
 /// </summary>
 public static class RecommendationMerger
 {
@@ -13,6 +15,8 @@ public static class RecommendationMerger
     /// Two recommendations are considered duplicates if they target the same table with key columns
     /// where one is a prefix of the other. The wider index (with more key columns) is kept and
     /// absorbs the include columns and reasons from the narrower index.
+    /// Also suppresses index recommendations (Kind = CreateIndex) on columns that have implicit conversions
+    /// (SchemaFix recommendations) to prevent suggesting indexes that won't be used due to conversions.
     /// </summary>
     /// <param name="recommendations">The list of recommendations to merge.</param>
     /// <returns>A new list with merged recommendations.</returns>
@@ -20,9 +24,28 @@ public static class RecommendationMerger
     {
         ArgumentNullException.ThrowIfNull(recommendations);
 
+        // First, collect all columns that have implicit conversions from SchemaFix recommendations
+        var implicitConversionColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var rec in recommendations)
+        {
+            if (rec.Kind == RecommendationKind.SchemaFix)
+            {
+                foreach (var column in rec.KeyColumns)
+                {
+                    implicitConversionColumns.Add(column);
+                }
+            }
+        }
+
+        // Filter out index recommendations that include columns with implicit conversions
+        var filteredRecommendations = recommendations
+            .Where(rec => rec.Kind == RecommendationKind.SchemaFix ||
+                         !rec.KeyColumns.Any(col => implicitConversionColumns.Contains(col)))
+            .ToList();
+
         var kept = new List<IndexRecommendation>();
 
-        foreach (var candidate in recommendations)
+        foreach (var candidate in filteredRecommendations)
         {
             var dupIndex = FindMatchingIndex(kept, candidate);
 
