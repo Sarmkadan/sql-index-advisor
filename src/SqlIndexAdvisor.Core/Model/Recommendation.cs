@@ -10,6 +10,19 @@ public enum Confidence
 }
 
 /// <summary>
+/// Distinguishes between recommendations that suggest creating an index versus those that
+/// recommend fixing the query or schema (e.g., implicit conversions, parameter sniffing).
+/// </summary>
+public enum RecommendationKind
+{
+    /// <summary>Create a new index to improve query performance.</summary>
+    CreateIndex,
+
+    /// <summary>Fix the query or schema (e.g., implicit conversion, parameter type mismatch).</summary>
+    SchemaFix
+}
+
+/// <summary>
 /// A single suggested index plus the reasoning that produced it. The estimated
 /// impact is deliberately "rough" - it is a heuristic score, not a promise.
 /// </summary>
@@ -32,6 +45,12 @@ public sealed class IndexRecommendation
 
     /// <summary>Which rule(s) fired to produce this recommendation.</summary>
     public List<string> Reasons { get; init; } = new();
+
+    /// <summary>
+    /// The kind of recommendation this is. Determines whether it suggests creating an index
+    /// or fixing a query/schema issue.
+    /// </summary>
+    public RecommendationKind Kind { get; init; } = RecommendationKind.CreateIndex;
 
     public string SuggestedName()
     {

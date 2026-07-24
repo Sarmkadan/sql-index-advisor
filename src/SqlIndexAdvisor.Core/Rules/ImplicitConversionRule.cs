@@ -56,6 +56,7 @@ public sealed class ImplicitConversionRule : PlanNodeVisitorBase
                 EstimatedImpactPercent = EstimateImpact(plan.Nodes.FirstOrDefault()),
                 SourceNodeCost = EstimateImpact(plan.Nodes.FirstOrDefault()) / 100.0,
                 Confidence = confidence,
+                Kind = RecommendationKind.SchemaFix,
                 Reasons = new List<string>
                 {
                     $"Query contains implicit conversion(s) on column(s): {string.Join(", ", conversionColumns)}"
