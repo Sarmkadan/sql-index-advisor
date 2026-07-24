@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 namespace SqlIndexAdvisor.Core.Parsing;
@@ -11,9 +13,9 @@ namespace SqlIndexAdvisor.Core.Parsing;
 /// </summary>
 public static partial class PredicateColumnScanner
 {
-    // matches:  optional "alias." then identifier, then a comparison operator
+    // matches: optional "alias." then identifier, then a comparison operator
     [GeneratedRegex(@"(?:[A-Za-z_][A-Za-z0-9_]*\.)?([A-Za-z_][A-Za-z0-9_]*)\s*(?:=|<>|!=|<=|>=|<|>|~|LIKE|ILIKE|IS|IS NOT|IN|NOT IN|BETWEEN|NOT BETWEEN)\s*(?:[A-Za-z_][A-Za-z0-9_]*)?",
-        RegexOptions.IgnoreCase)]
+    RegexOptions.IgnoreCase)]
     private static partial Regex PredicateRegex();
 
     private static readonly HashSet<string> Noise = new(StringComparer.OrdinalIgnoreCase)
@@ -34,23 +36,30 @@ public static partial class PredicateColumnScanner
 
     private static bool IsPostgres(string expression)
     {
+        if (expression == null)
+            return false;
+
         return expression.Contains("\"Node Type\"", StringComparison.OrdinalIgnoreCase)
-            || expression.Contains("\"Plan\"", StringComparison.OrdinalIgnoreCase);
+               || expression.Contains("\"Plan\"", StringComparison.OrdinalIgnoreCase);
     }
 
     public static IEnumerable<string> Scan(string expression)
     {
+        ArgumentNullException.ThrowIfNull(expression);
         var isPostgres = IsPostgres(expression);
         return Scan(expression, isPostgres);
     }
 
     public static IEnumerable<string> Scan(string expression, bool isPostgres)
     {
+        ArgumentNullException.ThrowIfNull(expression);
+
         foreach (Match m in PredicateRegex().Matches(expression))
         {
             var col = m.Groups[1].Value;
             var quotedIdentifier = GetQuotedIdentifier(col, isPostgres);
-            if (!Noise.Contains(quotedIdentifier)) continue;
+            if (Noise.Contains(quotedIdentifier))
+                continue;
             yield return quotedIdentifier;
         }
     }
