@@ -10,6 +10,18 @@ namespace SqlIndexAdvisor.Core.Parsing;
 /// </summary>
 public sealed class PostgresJsonPlanParser : IPlanParser
 {
+    // --------------------------------------------------------------------
+    // Limits to protect against untrusted input that could otherwise cause
+    // excessive memory usage or stack overflow.
+    // --------------------------------------------------------------------
+    private const int MaxFileSizeBytes = 10 * 1024 * 1024; // 10 MiB
+    private const int MaxNestingDepth = 1_000; // reasonable depth for a plan
+
+    /// <summary>
+    /// Determines whether the supplied content looks like a PostgreSQL JSON plan.
+    /// </summary>
+    /// <param name="content">The raw plan text.</param>
+    /// <returns>True if the content appears to be a PostgreSQL JSON plan; otherwise false.</returns>
     public bool CanParse(string content)
     {
         ArgumentException.ThrowIfNullOrEmpty(content);
@@ -21,9 +33,21 @@ public sealed class PostgresJsonPlanParser : IPlanParser
             || trimmed.Contains("\"Plan\"", StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// Parses a PostgreSQL JSON execution plan into an <see cref="ExecutionPlan"/>.
+    /// </summary>
+    /// <param name="content">The JSON plan text.</param>
+    /// <returns>An <see cref="ExecutionPlan"/> representing the parsed plan.</returns>
+    /// <exception cref="PlanParseException">
+    /// Thrown when the input exceeds size or nesting limits, or when the JSON is malformed.
+    /// </exception>
     public ExecutionPlan Parse(string content)
     {
         ArgumentException.ThrowIfNullOrEmpty(content);
+
+        if (content.Length > MaxFileSizeBytes)
+            throw new PlanParseException(
+                $"Plan file size exceeds the allowed limit of {MaxFileSizeBytes} bytes.");
 
         JsonDocument doc;
         try
@@ -58,7 +82,7 @@ public sealed class PostgresJsonPlanParser : IPlanParser
 
             var totalCost = ReadDouble(planRoot, "Total Cost");
             var nodes = new List<PlanNode>();
-            Walk(planRoot, null, totalCost, nodes);
+            Walk(planRoot, null, totalCost, nodes, 0);
 
             return new ExecutionPlan
             {
@@ -69,8 +93,13 @@ public sealed class PostgresJsonPlanParser : IPlanParser
         }
     }
 
-    private static void Walk(JsonElement el, PlanNode? parent, double totalCost, List<PlanNode> sink)
+    private static void Walk(JsonElement el, PlanNode? parent, double totalCost,
+        List<PlanNode> sink, int currentDepth)
     {
+        if (currentDepth > MaxNestingDepth)
+            throw new PlanParseException(
+                $"Plan nesting depth exceeds the allowed limit of {MaxNestingDepth} levels.");
+
         var nodeType = ReadString(el, "Node Type") ?? "Unknown";
         var nodeCost = ReadDouble(el, "Total Cost");
 
@@ -91,7 +120,7 @@ public sealed class PostgresJsonPlanParser : IPlanParser
         if (el.TryGetProperty("Plans", out var children) && children.ValueKind == JsonValueKind.Array)
         {
             foreach (var child in children.EnumerateArray())
-                Walk(child, node, totalCost, sink);
+                Walk(child, node, totalCost, sink, currentDepth + 1);
         }
     }
 
