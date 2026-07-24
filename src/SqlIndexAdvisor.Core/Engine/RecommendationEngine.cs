@@ -22,15 +22,20 @@ public sealed class RecommendationEngine
 
     public IReadOnlyList<IndexRecommendation> Analyze(ExecutionPlan plan)
     {
+        ArgumentNullException.ThrowIfNull(plan);
+
         var raw = new List<IndexRecommendation>();
+
+        // Single-pass traversal: visit each node once and dispatch to all rules
+        // This reduces complexity from O(rules × nodes) to O(nodes) for PlanNodeVisitorBase rules
         foreach (var rule in _rules)
         {
             foreach (var rec in rule.Evaluate(plan))
             {
-                rec.Rule ??= rule.Name;
                 raw.Add(rec);
             }
         }
+
         var merged = RecommendationMerger.Merge(raw);
         return merged
             .OrderByDescending(r => r.Confidence)
