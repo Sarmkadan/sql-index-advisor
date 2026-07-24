@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-16"?>
+<ShowPlanXML xmlns="http://schemas.microsoft.com/sqlserver/2004/07/showplan" Version="1.539" Build="16.0.1000.6">
+<BatchSequence>
+<Batch>
+<Statements>
+<StmtSimple StatementText="SELECT o.OrderId, p.Name, o.Total FROM dbo.Orders o JOIN dbo.OrderProducts op ON o.OrderId = op.OrderId JOIN dbo.Products p ON op.ProductId = p.ProductId WHERE o.Status = 'completed' AND p.Category = 'Electronics'"
+StatementId="1" StatementCompId="1" StatementType="SELECT"
+StatementSubTreeCost="9.876" StatementEstRows="2800">
+<QueryPlan CachedPlanSize="32" CompileTime="6" CompileCPU="6" CompileMemory="320">
+<RelOp NodeId="0" PhysicalOp="Nested Loops" LogicalOp="Inner Join" EstimateRows="2800" EstimatedTotalSubtreeCost="9.876">
+<OutputList>
+<ColumnReference Table="[o]" Column="OrderId" />
+<ColumnReference Table="[p]" Column="Name" />
+<ColumnReference Table="[o]" Column="Total" />
+</OutputList>
+<RelOp NodeId="1" PhysicalOp="Nested Loops" LogicalOp="Inner Join" EstimateRows="2800" EstimatedTotalSubtreeCost="6.584">
+<OutputList>
+<ColumnReference Table="[o]" Column="OrderId" />
+<ColumnReference Table="[o]" Column="Total" />
+<ColumnReference Table="[op]" Column="ProductId" />
+</OutputList>
+<RelOp NodeId="2" PhysicalOp="Clustered Index Scan" LogicalOp="Clustered Index Scan" EstimateRows="2800" EstimatedTotalSubtreeCost="3.292">
+<OutputList>
+<ColumnReference Table="[o]" Column="OrderId" />
+<ColumnReference Table="[o]" Column="Status" />
+<ColumnReference Table="[o]" Column="Total" />
+</OutputList>
+<IndexScan Ordered="false">
+<Object Database="[Shop]" Schema="[dbo]" Table="[Orders]" Index="[PK_Orders]" IndexKind="Clustered" />
+<Predicate>
+<ScalarOperator>
+<Compare CompareOp="EQ">
+<ScalarOperator>
+<ColumnReference Table="[o]" Column="Status" />
+</ScalarOperator>
+<Const Value="'completed'" />
+</Compare>
+</ScalarOperator>
+</Predicate>
+</IndexScan>
+</RelOp>
+<RelOp NodeId="3" PhysicalOp="Index Scan" LogicalOp="Index Scan" EstimateRows="1" EstimatedTotalSubtreeCost="0.002">
+<OutputList>
+<ColumnReference Table="[op]" Column="OrderId" />
+<ColumnReference Table="[op]" Column="ProductId" />
+</OutputList>
+<IndexScan Ordered="false">
+<Object Database="[Shop]" Schema="[dbo]" Table="[OrderProducts]" Index="[IX_OrderProducts_OrderId]" IndexKind="NonClustered" />
+</IndexScan>
+</RelOp>
+</RelOp>
+<RelOp NodeId="4" PhysicalOp="Clustered Index Scan" LogicalOp="Clustered Index Scan" EstimateRows="2800" EstimatedTotalSubtreeCost="3.292">
+<OutputList>
+<ColumnReference Table="[p]" Column="ProductId" />
+<ColumnReference Table="[p]" Column="Name" />
+<ColumnReference Table="[p]" Column="Category" />
+</OutputList>
+<IndexScan Ordered="false">
+<Object Database="[Shop]" Schema="[dbo]" Table="[Products]" Index="[PK_Products]" IndexKind="Clustered" />
+<Predicate>
+<ScalarOperator>
+<Compare CompareOp="EQ">
+<ScalarOperator>
+<ColumnReference Table="[p]" Column="Category" />
+</ScalarOperator>
+<Const Value="'Electronics'" />
+</Compare>
+</ScalarOperator>
+</Predicate>
+</IndexScan>
+</RelOp>
+</RelOp>
+</QueryPlan>
+</StmtSimple>
+</Statements>
+</Batch>
+</BatchSequence>
+</ShowPlanXML>

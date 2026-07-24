@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-16"?>
+<ShowPlanXML xmlns="http://schemas.microsoft.com/sqlserver/2004/07/showplan" Version="1.539" Build="16.0.1000.6">
+<BatchSequence>
+<Batch>
+<Statements>
+<StmtSimple StatementText="SELECT o.OrderId, c.Name, o.Total FROM dbo.Orders o JOIN dbo.Customers c ON o.CustomerId = c.CustomerId WHERE o.Status = 'completed' AND c.Country = 'DE'"
+StatementId="1" StatementCompId="1" StatementType="SELECT"
+StatementSubTreeCost="12.345" StatementEstRows="3200">
+<QueryPlan CachedPlanSize="28" CompileTime="4" CompileCPU="4" CompileMemory="250">
+<RelOp NodeId="0" PhysicalOp="Hash Match" LogicalOp="Inner Join" EstimateRows="3200" EstimatedTotalSubtreeCost="12.345">
+<OutputList>
+<ColumnReference Table="[o]" Column="OrderId" />
+<ColumnReference Table="[c]" Column="Name" />
+<ColumnReference Table="[o]" Column="Total" />
+</OutputList>
+<RelOp NodeId="1" PhysicalOp="Clustered Index Scan" LogicalOp="Clustered Index Scan" EstimateRows="3200" EstimatedTotalSubtreeCost="6.172">
+<OutputList>
+<ColumnReference Table="[o]" Column="OrderId" />
+<ColumnReference Table="[o]" Column="CustomerId" />
+<ColumnReference Table="[o]" Column="Total" />
+<ColumnReference Table="[o]" Column="Status" />
+</OutputList>
+<IndexScan Ordered="false">
+<Object Database="[Shop]" Schema="[dbo]" Table="[Orders]" Index="[PK_Orders]" IndexKind="Clustered" />
+<Predicate>
+<ScalarOperator>
+<Compare CompareOp="EQ">
+<ScalarOperator>
+<ColumnReference Table="[o]" Column="Status" />
+</ScalarOperator>
+<Const Value="'completed'" />
+</Compare>
+</ScalarOperator>
+</Predicate>
+</IndexScan>
+</RelOp>
+<RelOp NodeId="2" PhysicalOp="Table Scan" LogicalOp="Table Scan" EstimateRows="10000" EstimatedTotalSubtreeCost="6.173">
+<OutputList>
+<ColumnReference Table="[c]" Column="CustomerId" />
+<ColumnReference Table="[c]" Column="Name" />
+<ColumnReference Table="[c]" Column="Country" />
+</OutputList>
+<Predicate>
+<ScalarOperator>
+<Compare CompareOp="EQ">
+<ScalarOperator>
+<ColumnReference Table="[c]" Column="Country" />
+</ScalarOperator>
+<Const Value="'DE'" />
+</Compare>
+</ScalarOperator>
+</Predicate>
+</RelOp>
+</RelOp>
+</QueryPlan>
+</StmtSimple>
+</Statements>
+</Batch>
+</BatchSequence>
+</ShowPlanXML>

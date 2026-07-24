@@ -1,0 +1,25 @@
+[
+  {
+    "Plan": {
+      "Node Type": "Seq Scan",
+      "Relation Name": "products",
+      "Alias": "p",
+      "Startup Cost": 0.00,
+      "Total Cost": 12.345,
+      "Plan Rows": 2500,
+      "Plan Width": 88,
+      "Actual Startup Time": 0.018,
+      "Actual Total Time": 0.432,
+      "Actual Rows": 2500,
+      "Actual Loops": 1,
+      "Output": [
+        "product_id",
+        "product_code",
+        "name",
+        "price"
+      ],
+      "Filter": "(CAST(product_code AS text) = 'ABC123'::text)",
+      "Rows Removed by Filter": 7500
+    }
+  }
+]

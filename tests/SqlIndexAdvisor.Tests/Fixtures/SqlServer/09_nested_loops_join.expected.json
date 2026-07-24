@@ -1,0 +1,20 @@
+{
+  "dialect": "SqlServer",
+  "statementText": "SELECT o.OrderId, p.Name, o.Total FROM dbo.Orders o JOIN dbo.OrderProducts op ON o.OrderId = op.OrderId JOIN dbo.Products p ON op.ProductId = p.ProductId WHERE o.Status = 'completed' AND p.Category = 'Electronics'",
+  "estimatedTotalCost": 9.876,
+  "nodes": 5,
+  "engineMissingIndexes": 0,
+  "recommendations": [
+    {
+      "table": "dbo.Products",
+      "keyColumns": ["Category"],
+      "includeColumns": ["ProductId", "Name"],
+      "estimatedImpactPercent": 33.3,
+      "confidence": "Medium",
+      "rule": "missing-join-index",
+      "reasons": [
+        "Scan on dbo.Products with join predicate on (Category) is part of a Nested Loops join and is ~33% of statement cost. An index on the join predicate columns would eliminate the full scan."
+      ]
+    }
+  ]
+}

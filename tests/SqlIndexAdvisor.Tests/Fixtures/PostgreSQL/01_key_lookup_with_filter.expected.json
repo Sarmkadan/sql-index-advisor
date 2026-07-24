@@ -1,0 +1,20 @@
+{
+  "dialect": "Postgres",
+  "statementText": "",
+  "estimatedTotalCost": 18.567,
+  "nodes": 1,
+  "engineMissingIndexes": 0,
+  "recommendations": [
+    {
+      "table": "orders",
+      "keyColumns": ["status", "created_at", "customer_id"],
+      "includeColumns": ["order_id", "total", "shipping_address"],
+      "estimatedImpactPercent": 97.6,
+      "confidence": "High",
+      "rule": "full-scan-with-filter",
+      "reasons": [
+        "Seq Scan on orders carries a filter on (status, created_at, customer_id) and is ~100% of statement cost."
+      ]
+    }
+  ]
+}

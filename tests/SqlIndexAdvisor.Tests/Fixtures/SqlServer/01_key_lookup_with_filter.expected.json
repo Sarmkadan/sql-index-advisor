@@ -1,0 +1,31 @@
+{
+  "dialect": "SqlServer",
+  "statementText": "SELECT OrderId, CustomerId, Total, ShippingAddress FROM dbo.Orders WHERE Status = 'open' AND CreatedAt > '2026-01-01' AND CustomerId = 12345",
+  "estimatedTotalCost": 8.456,
+  "nodes": 3,
+  "engineMissingIndexes": 1,
+  "recommendations": [
+    {
+      "table": "dbo.Orders",
+      "keyColumns": ["Status", "CreatedAt", "CustomerId"],
+      "includeColumns": ["Total", "ShippingAddress"],
+      "estimatedImpactPercent": 85.3,
+      "confidence": "High",
+      "rule": "engine-hint",
+      "reasons": [
+        "Optimizer reported a missing index with 85.3% estimated impact."
+      ]
+    },
+    {
+      "table": "dbo.Orders",
+      "keyColumns": ["Status", "CreatedAt"],
+      "includeColumns": ["Total", "ShippingAddress"],
+      "estimatedImpactPercent": 80.0,
+      "confidence": "High",
+      "rule": "key-lookup",
+      "reasons": [
+        "Key Lookup on dbo.Orders follows an index seek with equality on (Status, CreatedAt) and then performs a lookup; a covering index could avoid the extra lookup."
+      ]
+    }
+  ]
+}

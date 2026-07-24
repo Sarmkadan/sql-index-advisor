@@ -1,0 +1,20 @@
+{
+  "dialect": "Postgres",
+  "statementText": "",
+  "estimatedTotalCost": 22.345,
+  "nodes": 1,
+  "engineMissingIndexes": 0,
+  "recommendations": [
+    {
+      "table": "customers",
+      "keyColumns": ["country", "is_active", "last_login_date"],
+      "includeColumns": ["customer_id", "name", "email"],
+      "estimatedImpactPercent": 97.5,
+      "confidence": "High",
+      "rule": "full-scan-with-filter",
+      "reasons": [
+        "Seq Scan on customers carries a filter on (country, is_active, last_login_date) and is ~100% of statement cost."
+      ]
+    }
+  ]
+}

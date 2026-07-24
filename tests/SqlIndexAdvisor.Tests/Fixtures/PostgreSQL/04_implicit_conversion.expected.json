@@ -1,0 +1,21 @@
+{
+  "dialect": "Postgres",
+  "statementText": "",
+  "estimatedTotalCost": 12.345,
+  "nodes": 1,
+  "engineMissingIndexes": 0,
+  "recommendations": [
+    {
+      "table": "products",
+      "keyColumns": ["product_code"],
+      "includeColumns": [],
+      "estimatedImpactPercent": 12.3,
+      "confidence": "Medium",
+      "rule": "implicit-conversion",
+      "reasons": [
+        "Query contains implicit conversion(s) on column(s): product_code"
+      ],
+      "kind": "SchemaFix"
+    }
+  ]
+}

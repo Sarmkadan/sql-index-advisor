@@ -1,0 +1,64 @@
+[
+  {
+    "Plan": {
+      "Node Type": "Hash Join",
+      "Join Type": "Inner",
+      "Startup Cost": 0.01,
+      "Total Cost": 15.678,
+      "Plan Rows": 3200,
+      "Plan Width": 72,
+      "Actual Startup Time": 0.020,
+      "Actual Total Time": 0.345,
+      "Actual Rows": 3200,
+      "Actual Loops": 1,
+      "Output": [
+        "o.order_id",
+        "c.name",
+        "o.total"
+      ],
+      "Plans": [
+        {
+          "Node Type": "Seq Scan",
+          "Relation Name": "orders",
+          "Alias": "o",
+          "Startup Cost": 0.00,
+          "Total Cost": 7.839,
+          "Plan Rows": 3200,
+          "Plan Width": 48,
+          "Actual Startup Time": 0.010,
+          "Actual Total Time": 0.170,
+          "Actual Rows": 3200,
+          "Actual Loops": 1,
+          "Output": [
+            "order_id",
+            "customer_id",
+            "total",
+            "status"
+          ],
+          "Filter": "(status = 'completed'::text)",
+          "Rows Removed by Filter": 6800
+        },
+        {
+          "Node Type": "Seq Scan",
+          "Relation Name": "customers",
+          "Alias": "c",
+          "Startup Cost": 0.00,
+          "Total Cost": 7.839,
+          "Plan Rows": 10000,
+          "Plan Width": 40,
+          "Actual Startup Time": 0.010,
+          "Actual Total Time": 0.170,
+          "Actual Rows": 10000,
+          "Actual Loops": 1,
+          "Output": [
+            "customer_id",
+            "name",
+            "country"
+          ],
+          "Filter": "(country = 'DE'::text)",
+          "Rows Removed by Filter": 90000
+        }
+      ]
+    }
+  }
+]

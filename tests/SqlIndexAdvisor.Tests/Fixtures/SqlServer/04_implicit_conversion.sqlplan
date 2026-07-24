@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-16"?>
+<ShowPlanXML xmlns="http://schemas.microsoft.com/sqlserver/2004/07/showplan" Version="1.539" Build="16.0.1000.6">
+<BatchSequence>
+<Batch>
+<Statements>
+<StmtSimple StatementText="SELECT * FROM dbo.Products WHERE CAST(ProductCode AS VARCHAR(20)) = 'ABC123'"
+StatementId="1" StatementCompId="1" StatementType="SELECT"
+StatementSubTreeCost="4.567" StatementEstRows="2500">
+<QueryPlan CachedPlanSize="20" CompileTime="3" CompileCPU="3" CompileMemory="180">
+<RelOp NodeId="0" PhysicalOp="Clustered Index Scan" LogicalOp="Clustered Index Scan" EstimateRows="2500" EstimatedTotalSubtreeCost="4.567">
+<OutputList>
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Products]" Column="ProductId" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Products]" Column="ProductCode" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Products]" Column="Name" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Products]" Column="Price" />
+</OutputList>
+<IndexScan Ordered="false">
+<Object Database="[Shop]" Schema="[dbo]" Table="[Products]" Index="[PK_Products]" IndexKind="Clustered" />
+<Predicate>
+<ScalarOperator>
+<Compare CompareOp="EQ">
+<ScalarOperator>
+<ScalarOperator>
+<Convert DataType="varchar" Style="0" Implicit="1">
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Products]" Column="ProductCode" />
+</Convert>
+</ScalarOperator>
+<Const Value="'ABC123'" />
+</Compare>
+</ScalarOperator>
+</Predicate>
+</IndexScan>
+</RelOp>
+</QueryPlan>
+</StmtSimple>
+</Statements>
+</Batch>
+</BatchSequence>
+</ShowPlanXML>

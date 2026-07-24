@@ -1,0 +1,20 @@
+{
+  "dialect": "SqlServer",
+  "statementText": "SELECT * FROM dbo.Customers WHERE Country = 'US' AND IsActive = 1 AND LastLoginDate > '2026-01-01'",
+  "estimatedTotalCost": 15.789,
+  "nodes": 1,
+  "engineMissingIndexes": 0,
+  "recommendations": [
+    {
+      "table": "dbo.Customers",
+      "keyColumns": ["Country", "IsActive", "LastLoginDate"],
+      "includeColumns": ["CustomerId", "Name", "Email"],
+      "estimatedImpactPercent": 90.0,
+      "confidence": "High",
+      "rule": "full-scan-with-filter",
+      "reasons": [
+        "Clustered Index Scan on dbo.Customers carries a filter on (Country, IsActive, LastLoginDate) and is ~100% of statement cost."
+      ]
+    }
+  ]
+}

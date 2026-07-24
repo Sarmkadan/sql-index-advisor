@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-16"?>
+<ShowPlanXML xmlns="http://schemas.microsoft.com/sqlserver/2004/07/showplan" Version="1.539" Build="16.0.1000.6">
+<BatchSequence>
+<Batch>
+<Statements>
+<StmtSimple StatementText="SELECT * FROM dbo.OrderItems ORDER BY OrderId DESC, LineNumber DESC"
+StatementId="1" StatementCompId="1" StatementType="SELECT"
+StatementSubTreeCost="6.789" StatementEstRows="8500">
+<QueryPlan CachedPlanSize="28" CompileTime="4" CompileCPU="4" CompileMemory="220">
+<RelOp NodeId="0" PhysicalOp="Sort" LogicalOp="Sort" EstimateRows="8500" EstimatedTotalSubtreeCost="6.789">
+<OutputList>
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[OrderItems]" Column="ItemId" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[OrderItems]" Column="OrderId" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[OrderItems]" Column="LineNumber" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[OrderItems]" Column="ProductId" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[OrderItems]" Column="Quantity" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[OrderItems]" Column="Price" />
+</OutputList>
+<RelOp NodeId="1" PhysicalOp="Clustered Index Scan" LogicalOp="Clustered Index Scan" EstimateRows="8500" EstimatedTotalSubtreeCost="0.003">
+<OutputList>
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[OrderItems]" Column="ItemId" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[OrderItems]" Column="OrderId" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[OrderItems]" Column="LineNumber" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[OrderItems]" Column="ProductId" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[OrderItems]" Column="Quantity" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[OrderItems]" Column="Price" />
+</OutputList>
+<IndexScan Ordered="false">
+<Object Database="[Shop]" Schema="[dbo]" Table="[OrderItems]" Index="[PK_OrderItems]" IndexKind="Clustered" />
+</IndexScan>
+</RelOp>
+</RelOp>
+</QueryPlan>
+</StmtSimple>
+</Statements>
+</Batch>
+</BatchSequence>
+</ShowPlanXML>
