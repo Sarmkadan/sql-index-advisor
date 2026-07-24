@@ -337,6 +337,131 @@ public class FullScanWithFilterRuleTests
     }
 
     [Fact]
+    public void Evaluate_PlanWithZeroMatchingNodes_ReturnsEmptyRecommendationList()
+    {
+        // Arrange - plan with nodes that don't match any criteria
+        var plan = new ExecutionPlan
+        {
+            Dialect = PlanDialect.SqlServer,
+            EstimatedTotalCost = 100,
+            Nodes = new List<PlanNode>
+            {
+                new()
+                {
+                    Operator = "Nested Loops",
+                    TableName = "users",
+                    EstimatedRows = 1000,
+                    EstimatedRowsRead = 1000000,
+                    RelativeCost = 0.5,
+                    PredicateColumns = { } // No predicate columns
+                },
+                new()
+                {
+                    Operator = "Index Scan",
+                    TableName = "products",
+                    EstimatedRows = 500,
+                    EstimatedRowsRead = 500000,
+                    RelativeCost = 0.3,
+                    PredicateColumns = { } // No predicate columns - Index Scan without predicate is not a full scan
+                }
+            }
+        };
+
+        // Act
+        var recommendations = _rule.Evaluate(plan).ToList();
+
+        // Assert - Should return empty list without throwing
+        Assert.Empty(recommendations);
+    }
+
+    [Fact]
+    public void Evaluate_ScanWithCostExactlyAtThreshold_ReturnsRecommendation()
+    {
+        // Arrange - scan with cost exactly at MinRelativeCost threshold (0.10)
+        var plan = new ExecutionPlan
+        {
+            Dialect = PlanDialect.SqlServer,
+            EstimatedTotalCost = 100,
+            Nodes = new List<PlanNode>
+            {
+                new()
+                {
+                    Operator = "Table Scan",
+                    TableName = "customers",
+                    EstimatedRows = 100,
+                    EstimatedRowsRead = 10000,
+                    RelativeCost = 0.10, // Exactly at threshold
+                    PredicateColumns = { "name" }
+                }
+            }
+        };
+
+        // Act
+        var recommendations = _rule.Evaluate(plan).ToList();
+
+        // Assert
+        Assert.Single(recommendations);
+    }
+
+    [Fact]
+    public void Evaluate_ScanWithCostJustBelowThreshold_ReturnsNoRecommendation()
+    {
+        // Arrange - scan with cost just below MinRelativeCost threshold
+        var plan = new ExecutionPlan
+        {
+            Dialect = PlanDialect.SqlServer,
+            EstimatedTotalCost = 100,
+            Nodes = new List<PlanNode>
+            {
+                new()
+                {
+                    Operator = "Table Scan",
+                    TableName = "customers",
+                    EstimatedRows = 100,
+                    EstimatedRowsRead = 10000,
+                    RelativeCost = 0.099, // Just below threshold
+                    PredicateColumns = { "name" }
+                }
+            }
+        };
+
+        // Act
+        var recommendations = _rule.Evaluate(plan).ToList();
+
+        // Assert
+        Assert.Empty(recommendations);
+    }
+
+    [Fact]
+    public void Evaluate_ScanWithCostJustAboveThreshold_ReturnsRecommendation()
+    {
+        // Arrange - scan with cost just above MinRelativeCost threshold
+        var plan = new ExecutionPlan
+        {
+            Dialect = PlanDialect.SqlServer,
+            EstimatedTotalCost = 100,
+            Nodes = new List<PlanNode>
+            {
+                new()
+                {
+                    Operator = "Table Scan",
+                    TableName = "customers",
+                    EstimatedRows = 100,
+                    EstimatedRowsRead = 10000,
+                    RelativeCost = 0.101, // Just above threshold
+                    PredicateColumns = { "name" }
+                }
+            }
+        };
+
+        // Act
+        var recommendations = _rule.Evaluate(plan).ToList();
+
+        // Assert
+        Assert.Single(recommendations);
+    }
+
+    [Fact]
     public void Name_ReturnsLowercaseRuleName()
     {
         // Act & Assert
