@@ -107,7 +107,7 @@ public sealed class PostgresJsonPlanParser : IPlanParser
         {
             var expr = ReadString(el, key);
             if (string.IsNullOrEmpty(expr)) continue;
-            foreach (var c in PredicateColumnScanner.Scan(expr))
+            foreach (var c in PredicateColumnScanner.Scan(expr, true))
                 if (!cols.Contains(c)) cols.Add(c);
         }
         return cols;
