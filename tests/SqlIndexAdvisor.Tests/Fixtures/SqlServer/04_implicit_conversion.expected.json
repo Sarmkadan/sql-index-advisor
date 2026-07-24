@@ -1,0 +1,21 @@
+{
+  "dialect": "SqlServer",
+  "statementText": "SELECT * FROM dbo.Products WHERE CAST(ProductCode AS VARCHAR(20)) = 'ABC123'",
+  "estimatedTotalCost": 4.567,
+  "nodes": 1,
+  "engineMissingIndexes": 0,
+  "recommendations": [
+    {
+      "table": "dbo.Products",
+      "keyColumns": ["ProductCode"],
+      "includeColumns": [],
+      "estimatedImpactPercent": 45.7,
+      "confidence": "Medium",
+      "rule": "implicit-conversion",
+      "reasons": [
+        "Query contains implicit conversion(s) on column(s): ProductCode"
+      ],
+      "kind": "SchemaFix"
+    }
+  ]
+}

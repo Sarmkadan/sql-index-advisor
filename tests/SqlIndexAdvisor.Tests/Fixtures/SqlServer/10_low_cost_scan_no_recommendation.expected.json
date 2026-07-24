@@ -1,0 +1,8 @@
+{
+  "dialect": "SqlServer",
+  "statementText": "SELECT COUNT(*) FROM dbo.LogEntries WHERE LogDate > '2026-01-01'",
+  "estimatedTotalCost": 0.456,
+  "nodes": 1,
+  "engineMissingIndexes": 0,
+  "recommendations": []
+}

@@ -1,0 +1,20 @@
+{
+  "dialect": "Postgres",
+  "statementText": "",
+  "estimatedTotalCost": 15.678,
+  "nodes": 3,
+  "engineMissingIndexes": 0,
+  "recommendations": [
+    {
+      "table": "customers",
+      "keyColumns": ["country"],
+      "includeColumns": ["customer_id", "name"],
+      "estimatedImpactPercent": 50.0,
+      "confidence": "Medium",
+      "rule": "missing-join-index",
+      "reasons": [
+        "Scan on customers with join predicate on (country) is part of a Hash Join join and is ~50% of statement cost. An index on the join predicate columns would eliminate the full scan."
+      ]
+    }
+  ]
+}

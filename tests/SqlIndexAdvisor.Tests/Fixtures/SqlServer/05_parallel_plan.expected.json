@@ -1,0 +1,20 @@
+{
+  "dialect": "SqlServer",
+  "statementText": "SELECT * FROM dbo.Orders WHERE CreatedAt > '2026-01-01' AND Status = 'shipped'",
+  "estimatedTotalCost": 25.891,
+  "nodes": 3,
+  "engineMissingIndexes": 0,
+  "recommendations": [
+    {
+      "table": "dbo.Orders",
+      "keyColumns": ["CreatedAt", "Status"],
+      "includeColumns": ["OrderId", "CustomerId", "Total"],
+      "estimatedImpactPercent": 99.9,
+      "confidence": "High",
+      "rule": "full-scan-with-filter",
+      "reasons": [
+        "Clustered Index Scan on dbo.Orders carries a filter on (CreatedAt, Status) and is ~100% of statement cost."
+      ]
+    }
+  ]
+}

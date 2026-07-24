@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-16"?>
+<ShowPlanXML xmlns="http://schemas.microsoft.com/sqlserver/2004/07/showplan" Version="1.539" Build="16.0.1000.6">
+<BatchSequence>
+<Batch>
+<Statements>
+<StmtSimple StatementText="SELECT OrderId, CustomerId, Total, ShippingAddress FROM dbo.Orders WHERE Status = 'open' AND CreatedAt > '2026-01-01' AND CustomerId = 12345"
+StatementId="1" StatementCompId="1" StatementType="SELECT"
+StatementSubTreeCost="8.456" StatementEstRows="1500">
+<QueryPlan CachedPlanSize="24" CompileTime="3" CompileCPU="3" CompileMemory="200">
+<MissingIndexes>
+<MissingIndexGroup Impact="85.321">
+<MissingIndex Database="[Shop]" Schema="[dbo]" Table="[Orders]">
+<ColumnGroup Usage="EQUALITY">
+<Column Name="[Status]" ColumnId="4" />
+<Column Name="[CreatedAt]" ColumnId="5" />
+<Column Name="[CustomerId]" ColumnId="2" />
+</ColumnGroup>
+<ColumnGroup Usage="INCLUDE">
+<Column Name="[Total]" ColumnId="3" />
+<Column Name="[ShippingAddress]" ColumnId="6" />
+</ColumnGroup>
+</MissingIndex>
+</MissingIndexGroup>
+</MissingIndexes>
+<RelOp NodeId="0" PhysicalOp="Nested Loops" LogicalOp="Inner Join" EstimateRows="1500" EstimatedTotalSubtreeCost="8.456">
+<OutputList>
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="OrderId" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="CustomerId" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="Total" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="ShippingAddress" />
+</OutputList>
+<RelOp NodeId="1" PhysicalOp="Index Seek" LogicalOp="Index Seek" EstimateRows="1500" EstimatedTotalSubtreeCost="0.456">
+<OutputList>
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="OrderId" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="CustomerId" />
+</OutputList>
+<IndexScan Ordered="true" ScanDirection="FORWARD" SeekPredicates="[Shop].[dbo].[Orders].[CustomerId]=[@CustomerIdParam]">
+<Object Database="[Shop]" Schema="[dbo]" Table="[Orders]" Index="[IX_Orders_CustomerId]" IndexKind="NonClustered" />
+</IndexScan>
+</RelOp>
+<RelOp NodeId="2" PhysicalOp="Key Lookup" LogicalOp="Key Lookup" EstimateRows="1500" EstimatedTotalSubtreeCost="8.0">
+<OutputList>
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="Total" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="ShippingAddress" />
+</OutputList>
+<IndexScan Ordered="false" ScanDirection="FORWARD">
+<Object Database="[Shop]" Schema="[dbo]" Table="[Orders]" Index="[PK_Orders]" IndexKind="Clustered" />
+<Predicate>
+<ScalarOperator>
+<And>
+<ScalarOperator>
+<Compare CompareOp="EQ">
+<ScalarOperator>
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="Status" />
+</ScalarOperator>
+<Const Value="'open'" />
+</Compare>
+</ScalarOperator>
+<ScalarOperator>
+<Compare CompareOp="GT">
+<ScalarOperator>
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="CreatedAt" />
+</ScalarOperator>
+<Const Value="'2026-01-01'" />
+</Compare>
+</ScalarOperator>
+</And>
+</ScalarOperator>
+</Predicate>
+</IndexScan>
+</RelOp>
+</RelOp>
+</QueryPlan>
+</StmtSimple>
+</Statements>
+</Batch>
+</BatchSequence>
+</ShowPlanXML>

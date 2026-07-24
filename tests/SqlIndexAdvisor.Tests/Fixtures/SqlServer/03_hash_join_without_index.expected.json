@@ -1,0 +1,20 @@
+{
+  "dialect": "SqlServer",
+  "statementText": "SELECT o.OrderId, c.Name, o.Total FROM dbo.Orders o JOIN dbo.Customers c ON o.CustomerId = c.CustomerId WHERE o.Status = 'completed' AND c.Country = 'DE'",
+  "estimatedTotalCost": 12.345,
+  "nodes": 3,
+  "engineMissingIndexes": 0,
+  "recommendations": [
+    {
+      "table": "dbo.Customers",
+      "keyColumns": ["Country"],
+      "includeColumns": ["CustomerId", "Name"],
+      "estimatedImpactPercent": 50.0,
+      "confidence": "Medium",
+      "rule": "missing-join-index",
+      "reasons": [
+        "Scan on dbo.Customers with join predicate on (Country) is part of a Hash Match join and is ~50% of statement cost. An index on the join predicate columns would eliminate the full scan."
+      ]
+    }
+  ]
+}

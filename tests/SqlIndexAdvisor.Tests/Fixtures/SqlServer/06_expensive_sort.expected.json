@@ -1,0 +1,20 @@
+{
+  "dialect": "SqlServer",
+  "statementText": "SELECT * FROM dbo.OrderItems ORDER BY OrderId DESC, LineNumber DESC",
+  "estimatedTotalCost": 6.789,
+  "nodes": 2,
+  "engineMissingIndexes": 0,
+  "recommendations": [
+    {
+      "table": "dbo.OrderItems",
+      "keyColumns": ["OrderId", "LineNumber"],
+      "includeColumns": ["ItemId", "ProductId", "Quantity", "Price"],
+      "estimatedImpactPercent": 67.9,
+      "confidence": "High",
+      "rule": "expensive-sort",
+      "reasons": [
+        "Sort operation (Sort) on dbo.OrderItems is ~100% of statement cost. Creating an index on (OrderId, LineNumber) can eliminate or reduce this expensive sort."
+      ]
+    }
+  ]
+}

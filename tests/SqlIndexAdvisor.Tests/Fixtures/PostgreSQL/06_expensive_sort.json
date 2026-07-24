@@ -1,0 +1,42 @@
+[
+  {
+    "Plan": {
+      "Node Type": "Sort",
+      "Startup Cost": 0.234,
+      "Total Cost": 8.901,
+      "Plan Rows": 8500,
+      "Plan Width": 120,
+      "Actual Startup Time": 0.050,
+      "Actual Total Time": 0.890,
+      "Actual Rows": 8500,
+      "Actual Loops": 1,
+      "Sort Key": [
+        "order_id DESC",
+        "line_number DESC"
+      ],
+      "Plans": [
+        {
+          "Node Type": "Seq Scan",
+          "Relation Name": "order_items",
+          "Alias": "oi",
+          "Startup Cost": 0.00,
+          "Total Cost": 0.456,
+          "Plan Rows": 8500,
+          "Plan Width": 48,
+          "Actual Startup Time": 0.002,
+          "Actual Total Time": 0.045,
+          "Actual Rows": 8500,
+          "Actual Loops": 1,
+          "Output": [
+            "item_id",
+            "order_id",
+            "line_number",
+            "product_id",
+            "quantity",
+            "price"
+          ]
+        }
+      ]
+    }
+  }
+]

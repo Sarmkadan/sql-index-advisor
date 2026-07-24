@@ -1,0 +1,8 @@
+{
+  "dialect": "SqlServer",
+  "statementText": "SELECT TOP 10 * FROM dbo.Users WHERE UserId = 12345",
+  "estimatedTotalCost": 0.003,
+  "nodes": 1,
+  "engineMissingIndexes": 0,
+  "recommendations": []
+}
