@@ -27,7 +27,7 @@ public enum RecommendationKind
 /// A single suggested index plus the reasoning that produced it. The estimated
 /// impact is deliberately "rough" - it is a heuristic score, not a promise.
 /// </summary>
-public sealed class IndexRecommendation
+public sealed class IndexRecommendation : IIndexRecommendation
 {
     public required string Table { get; init; }
     public required List<string> KeyColumns { get; init; }
