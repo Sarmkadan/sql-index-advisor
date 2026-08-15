@@ -9,7 +9,7 @@ namespace SqlIndexAdvisor.Core.Engine;
 /// columns in the same order (a prefix match is treated as a dup - the wider one
 /// wins and absorbs the other's includes/reasons).
 /// </summary>
-public sealed class RecommendationEngine
+public sealed class RecommendationEngine : IRecommendationEngine
 {
     private readonly IReadOnlyList<IIndexRule> _rules;
 
