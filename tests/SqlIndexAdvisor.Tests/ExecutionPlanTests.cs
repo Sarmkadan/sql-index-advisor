@@ -2,7 +2,7 @@ using SqlIndexAdvisor.Core.Model;
 
 namespace SqlIndexAdvisor.Tests;
 
-public class ExecutionPlanTests
+public class ExecutionPlanTests : IExecutionPlanTests
 {
     private readonly ExecutionPlan _samplePlan = new()
     {
