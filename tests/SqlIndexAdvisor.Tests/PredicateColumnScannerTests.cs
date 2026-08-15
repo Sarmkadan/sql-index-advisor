@@ -6,7 +6,7 @@ namespace SqlIndexAdvisor.Tests;
 /// <summary>
 /// Tests for the <see cref="PredicateColumnScanner"/> class.
 /// </summary>
-public class PredicateColumnScannerTests
+public class PredicateColumnScannerTests : IPredicateColumnScannerTests
 {
     /// <summary>
     /// Verifies that the <see cref="PredicateColumnScanner.Scan(string)"/> method picks up equality columns.
