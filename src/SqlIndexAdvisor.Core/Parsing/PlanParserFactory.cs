@@ -8,7 +8,7 @@ namespace SqlIndexAdvisor.Core.Parsing;
 /// that each parser's CanParse is cheap and mutually exclusive in practice
 /// (XML starts with '<', JSON with '[' or '{').
 /// </summary>
-public sealed class PlanParserFactory
+public sealed class PlanParserFactory : IPlanParserFactory
 {
     private readonly IReadOnlyList<IPlanParser> _parsers;
 
