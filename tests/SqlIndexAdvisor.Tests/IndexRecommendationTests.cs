@@ -3,7 +3,7 @@ using Xunit;
 
 namespace SqlIndexAdvisor.Tests;
 
-public class IndexRecommendationTests
+public class IndexRecommendationTests : IIndexRecommendationTests
 {
     private readonly IndexRecommendation _testRecommendation = new()
     {
