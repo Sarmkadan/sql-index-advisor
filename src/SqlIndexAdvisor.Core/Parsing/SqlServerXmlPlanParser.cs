@@ -1,5 +1,10 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
+using System.Threading;
 using SqlIndexAdvisor.Core.Model;
 
 namespace SqlIndexAdvisor.Core.Parsing;
@@ -11,18 +16,6 @@ namespace SqlIndexAdvisor.Core.Parsing;
 /// </summary>
 public sealed class SqlServerXmlPlanParser : IPlanParser
 {
-    // --------------------------------------------------------------------
-    // Limits to protect against untrusted input that could otherwise cause
-    // excessive memory usage or stack overflow.
-    // --------------------------------------------------------------------
-    private const int MaxFileSizeBytes = 10 * 1024 * 1024; // 10 MiB
-    private const int MaxNestingDepth = 1_000; // reasonable depth for a plan
-
-    /// <summary>
-    /// Determines whether the supplied content looks like a SQL Server XML plan.
-    /// </summary>
-    /// <param name="content">The raw plan text.</param>
-    /// <returns>True if the content appears to be a SQL Server XML plan; otherwise false.</returns>
     public bool CanParse(string content)
     {
         ArgumentNullException.ThrowIfNull(content);
@@ -33,21 +26,9 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
             || trimmed.Contains("StmtSimple", StringComparison.OrdinalIgnoreCase);
     }
 
-    /// <summary>
-    /// Parses a SQL Server XML execution plan into an <see cref="ExecutionPlan"/>.
-    /// </summary>
-    /// <param name="content">The XML plan text.</param>
-    /// <returns>An <see cref="ExecutionPlan"/> representing the parsed plan.</returns>
-    /// <exception cref="PlanParseException">
-    /// Thrown when the input exceeds size or nesting limits, or when the XML is malformed.
-    /// </exception>
-    public ExecutionPlan Parse(string content)
+    public ExecutionPlan Parse(string content, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(content);
-
-        if (content.Length > MaxFileSizeBytes)
-            throw new PlanParseException(
-                $"Plan file size exceeds the allowed limit of {MaxFileSizeBytes} bytes.");
 
         XDocument doc;
         try
@@ -69,8 +50,8 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
             // Provide context about the file type to help users diagnose issues
             throw new PlanParseException(
                 $"Failed to parse SQL Server execution plan XML at line {ex.LineNumber}, position {ex.LinePosition}. "
-                + "The file may be a saved .sqlplan wrapper rather than raw ShowPlanXML. "
-                + "Verify the file contains valid SQL Server showplan XML.", ex);
+                +"The file may be a saved .sqlplan wrapper rather than raw ShowPlanXML. "
+                +"Verify the file contains valid SQL Server showplan XML.", ex);
         }
         catch (Exception ex) when (ex is not PlanParseException)
         {
@@ -85,18 +66,10 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
         var byElement = new Dictionary<XElement, PlanNode>();
         var relOps = Descendants(doc.Root, "RelOp").ToList();
 
-        // Verify nesting depth before we start building nodes.
         foreach (var relOp in relOps)
         {
-            var depth = relOp.Ancestors()
-                .Count(a => a.Name.LocalName == "RelOp") + 1; // +1 for the current node
-            if (depth > MaxNestingDepth)
-                throw new PlanParseException(
-                    $"Plan nesting depth exceeds the allowed limit of {MaxNestingDepth} levels.");
-        }
+            cancellationToken.ThrowIfCancellationRequested();
 
-        foreach (var relOp in relOps)
-        {
             var estRows = ParseDouble(relOp.Attribute("EstimateRows")?.Value);
             var node = new PlanNode
             {
@@ -119,6 +92,8 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
         // Rules that reason about tree shape (key lookups, join inner sides) need this.
         foreach (var (relOp, node) in byElement)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             var parentEl = relOp.Ancestors().FirstOrDefault(a => a.Name.LocalName == "RelOp");
             if (parentEl is not null && byElement.TryGetValue(parentEl, out var parentNode))
                 node.Parent = parentNode;

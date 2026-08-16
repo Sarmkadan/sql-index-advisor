@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Threading;
 using SqlIndexAdvisor.Core.Model;
 
 namespace SqlIndexAdvisor.Core.Parsing;
@@ -37,11 +38,12 @@ public sealed class PostgresJsonPlanParser : IPlanParser
     /// Parses a PostgreSQL JSON execution plan into an <see cref="ExecutionPlan"/>.
     /// </summary>
     /// <param name="content">The JSON plan text.</param>
+    /// <param name="cancellationToken">Optional token to cancel the operation.</param>
     /// <returns>An <see cref="ExecutionPlan"/> representing the parsed plan.</returns>
     /// <exception cref="PlanParseException">
     /// Thrown when the input exceeds size or nesting limits, or when the JSON is malformed.
     /// </exception>
-    public ExecutionPlan Parse(string content)
+    public ExecutionPlan Parse(string content, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrEmpty(content);
 
@@ -82,7 +84,7 @@ public sealed class PostgresJsonPlanParser : IPlanParser
 
             var totalCost = ReadDouble(planRoot, "Total Cost");
             var nodes = new List<PlanNode>();
-            Walk(planRoot, null, totalCost, nodes, 0);
+            Walk(planRoot, null, totalCost, nodes, 0, cancellationToken);
 
             return new ExecutionPlan
             {
@@ -94,8 +96,10 @@ public sealed class PostgresJsonPlanParser : IPlanParser
     }
 
     private static void Walk(JsonElement el, PlanNode? parent, double totalCost,
-        List<PlanNode> sink, int currentDepth)
+        List<PlanNode> sink, int currentDepth, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         if (currentDepth > MaxNestingDepth)
             throw new PlanParseException(
                 $"Plan nesting depth exceeds the allowed limit of {MaxNestingDepth} levels.");
@@ -120,7 +124,7 @@ public sealed class PostgresJsonPlanParser : IPlanParser
         if (el.TryGetProperty("Plans", out var children) && children.ValueKind == JsonValueKind.Array)
         {
             foreach (var child in children.EnumerateArray())
-                Walk(child, node, totalCost, sink, currentDepth + 1);
+                Walk(child, node, totalCost, sink, currentDepth + 1, cancellationToken);
         }
     }
 
