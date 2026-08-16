@@ -122,8 +122,7 @@ public static class PlanParserFactoryExtensions
 
         var parser = parserSelector(factory.GetRegisteredParsers());
         return parser is null
-            ? throw new PlanParseException("No parser was selected by the provided selector function.")
+            ? throw new PlanParseException(PlanParserFactoryExtensionsConstants.NoParserSelectedErrorMessage)
             : parser.Parse(content);
     }
 }
-
