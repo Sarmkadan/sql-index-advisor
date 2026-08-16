@@ -16,7 +16,7 @@ namespace SqlIndexAdvisor.Tests
         [Fact]
         public void TryParse_ValidXml_ReturnsTrueAndPlan()
         {
-            var xml = @"<ShowPlanXML xmlns=""http://schemas.microsoft.com/sqlserver/2004/07/showplan""><Batch></Batch></ShowPlanXML>";
+            var xml = PlanParserFactoryExtensionsTestsConstants.ValidXml;
 
             var result = _factory.TryParse(xml, out var plan);
 
@@ -28,7 +28,7 @@ namespace SqlIndexAdvisor.Tests
         [Fact]
         public void TryParse_ValidJson_ReturnsTrueAndPlan()
         {
-            var json = @"{""Plan"":{}}";
+            var json = PlanParserFactoryExtensionsTestsConstants.ValidJson;
 
             var result = _factory.TryParse(json, out var plan);
 
@@ -40,7 +40,7 @@ namespace SqlIndexAdvisor.Tests
         [Fact]
         public void TryParse_InvalidContent_ReturnsFalseAndNullPlan()
         {
-            var bad = "not a plan";
+            var bad = PlanParserFactoryExtensionsTestsConstants.InvalidContent;
 
             var result = _factory.TryParse(bad, out var plan);
 
@@ -70,9 +70,9 @@ namespace SqlIndexAdvisor.Tests
         {
             var inputs = new List<(string SourceId, string Content)>
             {
-                ("xml1", @"<ShowPlanXML xmlns=""http://schemas.microsoft.com/sqlserver/2004/07/showplan""><Batch></Batch></ShowPlanXML>"),
-                ("json1", @"{""Plan"":{}}"),
-                ("bad", "not a plan")
+                ("xml1", PlanParserFactoryExtensionsTestsConstants.ValidXml),
+                ("json1", PlanParserFactoryExtensionsTestsConstants.ValidJson),
+                ("bad", PlanParserFactoryExtensionsTestsConstants.InvalidContent)
             };
 
             var results = _factory.ParseMany(inputs).ToList();
@@ -110,21 +110,21 @@ namespace SqlIndexAdvisor.Tests
         [Fact]
         public void CanParse_RecognizedXml_ReturnsTrue()
         {
-            var xml = @"<ShowPlanXML xmlns=""http://schemas.microsoft.com/sqlserver/2004/07/showplan""><Batch></Batch></ShowPlanXML>";
+            var xml = PlanParserFactoryExtensionsTestsConstants.ValidXml;
             Assert.True(_factory.CanParse(xml));
         }
 
         [Fact]
         public void CanParse_RecognizedJson_ReturnsTrue()
         {
-            var json = @"{""Plan"":{}}";
+            var json = PlanParserFactoryExtensionsTestsConstants.ValidJson;
             Assert.True(_factory.CanParse(json));
         }
 
         [Fact]
         public void CanParse_UnrecognizedContent_ReturnsFalse()
         {
-            Assert.False(_factory.CanParse("random text"));
+            Assert.False(_factory.CanParse(PlanParserFactoryExtensionsTestsConstants.InvalidContent));
         }
 
         [Fact]
