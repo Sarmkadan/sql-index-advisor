@@ -47,7 +47,7 @@ public static class ExecutionPlanExtensions
         return plan.Nodes
             .Where(node => node.IsScan && !string.IsNullOrEmpty(node.TableName))
             .Select(node => node.TableName!)
-            .Distinct(StringComparer.OrdinalIgnoreCase);
+            .Distinct(ExecutionPlanExtensionsConstants.OrdinalIgnoreCaseComparer);
     }
 
     /// <summary>
@@ -65,7 +65,7 @@ public static class ExecutionPlanExtensions
             .Where(node => node.IsScan)
             .SelectMany(node => node.PredicateColumns)
             .Where(col => !string.IsNullOrEmpty(col))
-            .Distinct(StringComparer.OrdinalIgnoreCase);
+            .Distinct(ExecutionPlanExtensionsConstants.OrdinalIgnoreCaseComparer);
     }
 
     /// <summary>
@@ -79,13 +79,13 @@ public static class ExecutionPlanExtensions
     {
         ArgumentNullException.ThrowIfNull(plan);
 
-        var predicateColumns = plan.GetPredicateColumns().ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var predicateColumns = plan.GetPredicateColumns().ToHashSet(ExecutionPlanExtensionsConstants.OrdinalIgnoreCaseComparer);
 
         return plan.Nodes
             .Where(node => node.IsScan)
             .SelectMany(node => node.OutputColumns)
             .Where(col => !string.IsNullOrEmpty(col) && !predicateColumns.Contains(col))
-            .Distinct(StringComparer.OrdinalIgnoreCase);
+            .Distinct(ExecutionPlanExtensionsConstants.OrdinalIgnoreCaseComparer);
     }
 
     /// <summary>
@@ -173,12 +173,12 @@ public static class ExecutionPlanExtensions
     {
         ArgumentNullException.ThrowIfNull(plan);
 
-        var predicateColumns = plan.GetPredicateColumns().ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var predicateColumns = plan.GetPredicateColumns().ToHashSet(ExecutionPlanExtensionsConstants.OrdinalIgnoreCaseComparer);
 
         return plan.Nodes
             .Where(node => node.IsScan)
             .SelectMany(node => node.OutputColumns)
         .Where(col => !string.IsNullOrEmpty(col) && predicateColumns.Contains(col))
-            .Distinct(StringComparer.OrdinalIgnoreCase);
+            .Distinct(ExecutionPlanExtensionsConstants.OrdinalIgnoreCaseComparer);
     }
 }
