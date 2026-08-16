@@ -21,23 +21,23 @@ public static class IndexRecommendationValidation
         // Validate Table
         if (string.IsNullOrWhiteSpace(value.Table))
         {
-            problems.Add("Table property must be a non-empty string.");
+            problems.Add(IndexRecommendationValidationConstants.TablePropertyMustBeNonEmptyString);
         }
 
         // Validate KeyColumns
         if (value.KeyColumns is null)
         {
-            problems.Add("KeyColumns collection must not be null.");
+            problems.Add(IndexRecommendationValidationConstants.KeyColumnsCollectionMustNotBeNull);
         }
         else if (value.KeyColumns.Count == 0)
         {
-            problems.Add("KeyColumns collection must contain at least one column.");
+            problems.Add(IndexRecommendationValidationConstants.KeyColumnsCollectionMustContainAtLeastOneColumn);
         }
         else
         {
             problems.AddRange(value.KeyColumns
                 .Where(column => string.IsNullOrWhiteSpace(column))
-                .Select(_ => "All KeyColumns must be non-empty strings."));
+                .Select(_ => IndexRecommendationValidationConstants.AllKeyColumnsMustBeNonEmptyStrings));
         }
 
         // Validate IncludeColumns (optional)
@@ -45,24 +45,21 @@ public static class IndexRecommendationValidation
         {
             problems.AddRange(value.IncludeColumns
                 .Where(column => string.IsNullOrWhiteSpace(column))
-                .Select(_ => "All IncludeColumns must be non-empty strings."));
+                .Select(_ => IndexRecommendationValidationConstants.AllIncludeColumnsMustBeNonEmptyStrings));
         }
 
         // Validate EstimatedImpactPercent
-        if (value.EstimatedImpactPercent < 0 || value.EstimatedImpactPercent > 100)
+        if (value.EstimatedImpactPercent < IndexRecommendationValidationConstants.MinEstimatedImpactPercent || value.EstimatedImpactPercent > IndexRecommendationValidationConstants.MaxEstimatedImpactPercent)
         {
-            problems.Add("EstimatedImpactPercent must be between 0 and 100 inclusive.");
+            problems.Add(IndexRecommendationValidationConstants.EstimatedImpactPercentMustBeBetween0And100Inclusive);
         }
-
-        // Validate Confidence
-        // Confidence is an enum, so it's always valid
 
         // Validate Reasons (optional)
         if (value.Reasons is not null)
         {
             problems.AddRange(value.Reasons
                 .Where(reason => string.IsNullOrWhiteSpace(reason))
-                .Select(_ => "All Reasons must be non-empty strings."));
+                .Select(_ => IndexRecommendationValidationConstants.AllReasonsMustBeNonEmptyStrings));
         }
 
         // Validate SuggestedName (computed property, but validate its components were valid)
