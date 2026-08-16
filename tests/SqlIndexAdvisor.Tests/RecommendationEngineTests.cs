@@ -8,7 +8,7 @@ using Xunit;
 /// </summary>
 namespace SqlIndexAdvisor.Tests;
 
-public class RecommendationEngineTests
+public class RecommendationEngineTests : IRecommendationEngineTests
 {
     /// <summary>
     /// Verifies that a Seq Scan with a filter produces a recommendation.
