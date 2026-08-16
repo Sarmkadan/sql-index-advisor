@@ -5,7 +5,7 @@ using Xunit;
 
 namespace SqlIndexAdvisor.Tests
 {
-    public class PlanParserFactoryJsonExtensionsTests
+    public class PlanParserFactoryJsonExtensionsTests : IPlanParserFactoryJsonExtensionsTests
     {
         [Fact]
         public void ToJson_NullFactory_ThrowsArgumentNullException()
