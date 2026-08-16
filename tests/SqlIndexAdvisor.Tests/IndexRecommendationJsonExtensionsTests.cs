@@ -7,13 +7,13 @@ public class IndexRecommendationJsonExtensionsTests
 {
     private readonly IndexRecommendation _testRecommendation = new()
     {
-        Table = "dbo.Users",
-        KeyColumns = new List<string> { "UserId", "Email" },
-        IncludeColumns = new List<string> { "Name", "CreatedDate" },
-        EstimatedImpactPercent = 85.5,
-        SourceNodeCost = 0.75,
+        Table = IndexRecommendationJsonExtensionsTestsConstants.TableUsers,
+        KeyColumns = new List<string> { IndexRecommendationJsonExtensionsTestsConstants.ColumnUserId, IndexRecommendationJsonExtensionsTestsConstants.ColumnEmail },
+        IncludeColumns = new List<string> { IndexRecommendationJsonExtensionsTestsConstants.ColumnName, IndexRecommendationJsonExtensionsTestsConstants.ColumnCreatedDate },
+        EstimatedImpactPercent = IndexRecommendationJsonExtensionsTestsConstants.EstimatedImpactPercent85_5,
+        SourceNodeCost = IndexRecommendationJsonExtensionsTestsConstants.SourceNodeCost0_75,
         Confidence = Confidence.High,
-        Reasons = new List<string> { "Missing index on Users table", "Frequent WHERE clause on UserId and Email" }
+        Reasons = new List<string> { IndexRecommendationJsonExtensionsTestsConstants.ReasonMissingIndexOnUsersTable, IndexRecommendationJsonExtensionsTestsConstants.ReasonFrequentWhereClause }
     };
 
     [Fact]
@@ -34,7 +34,7 @@ public class IndexRecommendationJsonExtensionsTests
         var result = _testRecommendation.ToJson();
 
         // Assert
-        Assert.Contains("\"table\":\"dbo.Users\"", result);
+        Assert.Contains($"\"table\":\"{IndexRecommendationJsonExtensionsTestsConstants.TableUsers}\"", result);
     }
 
     [Fact]
@@ -44,7 +44,7 @@ public class IndexRecommendationJsonExtensionsTests
         var result = _testRecommendation.ToJson();
 
         // Assert
-        Assert.Contains("\"keyColumns\":[\"UserId\",\"Email\"]", result);
+        Assert.Contains($"\"keyColumns\":[\"{IndexRecommendationJsonExtensionsTestsConstants.ColumnUserId}\",\"{IndexRecommendationJsonExtensionsTestsConstants.ColumnEmail}\"]", result);
     }
 
     [Fact]
@@ -54,7 +54,7 @@ public class IndexRecommendationJsonExtensionsTests
         var result = _testRecommendation.ToJson();
 
         // Assert
-        Assert.Contains("\"includeColumns\":[\"Name\",\"CreatedDate\"]", result);
+        Assert.Contains($"\"includeColumns\":[\"{IndexRecommendationJsonExtensionsTestsConstants.ColumnName}\",\"{IndexRecommendationJsonExtensionsTestsConstants.ColumnCreatedDate}\"]", result);
     }
 
     [Fact]
@@ -64,7 +64,7 @@ public class IndexRecommendationJsonExtensionsTests
         var result = _testRecommendation.ToJson();
 
         // Assert
-        Assert.Contains("\"estimatedImpactPercent\":85.5", result);
+        Assert.Contains($"\"estimatedImpactPercent\":{IndexRecommendationJsonExtensionsTestsConstants.EstimatedImpactPercent85_5}", result);
     }
 
     [Fact]
@@ -85,8 +85,8 @@ public class IndexRecommendationJsonExtensionsTests
 
         // Assert
         Assert.Contains("\"reasons\":[", result);
-        Assert.Contains("Missing index on Users table", result);
-        Assert.Contains("Frequent WHERE clause on UserId and Email", result);
+        Assert.Contains(IndexRecommendationJsonExtensionsTestsConstants.ReasonMissingIndexOnUsersTable, result);
+        Assert.Contains(IndexRecommendationJsonExtensionsTestsConstants.ReasonFrequentWhereClause, result);
     }
 
     [Fact]
@@ -121,15 +121,15 @@ public class IndexRecommendationJsonExtensionsTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal("dbo.Users", result.Table);
+        Assert.Equal(IndexRecommendationJsonExtensionsTestsConstants.TableUsers, result.Table);
         Assert.Equal(2, result.KeyColumns.Count);
-        Assert.Contains("UserId", result.KeyColumns);
-        Assert.Contains("Email", result.KeyColumns);
+        Assert.Contains(IndexRecommendationJsonExtensionsTestsConstants.ColumnUserId, result.KeyColumns);
+        Assert.Contains(IndexRecommendationJsonExtensionsTestsConstants.ColumnEmail, result.KeyColumns);
         Assert.Equal(2, result.IncludeColumns.Count);
-        Assert.Contains("Name", result.IncludeColumns);
-        Assert.Contains("CreatedDate", result.IncludeColumns);
-        Assert.Equal(85.5, result.EstimatedImpactPercent);
-        Assert.Equal(0.75, result.SourceNodeCost);
+        Assert.Contains(IndexRecommendationJsonExtensionsTestsConstants.ColumnName, result.IncludeColumns);
+        Assert.Contains(IndexRecommendationJsonExtensionsTestsConstants.ColumnCreatedDate, result.IncludeColumns);
+        Assert.Equal(IndexRecommendationJsonExtensionsTestsConstants.EstimatedImpactPercent85_5, result.EstimatedImpactPercent);
+        Assert.Equal(IndexRecommendationJsonExtensionsTestsConstants.SourceNodeCost0_75, result.SourceNodeCost);
         Assert.Equal(Confidence.High, result.Confidence);
         Assert.Equal(2, result.Reasons.Count);
     }
@@ -138,21 +138,21 @@ public class IndexRecommendationJsonExtensionsTests
     public void FromJson_WithValidJsonStringWithCamelCase_ReturnsIndexRecommendation()
     {
         // Arrange - JSON uses camelCase property names, enums are serialized as numbers
-        var json = "{\r\n            \"table\": \"dbo.Products\",\r\n            \"keyColumns\": [\"ProductId\", \"CategoryId\"],\r\n            \"includeColumns\": [\"ProductName\"],\r\n            \"estimatedImpactPercent\": 72.3,\r\n            \"sourceNodeCost\": 0.5,\r\n            \"confidence\": 1,\r\n            \"reasons\": [\"Missing index\", \"Performance issue\"]\r\n        }";
+        var json = $"{{\r\n            \"table\": \"{IndexRecommendationJsonExtensionsTestsConstants.TableProducts}\",\r\n            \"keyColumns\": [\"{IndexRecommendationJsonExtensionsTestsConstants.ColumnProductId}\", \"{IndexRecommendationJsonExtensionsTestsConstants.ColumnCategoryId}\"],\r\n            \"includeColumns\": [\"{IndexRecommendationJsonExtensionsTestsConstants.ColumnProductName}\"],\r\n            \"estimatedImpactPercent\": {IndexRecommendationJsonExtensionsTestsConstants.EstimatedImpactPercent72_3},\r\n            \"sourceNodeCost\": {IndexRecommendationJsonExtensionsTestsConstants.SourceNodeCost0_5},\r\n            \"confidence\": {(int)Confidence.Medium},\r\n            \"reasons\": [\"{IndexRecommendationJsonExtensionsTestsConstants.ReasonMissingIndex}\", \"{IndexRecommendationJsonExtensionsTestsConstants.ReasonPerformanceIssue}\"]\r\n        }}";
 
         // Act
         var result = IndexRecommendationJsonExtensions.FromJson(json);
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal("dbo.Products", result.Table);
+        Assert.Equal(IndexRecommendationJsonExtensionsTestsConstants.TableProducts, result.Table);
         Assert.Equal(2, result.KeyColumns.Count);
-        Assert.Contains("ProductId", result.KeyColumns);
-        Assert.Contains("CategoryId", result.KeyColumns);
+        Assert.Contains(IndexRecommendationJsonExtensionsTestsConstants.ColumnProductId, result.KeyColumns);
+        Assert.Contains(IndexRecommendationJsonExtensionsTestsConstants.ColumnCategoryId, result.KeyColumns);
         Assert.Single(result.IncludeColumns);
-        Assert.Contains("ProductName", result.IncludeColumns);
-        Assert.Equal(72.3, result.EstimatedImpactPercent);
-        Assert.Equal(0.5, result.SourceNodeCost);
+        Assert.Contains(IndexRecommendationJsonExtensionsTestsConstants.ColumnProductName, result.IncludeColumns);
+        Assert.Equal(IndexRecommendationJsonExtensionsTestsConstants.EstimatedImpactPercent72_3, result.EstimatedImpactPercent);
+        Assert.Equal(IndexRecommendationJsonExtensionsTestsConstants.SourceNodeCost0_5, result.SourceNodeCost);
         Assert.Equal(Confidence.Medium, result.Confidence);
         Assert.Equal(2, result.Reasons.Count);
     }
@@ -175,7 +175,7 @@ public class IndexRecommendationJsonExtensionsTests
     public void FromJson_WithInvalidJson_ThrowsJsonException()
     {
         // Arrange
-        var invalidJson = "{ invalid json";
+        var invalidJson = IndexRecommendationJsonExtensionsTestsConstants.InvalidJson;
 
         // Act & Assert
         Assert.Throws<JsonException>(() => IndexRecommendationJsonExtensions.FromJson(invalidJson));
@@ -193,7 +193,7 @@ public class IndexRecommendationJsonExtensionsTests
         // Assert
         Assert.True(result);
         Assert.NotNull(value);
-        Assert.Equal("dbo.Users", value.Table);
+        Assert.Equal(IndexRecommendationJsonExtensionsTestsConstants.TableUsers, value.Table);
         Assert.Equal(Confidence.High, value.Confidence);
     }
 
@@ -201,7 +201,7 @@ public class IndexRecommendationJsonExtensionsTests
     public void TryFromJson_WithValidJsonStringWithCamelCase_ReturnsTrueAndSetsValue()
     {
         // Arrange - JSON uses camelCase property names, enums are serialized as numbers
-        var json = "{\"table\":\"dbo.Orders\",\"keyColumns\":[\"OrderId\"],\"includeColumns\":[],\"estimatedImpactPercent\":45.2,\"sourceNodeCost\":0.3,\"confidence\":0,\"reasons\":[]}";
+        var json = $"{{\"table\":\"{IndexRecommendationJsonExtensionsTestsConstants.TableOrders}\",\"keyColumns\":[\"{IndexRecommendationJsonExtensionsTestsConstants.ColumnOrderId}\"],\"includeColumns\":[],\"estimatedImpactPercent\":{IndexRecommendationJsonExtensionsTestsConstants.EstimatedImpactPercent45_2},\"sourceNodeCost\":{IndexRecommendationJsonExtensionsTestsConstants.SourceNodeCost0_3},\"confidence\":{(int)Confidence.Low},\"reasons\":[]}}";
 
         // Act
         var result = IndexRecommendationJsonExtensions.TryFromJson(json, out var value);
@@ -209,12 +209,12 @@ public class IndexRecommendationJsonExtensionsTests
         // Assert
         Assert.True(result);
         Assert.NotNull(value);
-        Assert.Equal("dbo.Orders", value.Table);
+        Assert.Equal(IndexRecommendationJsonExtensionsTestsConstants.TableOrders, value.Table);
         Assert.Single(value.KeyColumns);
-        Assert.Equal("OrderId", value.KeyColumns[0]);
+        Assert.Equal(IndexRecommendationJsonExtensionsTestsConstants.ColumnOrderId, value.KeyColumns[0]);
         Assert.Empty(value.IncludeColumns);
-        Assert.Equal(45.2, value.EstimatedImpactPercent);
-        Assert.Equal(0.3, value.SourceNodeCost);
+        Assert.Equal(IndexRecommendationJsonExtensionsTestsConstants.EstimatedImpactPercent45_2, value.EstimatedImpactPercent);
+        Assert.Equal(IndexRecommendationJsonExtensionsTestsConstants.SourceNodeCost0_3, value.SourceNodeCost);
         Assert.Equal(Confidence.Low, value.Confidence);
     }
 
@@ -236,7 +236,7 @@ public class IndexRecommendationJsonExtensionsTests
     public void TryFromJson_WithWhitespaceJsonString_ReturnsFalseAndSetsValueToNull()
     {
         // Arrange - whitespace-only strings pass ArgumentException.ThrowIfNullOrEmpty check
-        var whitespaceJson = "   ";
+        var whitespaceJson = IndexRecommendationJsonExtensionsTestsConstants.WhitespaceJson;
 
         // Act
         var result = IndexRecommendationJsonExtensions.TryFromJson(whitespaceJson, out var value);
@@ -250,7 +250,7 @@ public class IndexRecommendationJsonExtensionsTests
     public void TryFromJson_WithInvalidJson_ReturnsFalseAndSetsValueToNull()
     {
         // Arrange
-        var invalidJson = "{ invalid json";
+        var invalidJson = IndexRecommendationJsonExtensionsTestsConstants.InvalidJson;
 
         // Act
         var result = IndexRecommendationJsonExtensions.TryFromJson(invalidJson, out var value);
@@ -299,11 +299,11 @@ public class IndexRecommendationJsonExtensionsTests
         // Arrange - minimal recommendation
         var minimal = new IndexRecommendation
         {
-            Table = "dbo.Minimal",
-            KeyColumns = new List<string> { "Id" },
+            Table = IndexRecommendationJsonExtensionsTestsConstants.TableMinimal,
+            KeyColumns = new List<string> { IndexRecommendationJsonExtensionsTestsConstants.ColumnId },
             IncludeColumns = new List<string>(),
-            EstimatedImpactPercent = 0.0,
-            SourceNodeCost = 0.0,
+            EstimatedImpactPercent = IndexRecommendationJsonExtensionsTestsConstants.EstimatedImpactPercent0,
+            SourceNodeCost = IndexRecommendationJsonExtensionsTestsConstants.SourceNodeCost0,
             Confidence = Confidence.Low,
             Reasons = new List<string>()
         };
@@ -334,10 +334,10 @@ public class IndexRecommendationJsonExtensionsTests
             // Arrange
             var recommendation = new IndexRecommendation
             {
-                Table = "dbo.Test",
-                KeyColumns = new List<string> { "Id" },
+                Table = IndexRecommendationJsonExtensionsTestsConstants.TableTest,
+                KeyColumns = new List<string> { IndexRecommendationJsonExtensionsTestsConstants.ColumnId },
                 IncludeColumns = new List<string>(),
-                EstimatedImpactPercent = 50.0,
+                EstimatedImpactPercent = IndexRecommendationJsonExtensionsTestsConstants.EstimatedImpactPercent50,
                 Confidence = confidence,
                 Reasons = new List<string>()
             };
