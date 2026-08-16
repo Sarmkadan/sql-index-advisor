@@ -2,7 +2,7 @@ using SqlIndexAdvisor.Core.Model;
 
 namespace SqlIndexAdvisor.Tests;
 
-public class IndexRecommendationValidationTests
+public class IndexRecommendationValidationTests : IIndexRecommendationValidationTests
 {
     [Fact]
     public void Validate_WithValidRecommendation_ReturnsEmptyList()
