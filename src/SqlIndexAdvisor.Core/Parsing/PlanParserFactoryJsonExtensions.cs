@@ -9,11 +9,11 @@ namespace SqlIndexAdvisor.Core.Parsing;
 /// </summary>
 public static class PlanParserFactoryJsonExtensions
 {
-	private static readonly JsonSerializerOptions s_jsonOptions = new(JsonSerializerDefaults.Web)
+	private static readonly JsonSerializerOptions s_jsonOptions = new(PlanParserFactoryJsonExtensionsConstants.JsonSerializerDefaults)
 	{
-		PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-		WriteIndented = false,
-		DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+		PropertyNamingPolicy = PlanParserFactoryJsonExtensionsConstants.DefaultNamingPolicy,
+		WriteIndented = PlanParserFactoryJsonExtensionsConstants.DefaultWriteIndented,
+		DefaultIgnoreCondition = PlanParserFactoryJsonExtensionsConstants.DefaultIgnoreCondition
 	};
 
 	/// <summary>
@@ -23,12 +23,12 @@ public static class PlanParserFactoryJsonExtensions
 	/// <param name="indented">Whether to indent the JSON for readability.</param>
 	/// <returns>A JSON representation of the factory.</returns>
 	/// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is <see langword="null"/>.</exception>
-	public static string ToJson(this PlanParserFactory value, bool indented = false)
+	public static string ToJson(this PlanParserFactory value, bool indented = PlanParserFactoryJsonExtensionsConstants.DefaultWriteIndented)
 	{
 		ArgumentNullException.ThrowIfNull(value);
 
 		var options = indented
-			? new JsonSerializerOptions(s_jsonOptions) { WriteIndented = true }
+			? new JsonSerializerOptions(s_jsonOptions) { WriteIndented = PlanParserFactoryJsonExtensionsConstants.IndentedWriteIndented }
 			: s_jsonOptions;
 
 		return JsonSerializer.Serialize(value, options);
