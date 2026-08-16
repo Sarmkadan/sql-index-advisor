@@ -7,7 +7,7 @@ namespace SqlIndexAdvisor.Tests;
 /// <summary>
 /// Contains unit tests for parsing SQL Server execution plans using the <see cref="SqlServerXmlPlanParser"/> class.
 /// </summary>
-public class SqlServerParserTests
+public class SqlServerParserTests : ISqlServerParserTests
 {
     private const string Plan = """
     <?xml version="1.0" encoding="utf-16"?>
