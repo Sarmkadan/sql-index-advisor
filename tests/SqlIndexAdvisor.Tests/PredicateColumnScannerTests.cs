@@ -1,5 +1,6 @@
 using SqlIndexAdvisor.Core.Parsing;
 using Xunit;
+using static SqlIndexAdvisor.Tests.PredicateColumnScannerTestsConstants;
 
 namespace SqlIndexAdvisor.Tests;
 
@@ -14,9 +15,9 @@ public class PredicateColumnScannerTests : IPredicateColumnScannerTests
     [Fact]
     public void PicksUpEqualityColumns()
     {
-        var cols = PredicateColumnScanner.Scan("((country = 'PL'::text) AND (is_active = true))").ToList();
-        Assert.Contains("country", cols);
-        Assert.Contains("is_active", cols);
+        var cols = PredicateColumnScanner.Scan(EqualityColumnsSql).ToList();
+        Assert.Contains(EqualityColumnCountry, cols);
+        Assert.Contains(EqualityColumnIsActive, cols);
     }
 
     /// <summary>
@@ -25,8 +26,8 @@ public class PredicateColumnScannerTests : IPredicateColumnScannerTests
     [Fact]
     public void StripsAliasPrefix()
     {
-        var cols = PredicateColumnScanner.Scan("(u.status = 'open')").ToList();
-        Assert.Equal(new[] { "status" }, cols);
+        var cols = PredicateColumnScanner.Scan(AliasPrefixSql).ToList();
+        Assert.Equal(new[] { AliasPrefixColumn }, cols);
     }
 
     /// <summary>
@@ -35,9 +36,9 @@ public class PredicateColumnScannerTests : IPredicateColumnScannerTests
     [Fact]
     public void IgnoresBooleanKeywords()
     {
-        var cols = PredicateColumnScanner.Scan("(a = 1 AND b > 2)").ToList();
-        Assert.DoesNotContain("AND", cols);
-        Assert.Equal(new[] { "a", "b" }, cols);
+        var cols = PredicateColumnScanner.Scan(BooleanKeywordsSql).ToList();
+        Assert.DoesNotContain(BooleanKeywordAnd, cols);
+        Assert.Equal(new[] { BooleanColumnA, BooleanColumnB }, cols);
     }
 
     /// <summary>
@@ -46,8 +47,8 @@ public class PredicateColumnScannerTests : IPredicateColumnScannerTests
     [Fact]
     public void HandlesRangeAndInOperators()
     {
-        var cols = PredicateColumnScanner.Scan("(price BETWEEN 10 AND 20 AND category IN ('x','y'))").ToList();
-        Assert.Contains("price", cols);
-        Assert.Contains("category", cols);
+        var cols = PredicateColumnScanner.Scan(RangeAndInSql).ToList();
+        Assert.Contains(RangeColumnPrice, cols);
+        Assert.Contains(RangeColumnCategory, cols);
     }
 }
