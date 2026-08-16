@@ -8,11 +8,11 @@ namespace SqlIndexAdvisor.Core.Engine;
 /// </summary>
 public static class RecommendationEngineJsonExtensions
 {
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
+    private static readonly JsonSerializerOptions JsonOptions = new(RecommendationEngineJsonExtensionsConstants.SerializerDefaults)
     {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = false,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        PropertyNamingPolicy = RecommendationEngineJsonExtensionsConstants.PropertyNamingPolicy,
+        WriteIndented = RecommendationEngineJsonExtensionsConstants.DefaultWriteIndented,
+        DefaultIgnoreCondition = RecommendationEngineJsonExtensionsConstants.DefaultIgnoreCondition
     };
 
     /// <summary>
@@ -27,7 +27,7 @@ public static class RecommendationEngineJsonExtensions
         ArgumentNullException.ThrowIfNull(value);
 
         var options = indented
-            ? new JsonSerializerOptions(JsonOptions) { WriteIndented = true }
+            ? new JsonSerializerOptions(JsonOptions) { WriteIndented = RecommendationEngineJsonExtensionsConstants.IndentedWriteIndented }
             : JsonOptions;
 
         return JsonSerializer.Serialize(value, options);
