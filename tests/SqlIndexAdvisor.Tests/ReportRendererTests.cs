@@ -7,7 +7,7 @@ namespace SqlIndexAdvisor.Tests;
 /// <summary>
 /// Tests for the ReportRenderer class covering text and JSON rendering scenarios.
 /// </summary>
-public class ReportRendererTests
+public class ReportRendererTests : IReportRendererTests
 {
     /// <summary>
     /// Verifies that empty recommendation list produces appropriate text output.
