@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
 namespace SqlIndexAdvisor.Core.Model;
 
 /// <summary>
@@ -23,33 +27,33 @@ public static class ExecutionPlanValidation
         // Validate Dialect
         if (value.Dialect != PlanDialect.SqlServer && value.Dialect != PlanDialect.Postgres)
         {
-            problems.Add($"Invalid Dialect value: {value.Dialect}. Expected SqlServer or Postgres.");
+            problems.Add(string.Format(ExecutionPlanValidationConstants.InvalidDialectMessage, value.Dialect));
         }
 
         // Validate StatementText
         if (value.StatementText is null)
         {
-            problems.Add("StatementText cannot be null.");
+            problems.Add(ExecutionPlanValidationConstants.StatementTextCannotBeNull);
         }
 
         // Validate EstimatedTotalCost
         if (double.IsNaN(value.EstimatedTotalCost))
         {
-            problems.Add("EstimatedTotalCost cannot be NaN.");
+            problems.Add(ExecutionPlanValidationConstants.EstimatedTotalCostNaN);
         }
         else if (double.IsInfinity(value.EstimatedTotalCost))
         {
-            problems.Add("EstimatedTotalCost cannot be infinite.");
+            problems.Add(ExecutionPlanValidationConstants.EstimatedTotalCostInfinite);
         }
         else if (value.EstimatedTotalCost < 0)
         {
-            problems.Add("EstimatedTotalCost cannot be negative.");
+            problems.Add(ExecutionPlanValidationConstants.EstimatedTotalCostNegative);
         }
 
         // Validate Nodes collection
         if (value.Nodes is null)
         {
-            problems.Add("Nodes collection cannot be null.");
+            problems.Add(ExecutionPlanValidationConstants.NodesCollectionCannotBeNull);
         }
         else
         {
@@ -59,58 +63,59 @@ public static class ExecutionPlanValidation
                 var node = value.Nodes[i];
                 if (node is null)
                 {
-                    problems.Add($"Nodes[{i}] cannot be null.");
+                    problems.Add(string.Format(ExecutionPlanValidationConstants.NodeCannotBeNull, i));
                     continue;
                 }
 
                 if (string.IsNullOrEmpty(node.Operator))
                 {
-                    problems.Add($"Nodes[{i}].Operator cannot be null or empty.");
+                    problems.Add(string.Format(ExecutionPlanValidationConstants.NodeOperatorCannotBeNullOrEmpty, i));
                 }
 
                 if (node.EstimatedRows < 0)
                 {
-                    problems.Add($"Nodes[{i}].EstimatedRows cannot be negative. Actual: {node.EstimatedRows}");
+                    problems.Add(string.Format(ExecutionPlanValidationConstants.NodeEstimatedRowsNegative, i, node.EstimatedRows));
                 }
 
                 if (double.IsNaN(node.EstimatedRows))
                 {
-                    problems.Add($"Nodes[{i}].EstimatedRows cannot be NaN.");
+                    problems.Add(string.Format(ExecutionPlanValidationConstants.NodeEstimatedRowsNaN, i));
                 }
 
                 if (double.IsInfinity(node.EstimatedRows))
                 {
-                    problems.Add($"Nodes[{i}].EstimatedRows cannot be infinite.");
+                    problems.Add(string.Format(ExecutionPlanValidationConstants.NodeEstimatedRowsInfinite, i));
                 }
 
                 if (node.EstimatedRowsRead < 0)
                 {
-                    problems.Add($"Nodes[{i}].EstimatedRowsRead cannot be negative. Actual: {node.EstimatedRowsRead}");
+                    problems.Add(string.Format(ExecutionPlanValidationConstants.NodeEstimatedRowsReadNegative, i, node.EstimatedRowsRead));
                 }
 
                 if (double.IsNaN(node.EstimatedRowsRead))
                 {
-                    problems.Add($"Nodes[{i}].EstimatedRowsRead cannot be NaN.");
+                    problems.Add(string.Format(ExecutionPlanValidationConstants.NodeEstimatedRowsReadNaN, i));
                 }
 
                 if (double.IsInfinity(node.EstimatedRowsRead))
                 {
-                    problems.Add($"Nodes[{i}].EstimatedRowsRead cannot be infinite.");
+                    problems.Add(string.Format(ExecutionPlanValidationConstants.NodeEstimatedRowsReadInfinite, i));
                 }
 
-                if (node.RelativeCost < 0 || node.RelativeCost > 1)
+                if (node.RelativeCost < ExecutionPlanValidationConstants.RelativeCostMin ||
+                    node.RelativeCost > ExecutionPlanValidationConstants.RelativeCostMax)
                 {
-                    problems.Add($"Nodes[{i}].RelativeCost must be between 0 and 1. Actual: {node.RelativeCost}");
+                    problems.Add(string.Format(ExecutionPlanValidationConstants.NodeRelativeCostOutOfRange, i, node.RelativeCost));
                 }
 
                 if (double.IsNaN(node.RelativeCost))
                 {
-                    problems.Add($"Nodes[{i}].RelativeCost cannot be NaN.");
+                    problems.Add(string.Format(ExecutionPlanValidationConstants.NodeRelativeCostNaN, i));
                 }
 
                 if (double.IsInfinity(node.RelativeCost))
                 {
-                    problems.Add($"Nodes[{i}].RelativeCost cannot be infinite.");
+                    problems.Add(string.Format(ExecutionPlanValidationConstants.NodeRelativeCostInfinite, i));
                 }
 
                 // Validate string collections
@@ -122,7 +127,7 @@ public static class ExecutionPlanValidation
         // Validate EngineMissingIndexes collection
         if (value.EngineMissingIndexes is null)
         {
-            problems.Add("EngineMissingIndexes collection cannot be null.");
+            problems.Add(ExecutionPlanValidationConstants.EngineMissingIndexesCollectionCannotBeNull);
         }
         else
         {
@@ -132,28 +137,29 @@ public static class ExecutionPlanValidation
                 var index = value.EngineMissingIndexes[i];
                 if (index is null)
                 {
-                    problems.Add($"EngineMissingIndexes[{i}] cannot be null.");
+                    problems.Add(string.Format(ExecutionPlanValidationConstants.EngineMissingIndexCannotBeNull, i));
                     continue;
                 }
 
                 if (string.IsNullOrEmpty(index.Table))
                 {
-                    problems.Add($"EngineMissingIndexes[{i}].Table cannot be null or empty.");
+                    problems.Add(string.Format(ExecutionPlanValidationConstants.EngineMissingIndexTableCannotBeNullOrEmpty, i));
                 }
 
-                if (index.ImpactPercent < 0 || index.ImpactPercent > 100)
+                if (index.ImpactPercent < ExecutionPlanValidationConstants.ImpactPercentMin ||
+                    index.ImpactPercent > ExecutionPlanValidationConstants.ImpactPercentMax)
                 {
-                    problems.Add($"EngineMissingIndexes[{i}].ImpactPercent must be between 0 and 100. Actual: {index.ImpactPercent}");
+                    problems.Add(string.Format(ExecutionPlanValidationConstants.EngineMissingIndexImpactPercentOutOfRange, i, index.ImpactPercent));
                 }
 
                 if (double.IsNaN(index.ImpactPercent))
                 {
-                    problems.Add($"EngineMissingIndexes[{i}].ImpactPercent cannot be NaN.");
+                    problems.Add(string.Format(ExecutionPlanValidationConstants.EngineMissingIndexImpactPercentNaN, i));
                 }
 
                 if (double.IsInfinity(index.ImpactPercent))
                 {
-                    problems.Add($"EngineMissingIndexes[{i}].ImpactPercent cannot be infinite.");
+                    problems.Add(string.Format(ExecutionPlanValidationConstants.EngineMissingIndexImpactPercentInfinite, i));
                 }
 
                 // Validate column collections
@@ -211,7 +217,7 @@ public static class ExecutionPlanValidation
     {
         if (collection is null)
         {
-            problems.Add($"{collectionPath} cannot be null.");
+            problems.Add(string.Format(ExecutionPlanValidationConstants.CollectionCannotBeNull, collectionPath));
             return;
         }
 
@@ -221,7 +227,7 @@ public static class ExecutionPlanValidation
             var item = list[j];
             if (string.IsNullOrEmpty(item))
             {
-                problems.Add($"{collectionPath}[{j}] cannot be null or empty.");
+                problems.Add(string.Format(ExecutionPlanValidationConstants.CollectionItemCannotBeNullOrEmpty, collectionPath, j));
             }
         }
     }
