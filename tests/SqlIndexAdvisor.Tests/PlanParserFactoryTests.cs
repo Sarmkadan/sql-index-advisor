@@ -5,7 +5,7 @@ using SqlIndexAdvisor.Core.Model;
 
 namespace SqlIndexAdvisor.Tests
 {
-    public class PlanParserFactoryTests
+    public class PlanParserFactoryTests : IPlanParserFactoryTests
     {
         private readonly PlanParserFactory _factory = new PlanParserFactory();
 
