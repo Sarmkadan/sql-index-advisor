@@ -71,17 +71,17 @@ public static class RecommendationEngineTestsExtensions
         return new ExecutionPlan
         {
             Dialect = dialect,
-            EstimatedTotalCost = 100,
+            EstimatedTotalCost = RecommendationEngineTestsExtensionsConstants.SeqScanEstimatedTotalCost,
             Nodes =
             {
                 new PlanNode
                 {
                     Operator = "Seq Scan",
                     TableName = tableName,
-                    EstimatedRows = 1000,
-                    EstimatedRowsRead = 1000000,
-                    RelativeCost = 0.9,
-                    PredicateColumns = { "id" }
+                    EstimatedRows = RecommendationEngineTestsExtensionsConstants.SeqScanEstimatedRows,
+                    EstimatedRowsRead = RecommendationEngineTestsExtensionsConstants.SeqScanEstimatedRowsRead,
+                    RelativeCost = RecommendationEngineTestsExtensionsConstants.SeqScanRelativeCost,
+                    PredicateColumns = { RecommendationEngineTestsExtensionsConstants.SeqScanPredicateColumn }
                 }
             }
         };
@@ -103,18 +103,22 @@ public static class RecommendationEngineTestsExtensions
         return new ExecutionPlan
         {
             Dialect = dialect,
-            EstimatedTotalCost = 10,
+            EstimatedTotalCost = RecommendationEngineTestsExtensionsConstants.ClusteredScanEstimatedTotalCost,
             Nodes =
             {
                 new PlanNode
                 {
                     Operator = "Clustered Index Scan",
                     TableName = tableName,
-                    EstimatedRows = 100,
-                    EstimatedRowsRead = 10000,
-                    RelativeCost = 0.8,
-                    PredicateColumns = { "status" },
-                    OutputColumns = { "id", "total", "customer_id" }
+                    EstimatedRows = RecommendationEngineTestsExtensionsConstants.ClusteredScanEstimatedRows,
+                    EstimatedRowsRead = RecommendationEngineTestsExtensionsConstants.ClusteredScanEstimatedRowsRead,
+                    RelativeCost = RecommendationEngineTestsExtensionsConstants.ClusteredScanRelativeCost,
+                    PredicateColumns = { RecommendationEngineTestsExtensionsConstants.ClusteredScanPredicateColumn },
+                    OutputColumns = {
+                        RecommendationEngineTestsExtensionsConstants.ClusteredScanOutputColumns[0],
+                        RecommendationEngineTestsExtensionsConstants.ClusteredScanOutputColumns[1],
+                        RecommendationEngineTestsExtensionsConstants.ClusteredScanOutputColumns[2]
+                    }
                 }
             }
         };
@@ -156,13 +160,13 @@ public static class RecommendationEngineTestsExtensions
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(createStatement);
 
-        const string prefix = "CREATE INDEX ";
+        const string prefix = RecommendationEngineTestsExtensionsConstants.CreateIndexPrefix;
         if (!createStatement.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
         {
             throw new ArgumentException("Statement must be a CREATE INDEX statement.", nameof(createStatement));
         }
 
-        var indexOfOn = createStatement.IndexOf(" ON ", StringComparison.OrdinalIgnoreCase);
+        var indexOfOn = createStatement.IndexOf(RecommendationEngineTestsExtensionsConstants.OnClause, StringComparison.OrdinalIgnoreCase);
         if (indexOfOn < 0)
         {
             throw new ArgumentException("Statement must contain ' ON ' clause.", nameof(createStatement));
@@ -182,7 +186,7 @@ public static class RecommendationEngineTestsExtensions
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(createStatement);
 
-        const string onPrefix = " ON ";
+        const string onPrefix = RecommendationEngineTestsExtensionsConstants.OnClause;
         var indexOfOn = createStatement.IndexOf(onPrefix, StringComparison.OrdinalIgnoreCase);
         if (indexOfOn < 0)
         {
@@ -205,15 +209,15 @@ public static class RecommendationEngineTestsExtensions
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(createStatement);
 
-        var columnsStart = createStatement.IndexOf('(');
-        var columnsEnd = createStatement.IndexOf(')', columnsStart);
+        var columnsStart = createStatement.IndexOf(RecommendationEngineTestsExtensionsConstants.OpeningParen);
+        var columnsEnd = createStatement.IndexOf(RecommendationEngineTestsExtensionsConstants.ClosingParen, columnsStart);
         if (columnsStart < 0 || columnsEnd < 0)
         {
             throw new ArgumentException("Statement must contain column list in parentheses.", nameof(createStatement));
         }
 
         var columnsText = createStatement.Substring(columnsStart + 1, columnsEnd - columnsStart - 1);
-        return columnsText.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries);
+        return columnsText.Split(new[] { RecommendationEngineTestsExtensionsConstants.ColumnSeparator }, StringSplitOptions.RemoveEmptyEntries);
     }
 
     /// <summary>
@@ -227,7 +231,7 @@ public static class RecommendationEngineTestsExtensions
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(createStatement);
 
-        const string includePrefix = "INCLUDE (";
+        const string includePrefix = RecommendationEngineTestsExtensionsConstants.IncludePrefix;
         var indexOfInclude = createStatement.IndexOf(includePrefix, StringComparison.OrdinalIgnoreCase);
         if (indexOfInclude < 0)
         {
@@ -235,14 +239,14 @@ public static class RecommendationEngineTestsExtensions
         }
 
         var columnsStart = indexOfInclude + includePrefix.Length;
-        var columnsEnd = createStatement.IndexOf(')', columnsStart);
+        var columnsEnd = createStatement.IndexOf(RecommendationEngineTestsExtensionsConstants.ClosingParen, columnsStart);
         if (columnsEnd < 0)
         {
             throw new ArgumentException("Statement must contain closing parenthesis for INCLUDE clause.", nameof(createStatement));
         }
 
         var columnsText = createStatement.Substring(columnsStart, columnsEnd - columnsStart);
-        var columns = columnsText.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries);
+        var columns = columnsText.Split(new[] { RecommendationEngineTestsExtensionsConstants.ColumnSeparator }, StringSplitOptions.RemoveEmptyEntries);
         return columns.Length == 0 ? Array.Empty<string>() : columns;
     }
 }
