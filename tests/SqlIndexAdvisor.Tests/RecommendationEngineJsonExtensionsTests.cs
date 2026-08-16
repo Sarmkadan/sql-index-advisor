@@ -4,7 +4,7 @@ using Xunit;
 
 namespace SqlIndexAdvisor.Tests
 {
-    public class RecommendationEngineJsonExtensionsTests
+    public class RecommendationEngineJsonExtensionsTests : IRecommendationEngineJsonExtensionsTests
     {
         [Fact]
         public void ToJson_WithValidEngine_ReturnsNonEmptyJson()
