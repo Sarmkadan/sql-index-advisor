@@ -2,7 +2,7 @@ using SqlIndexAdvisor.Core.Model;
 
 namespace SqlIndexAdvisor.Tests;
 
-public class IndexRecommendationExtensionsTests
+public class IndexRecommendationExtensionsTests : IIndexRecommendationExtensionsTests
 {
     private readonly IndexRecommendation _testRecommendation = new()
     {
