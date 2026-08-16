@@ -5,10 +5,10 @@ namespace SqlIndexAdvisor.Core.Model;
 
 public static class ExecutionPlanJsonExtensions
 {
-    private static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web)
+    private static readonly JsonSerializerOptions Options = new(ExecutionPlanJsonExtensionsConstants.SerializerDefaults)
     {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = false,
+        PropertyNamingPolicy = ExecutionPlanJsonExtensionsConstants.NamingPolicy,
+        WriteIndented = ExecutionPlanJsonExtensionsConstants.DefaultWriteIndented,
     };
 
     /// <summary>
@@ -23,7 +23,7 @@ public static class ExecutionPlanJsonExtensions
         ArgumentNullException.ThrowIfNull(value);
 
         var options = indented
-            ? new JsonSerializerOptions(Options) { WriteIndented = true }
+            ? new JsonSerializerOptions(Options) { WriteIndented = ExecutionPlanJsonExtensionsConstants.IndentedWriteIndented }
             : Options;
         return JsonSerializer.Serialize(value, options);
     }
