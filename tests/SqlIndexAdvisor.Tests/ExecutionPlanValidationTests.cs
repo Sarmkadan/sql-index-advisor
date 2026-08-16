@@ -3,7 +3,7 @@ using Xunit;
 
 namespace SqlIndexAdvisor.Tests;
 
-public class ExecutionPlanValidationTests
+public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
 {
     [Fact]
     public void Validate_HappyPath_ForEachMajorPublicMethod_ReturnsNoProblems()
