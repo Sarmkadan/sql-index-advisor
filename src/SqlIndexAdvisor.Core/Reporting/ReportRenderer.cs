@@ -26,6 +26,9 @@ public static class ReportRenderer
     /// <returns>A formatted text report string.</returns>
     public static string RenderText(ExecutionPlan plan, IReadOnlyList<IndexRecommendation> recs)
     {
+        ArgumentNullException.ThrowIfNull(plan);
+        ArgumentNullException.ThrowIfNull(recs);
+
         var sb = new StringBuilder();
         sb.AppendLine($"Dialect : {plan.Dialect}");
         sb.AppendLine($"Statement cost: {plan.EstimatedTotalCost:0.###}");
@@ -72,7 +75,7 @@ public static class ReportRenderer
     {
         ArgumentNullException.ThrowIfNull(plan);
         ArgumentNullException.ThrowIfNull(recs);
-        ArgumentNullException.ThrowIfNull(schemaVersion);
+        ArgumentException.ThrowIfNullOrEmpty(schemaVersion);
 
         var payload = new
         {
