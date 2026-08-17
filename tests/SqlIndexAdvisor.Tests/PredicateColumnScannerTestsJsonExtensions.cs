@@ -8,11 +8,6 @@ namespace SqlIndexAdvisor.Tests
     /// </summary>
     public static class PredicateColumnScannerTestsJsonExtensions
     {
-        private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web)
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        };
-
         /// <summary>
         /// Converts the specified <see cref="PredicateColumnScannerTests"/> instance to a JSON string.
         /// </summary>
@@ -23,11 +18,10 @@ namespace SqlIndexAdvisor.Tests
         public static string ToJson(this PredicateColumnScannerTests value, bool indented = false)
         {
             ArgumentNullException.ThrowIfNull(value);
-            var options = _jsonOptions;
-            if (indented)
-            {
-                options = new JsonSerializerOptions(_jsonOptions) { WriteIndented = true };
-            }
+            var options = indented
+                ? PredicateColumnScannerTestsJsonExtensionsConstants.IndentedJsonOptions
+                : PredicateColumnScannerTestsJsonExtensionsConstants.DefaultJsonOptions;
+
             return JsonSerializer.Serialize(value, options);
         }
 
@@ -42,7 +36,7 @@ namespace SqlIndexAdvisor.Tests
             ArgumentException.ThrowIfNullOrEmpty(json);
             try
             {
-                return JsonSerializer.Deserialize<PredicateColumnScannerTests>(json, _jsonOptions);
+                return JsonSerializer.Deserialize<PredicateColumnScannerTests>(json, PredicateColumnScannerTestsJsonExtensionsConstants.DefaultJsonOptions);
             }
             catch (JsonException)
             {
@@ -62,7 +56,7 @@ namespace SqlIndexAdvisor.Tests
             ArgumentException.ThrowIfNullOrEmpty(json);
             try
             {
-                value = JsonSerializer.Deserialize<PredicateColumnScannerTests>(json, _jsonOptions);
+                value = JsonSerializer.Deserialize<PredicateColumnScannerTests>(json, PredicateColumnScannerTestsJsonExtensionsConstants.DefaultJsonOptions);
                 return value is not null;
             }
             catch (JsonException)
@@ -71,6 +65,5 @@ namespace SqlIndexAdvisor.Tests
                 return false;
             }
         }
-
     }
 }
