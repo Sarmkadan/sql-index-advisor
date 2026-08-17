@@ -16,7 +16,7 @@ public class FullScanWithFilterRuleTests
     public void Evaluate_SeqScanWithFilterPredicate_ReturnsRecommendation()
     {
         // Arrange
-        var plan = "users".CreateSeqScanPlan();
+        var plan = FullScanWithFilterRuleTestsConstants.UsersTable.CreateSeqScanPlan();
 
         // Act
         var recommendations = _rule.Evaluate(plan).ToList();
@@ -25,18 +25,18 @@ public class FullScanWithFilterRuleTests
         Assert.Single(recommendations);
         var recommendation = recommendations[0];
 
-        Assert.Equal("users", recommendation.Table);
+        Assert.Equal(FullScanWithFilterRuleTestsConstants.UsersTable, recommendation.Table);
         Assert.Equal(new[] { "id" }, recommendation.KeyColumns);
         Assert.Empty(recommendation.IncludeColumns);
         Assert.Equal(Confidence.High, recommendation.Confidence);
-        Assert.Contains("Seq Scan on users carries a filter on (id) and is ~90% of statement cost.", recommendation.Reasons);
+        Assert.Contains(FullScanWithFilterRuleTestsConstants.SeqScanUsersReason, recommendation.Reasons);
     }
 
     [Fact]
     public void Evaluate_ClusteredIndexScanWithFilterPredicate_ReturnsRecommendation()
     {
         // Arrange
-        var plan = "orders".CreateClusteredIndexScanPlan();
+        var plan = FullScanWithFilterRuleTestsConstants.OrdersTable.CreateClusteredIndexScanPlan();
 
         // Act
         var recommendations = _rule.Evaluate(plan).ToList();
@@ -45,11 +45,11 @@ public class FullScanWithFilterRuleTests
         Assert.Single(recommendations);
         var recommendation = recommendations[0];
 
-        Assert.Equal("orders", recommendation.Table);
+        Assert.Equal(FullScanWithFilterRuleTestsConstants.OrdersTable, recommendation.Table);
         Assert.Equal(new[] { "status" }, recommendation.KeyColumns);
         Assert.Equal(new[] { "id", "total", "customer_id" }, recommendation.IncludeColumns);
         Assert.Equal(Confidence.High, recommendation.Confidence);
-        Assert.Contains("Clustered Index Scan on orders carries a filter on (status) and is ~80% of statement cost.", recommendation.Reasons);
+        Assert.Contains(FullScanWithFilterRuleTestsConstants.ClusteredIndexScanOrdersReason, recommendation.Reasons);
     }
 
     [Fact]
@@ -59,7 +59,7 @@ public class FullScanWithFilterRuleTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.Postgres,
-            EstimatedTotalCost = 100,
+            EstimatedTotalCost = FullScanWithFilterRuleTestsConstants.EstimatedTotalCost,
             Nodes = new List<PlanNode>
             {
                 new()
@@ -68,7 +68,7 @@ public class FullScanWithFilterRuleTests
                     TableName = "products",
                     EstimatedRows = 1000,
                     EstimatedRowsRead = 1000000,
-                    RelativeCost = 0.9,
+                    RelativeCost = FullScanWithFilterRuleTestsConstants.HighRelativeCost,
                     PredicateColumns = { } // No predicate columns
                 }
             }
@@ -88,16 +88,16 @@ public class FullScanWithFilterRuleTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.SqlServer,
-            EstimatedTotalCost = 100,
+            EstimatedTotalCost = FullScanWithFilterRuleTestsConstants.EstimatedTotalCost,
             Nodes = new List<PlanNode>
             {
                 new()
                 {
                     Operator = "Table Scan",
-                    TableName = "customers",
+                    TableName = FullScanWithFilterRuleTestsConstants.CustomersTable,
                     EstimatedRows = 100,
                     EstimatedRowsRead = 10000,
-                    RelativeCost = 0.05, // Below threshold
+                    RelativeCost = FullScanWithFilterRuleTestsConstants.LowRelativeCost,
                     PredicateColumns = { "name" }
                 }
             }
@@ -117,16 +117,16 @@ public class FullScanWithFilterRuleTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.SqlServer,
-            EstimatedTotalCost = 100,
+            EstimatedTotalCost = FullScanWithFilterRuleTestsConstants.EstimatedTotalCost,
             Nodes = new List<PlanNode>
             {
                 new()
                 {
                     Operator = "Index Scan",
-                    TableName = "products",
+                    TableName = FullScanWithFilterRuleTestsConstants.ProductsTable,
                     EstimatedRows = 500,
                     EstimatedRowsRead = 500000,
-                    RelativeCost = 0.5,
+                    RelativeCost = FullScanWithFilterRuleTestsConstants.MediumRelativeCost,
                     PredicateColumns = { "category_id", "price" },
                     OutputColumns = { "id", "name", "category_id", "price", "stock" }
                 }
@@ -140,11 +140,11 @@ public class FullScanWithFilterRuleTests
         Assert.Single(recommendations);
         var recommendation = recommendations[0];
 
-        Assert.Equal("products", recommendation.Table);
+        Assert.Equal(FullScanWithFilterRuleTestsConstants.ProductsTable, recommendation.Table);
         Assert.Equal(new[] { "category_id", "price" }, recommendation.KeyColumns);
         Assert.Equal(new[] { "id", "name", "stock" }, recommendation.IncludeColumns);
         Assert.Equal(Confidence.Medium, recommendation.Confidence);
-        Assert.Contains("Index Scan on products carries a filter on (category_id, price) and is ~50% of statement cost.", recommendation.Reasons);
+        Assert.Contains(FullScanWithFilterRuleTestsConstants.IndexScanProductsReason, recommendation.Reasons);
     }
 
     [Fact]
@@ -154,34 +154,34 @@ public class FullScanWithFilterRuleTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.Postgres,
-            EstimatedTotalCost = 100,
+            EstimatedTotalCost = FullScanWithFilterRuleTestsConstants.EstimatedTotalCost,
             Nodes = new List<PlanNode>
             {
                 new()
                 {
                     Operator = "Seq Scan",
-                    TableName = "users",
+                    TableName = FullScanWithFilterRuleTestsConstants.UsersTable,
                     EstimatedRows = 1000,
                     EstimatedRowsRead = 1000000,
-                    RelativeCost = 0.9,
+                    RelativeCost = FullScanWithFilterRuleTestsConstants.HighRelativeCost,
                     PredicateColumns = { } // No predicate - should be ignored
                 },
                 new()
                 {
                     Operator = "Seq Scan",
-                    TableName = "orders",
+                    TableName = FullScanWithFilterRuleTestsConstants.OrdersTable,
                     EstimatedRows = 5000,
                     EstimatedRowsRead = 5000000,
-                    RelativeCost = 0.8,
+                    RelativeCost = FullScanWithFilterRuleTestsConstants.MediumHighRelativeCost,
                     PredicateColumns = { "customer_id" } // Has predicate - should match
                 },
                 new()
                 {
                     Operator = "Index Scan",
-                    TableName = "products",
+                    TableName = FullScanWithFilterRuleTestsConstants.ProductsTable,
                     EstimatedRows = 200,
                     EstimatedRowsRead = 200000,
-                    RelativeCost = 0.3,
+                    RelativeCost = FullScanWithFilterRuleTestsConstants.LowMediumRelativeCost,
                     PredicateColumns = { } // No predicate - should be ignored
                 }
             }
@@ -194,7 +194,7 @@ public class FullScanWithFilterRuleTests
         Assert.Single(recommendations);
         var recommendation = recommendations[0];
 
-        Assert.Equal("orders", recommendation.Table);
+        Assert.Equal(FullScanWithFilterRuleTestsConstants.OrdersTable, recommendation.Table);
         Assert.Equal(new[] { "customer_id" }, recommendation.KeyColumns);
     }
 
@@ -205,16 +205,16 @@ public class FullScanWithFilterRuleTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.Postgres,
-            EstimatedTotalCost = 100,
+            EstimatedTotalCost = FullScanWithFilterRuleTestsConstants.EstimatedTotalCost,
             Nodes = new List<PlanNode>
             {
                 new()
                 {
                     Operator = "Seq Scan",
-                    TableName = "logs",
+                    TableName = FullScanWithFilterRuleTestsConstants.LogsTable,
                     EstimatedRows = 100, // Only 100 rows output
                     EstimatedRowsRead = 1000000, // But read 1M rows
-                    RelativeCost = 0.9,
+                    RelativeCost = FullScanWithFilterRuleTestsConstants.HighRelativeCost,
                     PredicateColumns = { "timestamp" },
                     OutputColumns = { "id", "message", "timestamp", "severity" }
                 }
@@ -228,7 +228,7 @@ public class FullScanWithFilterRuleTests
         Assert.Single(recommendations);
         var recommendation = recommendations[0];
 
-        Assert.Equal("logs", recommendation.Table);
+        Assert.Equal(FullScanWithFilterRuleTestsConstants.LogsTable, recommendation.Table);
         Assert.Equal(new[] { "timestamp" }, recommendation.KeyColumns);
         Assert.Equal(new[] { "id", "message", "severity" }, recommendation.IncludeColumns);
         Assert.Equal(Confidence.High, recommendation.Confidence);
@@ -242,7 +242,7 @@ public class FullScanWithFilterRuleTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.SqlServer,
-            EstimatedTotalCost = 100,
+            EstimatedTotalCost = FullScanWithFilterRuleTestsConstants.EstimatedTotalCost,
             Nodes = new List<PlanNode>
             {
                 new()
@@ -251,7 +251,7 @@ public class FullScanWithFilterRuleTests
                     TableName = "transactions",
                     EstimatedRows = 1000,
                     EstimatedRowsRead = 100000,
-                    RelativeCost = 0.4,
+                    RelativeCost = FullScanWithFilterRuleTestsConstants.MediumLowRelativeCost,
                     PredicateColumns = { "status", "date" },
                     OutputColumns = { "id", "amount", "status", "date", "account_id" }
                 }
@@ -278,16 +278,16 @@ public class FullScanWithFilterRuleTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.Postgres,
-            EstimatedTotalCost = 100,
+            EstimatedTotalCost = FullScanWithFilterRuleTestsConstants.EstimatedTotalCost,
             Nodes = new List<PlanNode>
             {
                 new()
                 {
                     Operator = "Seq Scan",
-                    TableName = "audit",
+                    TableName = FullScanWithFilterRuleTestsConstants.AuditTable,
                     EstimatedRows = 50,
                     EstimatedRowsRead = 1000,
-                    RelativeCost = 0.2,
+                    RelativeCost = FullScanWithFilterRuleTestsConstants.LowRelativeCost2,
                     PredicateColumns = { "user_id" },
                     OutputColumns = { "id", "action", "user_id", "timestamp" }
                 }
@@ -301,7 +301,7 @@ public class FullScanWithFilterRuleTests
         Assert.Single(recommendations);
         var recommendation = recommendations[0];
 
-        Assert.Equal("audit", recommendation.Table);
+        Assert.Equal(FullScanWithFilterRuleTestsConstants.AuditTable, recommendation.Table);
         Assert.Equal(new[] { "user_id" }, recommendation.KeyColumns);
         Assert.Equal(new[] { "id", "action", "timestamp" }, recommendation.IncludeColumns);
         Assert.Equal(Confidence.Low, recommendation.Confidence);
@@ -314,7 +314,7 @@ public class FullScanWithFilterRuleTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.Postgres,
-            EstimatedTotalCost = 100,
+            EstimatedTotalCost = FullScanWithFilterRuleTestsConstants.EstimatedTotalCost,
             Nodes = new List<PlanNode>
             {
                 new()
@@ -323,7 +323,7 @@ public class FullScanWithFilterRuleTests
                     TableName = null, // No table name
                     EstimatedRows = 1000,
                     EstimatedRowsRead = 1000000,
-                    RelativeCost = 0.9,
+                    RelativeCost = FullScanWithFilterRuleTestsConstants.HighRelativeCost,
                     PredicateColumns = { "id" }
                 }
             }
@@ -343,25 +343,25 @@ public class FullScanWithFilterRuleTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.SqlServer,
-            EstimatedTotalCost = 100,
+            EstimatedTotalCost = FullScanWithFilterRuleTestsConstants.EstimatedTotalCost,
             Nodes = new List<PlanNode>
             {
                 new()
                 {
                     Operator = "Nested Loops",
-                    TableName = "users",
+                    TableName = FullScanWithFilterRuleTestsConstants.UsersTable,
                     EstimatedRows = 1000,
                     EstimatedRowsRead = 1000000,
-                    RelativeCost = 0.5,
+                    RelativeCost = FullScanWithFilterRuleTestsConstants.MediumRelativeCost,
                     PredicateColumns = { } // No predicate columns
                 },
                 new()
                 {
                     Operator = "Index Scan",
-                    TableName = "products",
+                    TableName = FullScanWithFilterRuleTestsConstants.ProductsTable,
                     EstimatedRows = 500,
                     EstimatedRowsRead = 500000,
-                    RelativeCost = 0.3,
+                    RelativeCost = FullScanWithFilterRuleTestsConstants.LowMediumRelativeCost,
                     PredicateColumns = { } // No predicate columns - Index Scan without predicate is not a full scan
                 }
             }
@@ -381,16 +381,16 @@ public class FullScanWithFilterRuleTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.SqlServer,
-            EstimatedTotalCost = 100,
+            EstimatedTotalCost = FullScanWithFilterRuleTestsConstants.EstimatedTotalCost,
             Nodes = new List<PlanNode>
             {
                 new()
                 {
                     Operator = "Table Scan",
-                    TableName = "customers",
+                    TableName = FullScanWithFilterRuleTestsConstants.CustomersTable,
                     EstimatedRows = 100,
                     EstimatedRowsRead = 10000,
-                    RelativeCost = 0.10, // Exactly at threshold
+                    RelativeCost = FullScanWithFilterRuleTestsConstants.MinRelativeCost, // Exactly at threshold
                     PredicateColumns = { "name" }
                 }
             }
@@ -410,16 +410,16 @@ public class FullScanWithFilterRuleTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.SqlServer,
-            EstimatedTotalCost = 100,
+            EstimatedTotalCost = FullScanWithFilterRuleTestsConstants.EstimatedTotalCost,
             Nodes = new List<PlanNode>
             {
                 new()
                 {
                     Operator = "Table Scan",
-                    TableName = "customers",
+                    TableName = FullScanWithFilterRuleTestsConstants.CustomersTable,
                     EstimatedRows = 100,
                     EstimatedRowsRead = 10000,
-                    RelativeCost = 0.099, // Just below threshold
+                    RelativeCost = FullScanWithFilterRuleTestsConstants.JustBelowMinRelativeCost, // Just below threshold
                     PredicateColumns = { "name" }
                 }
             }
@@ -439,16 +439,16 @@ public class FullScanWithFilterRuleTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.SqlServer,
-            EstimatedTotalCost = 100,
+            EstimatedTotalCost = FullScanWithFilterRuleTestsConstants.EstimatedTotalCost,
             Nodes = new List<PlanNode>
             {
                 new()
                 {
                     Operator = "Table Scan",
-                    TableName = "customers",
+                    TableName = FullScanWithFilterRuleTestsConstants.CustomersTable,
                     EstimatedRows = 100,
                     EstimatedRowsRead = 10000,
-                    RelativeCost = 0.101, // Just above threshold
+                    RelativeCost = FullScanWithFilterRuleTestsConstants.JustAboveMinRelativeCost, // Just above threshold
                     PredicateColumns = { "name" }
                 }
             }
@@ -465,6 +465,6 @@ public class FullScanWithFilterRuleTests
     public void Name_ReturnsLowercaseRuleName()
     {
         // Act & Assert
-        Assert.Equal("fullscanwithfilter", _rule.Name);
+        Assert.Equal(FullScanWithFilterRuleTestsConstants.RuleName, _rule.Name);
     }
 }
