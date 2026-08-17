@@ -1,6 +1,7 @@
 using SqlIndexAdvisor.Core.Model;
 using SqlIndexAdvisor.Core.Reporting;
 using Xunit;
+using static SqlIndexAdvisor.Tests.ReportRendererTestsConstants;
 
 namespace SqlIndexAdvisor.Tests;
 
@@ -18,15 +19,15 @@ public class ReportRendererTests : IReportRendererTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.Postgres,
-            EstimatedTotalCost = 100,
-            Nodes = { new PlanNode { Operator = "Seq Scan", TableName = "users" } }
+            EstimatedTotalCost = DefaultCost,
+            Nodes = { new PlanNode { Operator = DefaultOperator, TableName = UserTableName } }
         };
 
         var recs = new List<IndexRecommendation>();
         var output = ReportRenderer.RenderText(plan, recs);
 
-        Assert.Contains("No index recommendations", output);
-        Assert.Contains("The plan looks fine", output);
+        Assert.Contains(NoRecommendationsMessage, output);
+        Assert.Contains(PlanLooksFineMessage, output);
         Assert.DoesNotContain("recommendation(s)", output);
     }
 
@@ -112,11 +113,11 @@ public class ReportRendererTests : IReportRendererTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.Postgres,
-            EstimatedTotalCost = 500,
+            EstimatedTotalCost = HighCost,
             Nodes =
             {
-                new PlanNode { Operator = "Seq Scan", TableName = "users" },
-                new PlanNode { Operator = "Seq Scan", TableName = "orders" }
+                new PlanNode { Operator = DefaultOperator, TableName = UserTableName },
+                new PlanNode { Operator = DefaultOperator, TableName = "orders" }
             }
         };
 
@@ -124,7 +125,7 @@ public class ReportRendererTests : IReportRendererTests
         {
             new IndexRecommendation
             {
-                Table = "users",
+                Table = UserTableName,
                 KeyColumns = new() { "email" },
                 EstimatedImpactPercent = 65.2,
                 Confidence = Confidence.High,
@@ -145,7 +146,7 @@ public class ReportRendererTests : IReportRendererTests
         Assert.Contains("2 recommendation(s)", output);
         Assert.Contains("[1]", output);
         Assert.Contains("[2]", output);
-        Assert.Contains("users", output);
+        Assert.Contains(UserTableName, output);
         Assert.Contains("orders", output);
         Assert.Contains("65.2% estimated impact", output);
         Assert.Contains("45.8% estimated impact", output);
@@ -432,8 +433,8 @@ public class ReportRendererTests : IReportRendererTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.Postgres,
-            EstimatedTotalCost = 100,
-            Nodes = { new PlanNode { Operator = "Seq Scan", TableName = "test" } }
+            EstimatedTotalCost = DefaultCost,
+            Nodes = { new PlanNode { Operator = DefaultOperator, TableName = "test" } }
         };
 
         var recs = new List<IndexRecommendation>
@@ -449,7 +450,7 @@ public class ReportRendererTests : IReportRendererTests
         };
 
         var output = ReportRenderer.RenderText(plan, recs);
-        Assert.Contains("Impact figures are rough heuristics", output);
-        Assert.Contains("Validate before applying", output);
+        Assert.Contains(ImpactDisclaimerHeuristic, output);
+        Assert.Contains(ImpactDisclaimerValidation, output);
     }
 }
