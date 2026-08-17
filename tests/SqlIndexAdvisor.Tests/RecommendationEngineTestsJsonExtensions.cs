@@ -14,8 +14,8 @@ public static class RecommendationEngineTestsJsonExtensions
 	/// </summary>
 	private static readonly JsonSerializerOptions _options = new(JsonSerializerDefaults.Web)
 	{
-		PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-		WriteIndented = false
+		PropertyNamingPolicy = RecommendationEngineTestsJsonExtensionsConstants.DefaultJsonNamingPolicy,
+		WriteIndented = RecommendationEngineTestsJsonExtensionsConstants.DefaultWriteIndented
 	};
 
 	/// <summary>
@@ -25,7 +25,7 @@ public static class RecommendationEngineTestsJsonExtensions
 	/// <param name="indented">Whether the output should be indented.</param>
 	/// <returns>A JSON string representation of the instance.</returns>
 	/// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is <c>null</c>.</exception>
-	public static string ToJson(this SqlIndexAdvisor.Core.Model.IndexRecommendation value, bool indented = false)
+	public static string ToJson(this SqlIndexAdvisor.Core.Model.IndexRecommendation value, bool indented = RecommendationEngineTestsJsonExtensionsConstants.DefaultWriteIndented)
 	{
 		ArgumentNullException.ThrowIfNull(value);
 		var options = new JsonSerializerOptions(_options) 
