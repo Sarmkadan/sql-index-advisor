@@ -19,29 +19,29 @@ public class RecommendationEngineTests : IRecommendationEngineTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.Postgres,
-            EstimatedTotalCost = 100,
+            EstimatedTotalCost = RecommendationEngineTestsConstants.DefaultEstimatedTotalCost,
             Nodes =
             {
                 new PlanNode
                 {
-                    Operator = "Seq Scan",
-                    TableName = "users",
-                    EstimatedRows = 50,
-                    EstimatedRowsRead = 500000,
-                    RelativeCost = 0.9,
-                    PredicateColumns = { "country", "is_active" },
-                    OutputColumns = { "id", "email", "country" }
+                    Operator = RecommendationEngineTestsConstants.SeqScanOperator,
+                    TableName = RecommendationEngineTestsConstants.UsersTable,
+                    EstimatedRows = RecommendationEngineTestsConstants.DefaultEstimatedRows,
+                    EstimatedRowsRead = RecommendationEngineTestsConstants.DefaultEstimatedRowsRead,
+                    RelativeCost = RecommendationEngineTestsConstants.DefaultRelativeCost,
+                    PredicateColumns = { RecommendationEngineTestsConstants.CountryColumn, RecommendationEngineTestsConstants.IsActiveColumn },
+                    OutputColumns = { RecommendationEngineTestsConstants.IdColumn, RecommendationEngineTestsConstants.EmailColumn, RecommendationEngineTestsConstants.CountryColumn }
                 }
             }
         };
 
         var rec = Assert.Single(new RecommendationEngine().Analyze(plan));
-        Assert.Equal("users", rec.Table);
-        Assert.Equal(new[] { "country", "is_active" }, rec.KeyColumns);
+        Assert.Equal(RecommendationEngineTestsConstants.UsersTable, rec.Table);
+        Assert.Equal(new[] { RecommendationEngineTestsConstants.CountryColumn, RecommendationEngineTestsConstants.IsActiveColumn }, rec.KeyColumns);
         // id and email are not predicate columns -> INCLUDE; country is a key so excluded.
-        Assert.Contains("id", rec.IncludeColumns);
-        Assert.Contains("email", rec.IncludeColumns);
-        Assert.DoesNotContain("country", rec.IncludeColumns);
+        Assert.Contains(RecommendationEngineTestsConstants.IdColumn, rec.IncludeColumns);
+        Assert.Contains(RecommendationEngineTestsConstants.EmailColumn, rec.IncludeColumns);
+        Assert.DoesNotContain(RecommendationEngineTestsConstants.CountryColumn, rec.IncludeColumns);
         Assert.Equal(Confidence.High, rec.Confidence);
     }
 
@@ -58,10 +58,10 @@ public class RecommendationEngineTests : IRecommendationEngineTests
             {
                 new PlanNode
                 {
-                    Operator = "Seq Scan",
-                    TableName = "tiny",
-                    RelativeCost = 0.02,
-                    PredicateColumns = { "x" }
+                    Operator = RecommendationEngineTestsConstants.SeqScanOperator,
+                    TableName = RecommendationEngineTestsConstants.TinyTable,
+                    RelativeCost = RecommendationEngineTestsConstants.CheapRelativeCost,
+                    PredicateColumns = { RecommendationEngineTestsConstants.XColumn }
                 }
             }
         };
@@ -77,39 +77,39 @@ public class RecommendationEngineTests : IRecommendationEngineTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.SqlServer,
-            EstimatedTotalCost = 10,
+            EstimatedTotalCost = RecommendationEngineTestsConstants.OrdersEstimatedTotalCost,
             EngineMissingIndexes =
             {
                 new EngineMissingIndex
                 {
-                    Table = "dbo.Orders",
-                    ImpactPercent = 80,
-                    EqualityColumns = { "Status" },
-                    IncludeColumns = { "Total" }
+                    Table = RecommendationEngineTestsConstants.OrdersTable,
+                    ImpactPercent = RecommendationEngineTestsConstants.OrdersImpactPercent,
+                    EqualityColumns = { RecommendationEngineTestsConstants.StatusColumn },
+                    IncludeColumns = { RecommendationEngineTestsConstants.TotalColumn }
                 }
             },
             Nodes =
             {
                 new PlanNode
                 {
-                    Operator = "Clustered Index Scan",
-                    TableName = "dbo.Orders",
-                    RelativeCost = 0.95,
-                    EstimatedRows = 10,
-                    EstimatedRowsRead = 1000,
-                    PredicateColumns = { "Status" },
-                    OutputColumns = { "Total", "CustomerId" }
+                    Operator = RecommendationEngineTestsConstants.ClusteredIndexScanOperator,
+                    TableName = RecommendationEngineTestsConstants.OrdersTable,
+                    RelativeCost = RecommendationEngineTestsConstants.ClusteredIndexScanRelativeCost,
+                    EstimatedRows = RecommendationEngineTestsConstants.OrdersEstimatedRows,
+                    EstimatedRowsRead = RecommendationEngineTestsConstants.OrdersEstimatedRowsRead,
+                    PredicateColumns = { RecommendationEngineTestsConstants.StatusColumn },
+                    OutputColumns = { RecommendationEngineTestsConstants.TotalColumn, RecommendationEngineTestsConstants.CustomerIdColumn }
                 }
             }
         };
 
         var recs = new RecommendationEngine().Analyze(plan);
         var rec = Assert.Single(recs);
-        Assert.Equal("dbo.Orders", rec.Table);
-        Assert.Equal(new[] { "Status" }, rec.KeyColumns);
+        Assert.Equal(RecommendationEngineTestsConstants.OrdersTable, rec.Table);
+        Assert.Equal(new[] { RecommendationEngineTestsConstants.StatusColumn }, rec.KeyColumns);
         // includes merged from both sources
-        Assert.Contains("Total", rec.IncludeColumns);
-        Assert.Contains("CustomerId", rec.IncludeColumns);
+        Assert.Contains(RecommendationEngineTestsConstants.TotalColumn, rec.IncludeColumns);
+        Assert.Contains(RecommendationEngineTestsConstants.CustomerIdColumn, rec.IncludeColumns);
         Assert.Equal(Confidence.High, rec.Confidence);
         Assert.True(rec.Reasons.Count >= 2);
     }
@@ -122,12 +122,12 @@ public class RecommendationEngineTests : IRecommendationEngineTests
     {
         var rec = new IndexRecommendation
         {
-            Table = "dbo.Orders",
-            KeyColumns = new() { "Status", "CreatedAt" },
-            IncludeColumns = { "Total" }
+            Table = RecommendationEngineTestsConstants.OrdersTable,
+            KeyColumns = new() { RecommendationEngineTestsConstants.StatusColumn, RecommendationEngineTestsConstants.CreatedAtColumn },
+            IncludeColumns = { RecommendationEngineTestsConstants.TotalColumn }
         };
         var sql = rec.ToCreateStatement(PlanDialect.SqlServer);
-        Assert.Contains("CREATE INDEX IX_Orders_Status_CreatedAt ON dbo.Orders (Status, CreatedAt)", sql);
-        Assert.Contains("INCLUDE (Total)", sql);
+        Assert.Contains(RecommendationEngineTestsConstants.CreateIndexStatement, sql);
+        Assert.Contains(RecommendationEngineTestsConstants.IncludeStatement, sql);
     }
 }
