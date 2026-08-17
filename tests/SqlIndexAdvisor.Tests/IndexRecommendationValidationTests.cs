@@ -10,7 +10,7 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         // Arrange
         var recommendation = new IndexRecommendation
         {
-            Table = "dbo.Users",
+            Table = IndexRecommendationValidationTestsConstants.DefaultTableName,
             KeyColumns = new List<string> { "UserId", "Email" },
             IncludeColumns = new List<string> { "Name", "CreatedDate" },
             EstimatedImpactPercent = 85.5,
@@ -40,7 +40,7 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
 
         // Assert
         Assert.Single(result);
-        Assert.Equal("Table property must be a non-empty string.", result[0]);
+        Assert.Equal(IndexRecommendationValidationTestsConstants.ErrorTableMustBeNonEmpty, result[0]);
     }
 
     [Fact]
@@ -49,7 +49,7 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         // Arrange
         var recommendation = new IndexRecommendation
         {
-            Table = "   ",
+            Table = IndexRecommendationValidationTestsConstants.InvalidString,
             KeyColumns = new List<string> { "UserId" }
         };
 
@@ -58,7 +58,7 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
 
         // Assert
         Assert.Single(result);
-        Assert.Equal("Table property must be a non-empty string.", result[0]);
+        Assert.Equal(IndexRecommendationValidationTestsConstants.ErrorTableMustBeNonEmpty, result[0]);
     }
 
     [Fact]
@@ -67,7 +67,7 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         // Arrange
         var recommendation = new IndexRecommendation
         {
-            Table = "dbo.Users",
+            Table = IndexRecommendationValidationTestsConstants.DefaultTableName,
             KeyColumns = null
         };
 
@@ -76,7 +76,7 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
 
         // Assert
         Assert.Single(result);
-        Assert.Equal("KeyColumns collection must not be null.", result[0]);
+        Assert.Equal(IndexRecommendationValidationTestsConstants.ErrorKeyColumnsNotNull, result[0]);
     }
 
     [Fact]
@@ -85,7 +85,7 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         // Arrange
         var recommendation = new IndexRecommendation
         {
-            Table = "dbo.Users",
+            Table = IndexRecommendationValidationTestsConstants.DefaultTableName,
             KeyColumns = new List<string>()
         };
 
@@ -94,7 +94,7 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
 
         // Assert
         Assert.Single(result);
-        Assert.Equal("KeyColumns collection must contain at least one column.", result[0]);
+        Assert.Equal(IndexRecommendationValidationTestsConstants.ErrorKeyColumnsMustContainAtLeastOne, result[0]);
     }
 
     [Fact]
@@ -103,8 +103,8 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         // Arrange
         var recommendation = new IndexRecommendation
         {
-            Table = "dbo.Users",
-            KeyColumns = new List<string> { "UserId", "   ", "Email" }
+            Table = IndexRecommendationValidationTestsConstants.DefaultTableName,
+            KeyColumns = new List<string> { "UserId", IndexRecommendationValidationTestsConstants.InvalidString, "Email" }
         };
 
         // Act
@@ -112,7 +112,7 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
 
         // Assert
         Assert.Single(result);
-        Assert.Equal("All KeyColumns must be non-empty strings.", result[0]);
+        Assert.Equal(IndexRecommendationValidationTestsConstants.ErrorKeyColumnsMustBeNonEmpty, result[0]);
     }
 
     [Fact]
@@ -121,7 +121,7 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         // Arrange
         var recommendation = new IndexRecommendation
         {
-            Table = "dbo.Users",
+            Table = IndexRecommendationValidationTestsConstants.DefaultTableName,
             KeyColumns = new List<string> { "UserId" },
             IncludeColumns = null
         };
@@ -139,9 +139,9 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         // Arrange
         var recommendation = new IndexRecommendation
         {
-            Table = "dbo.Users",
+            Table = IndexRecommendationValidationTestsConstants.DefaultTableName,
             KeyColumns = new List<string> { "UserId" },
-            IncludeColumns = new List<string> { "Name", "   ", "CreatedDate" }
+            IncludeColumns = new List<string> { "Name", IndexRecommendationValidationTestsConstants.InvalidString, "CreatedDate" }
         };
 
         // Act
@@ -149,7 +149,7 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
 
         // Assert
         Assert.Single(result);
-        Assert.Equal("All IncludeColumns must be non-empty strings.", result[0]);
+        Assert.Equal(IndexRecommendationValidationTestsConstants.ErrorIncludeColumnsMustBeNonEmpty, result[0]);
     }
 
     [Fact]
@@ -158,7 +158,7 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         // Arrange
         var recommendation = new IndexRecommendation
         {
-            Table = "dbo.Users",
+            Table = IndexRecommendationValidationTestsConstants.DefaultTableName,
             KeyColumns = new List<string> { "UserId" },
             EstimatedImpactPercent = -1
         };
@@ -168,7 +168,7 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
 
         // Assert
         Assert.Single(result);
-        Assert.Equal("EstimatedImpactPercent must be between 0 and 100 inclusive.", result[0]);
+        Assert.Equal(IndexRecommendationValidationTestsConstants.ErrorEstimatedImpactPercentRange, result[0]);
     }
 
     [Fact]
@@ -177,9 +177,9 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         // Arrange
         var recommendation = new IndexRecommendation
         {
-            Table = "dbo.Users",
+            Table = IndexRecommendationValidationTestsConstants.DefaultTableName,
             KeyColumns = new List<string> { "UserId" },
-            EstimatedImpactPercent = 100
+            EstimatedImpactPercent = IndexRecommendationValidationTestsConstants.MaxEstimatedImpactPercent
         };
 
         // Act
@@ -195,7 +195,7 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         // Arrange
         var recommendation = new IndexRecommendation
         {
-            Table = "dbo.Users",
+            Table = IndexRecommendationValidationTestsConstants.DefaultTableName,
             KeyColumns = new List<string> { "UserId" },
             Reasons = null
         };
@@ -213,9 +213,9 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         // Arrange
         var recommendation = new IndexRecommendation
         {
-            Table = "dbo.Users",
+            Table = IndexRecommendationValidationTestsConstants.DefaultTableName,
             KeyColumns = new List<string> { "UserId" },
-            Reasons = new List<string> { "Valid reason", "   ", "Another valid reason" }
+            Reasons = new List<string> { "Valid reason", IndexRecommendationValidationTestsConstants.InvalidString, "Another valid reason" }
         };
 
         // Act
@@ -223,7 +223,7 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
 
         // Assert
         Assert.Single(result);
-        Assert.Equal("All Reasons must be non-empty strings.", result[0]);
+        Assert.Equal(IndexRecommendationValidationTestsConstants.ErrorReasonsMustBeNonEmpty, result[0]);
     }
 
     [Fact]
@@ -232,11 +232,11 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         // Arrange
         var recommendation = new IndexRecommendation
         {
-            Table = "   ",
-            KeyColumns = new List<string> { "UserId", "   " },
-            IncludeColumns = new List<string> { "Name", "   " },
+            Table = IndexRecommendationValidationTestsConstants.InvalidString,
+            KeyColumns = new List<string> { "UserId", IndexRecommendationValidationTestsConstants.InvalidString },
+            IncludeColumns = new List<string> { "Name", IndexRecommendationValidationTestsConstants.InvalidString },
             EstimatedImpactPercent = 150,
-            Reasons = new List<string> { "Valid reason", "   " }
+            Reasons = new List<string> { "Valid reason", IndexRecommendationValidationTestsConstants.InvalidString }
         };
 
         // Act
@@ -244,11 +244,11 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
 
         // Assert
         Assert.Equal(5, result.Count);
-        Assert.Contains("Table property must be a non-empty string.", result);
-        Assert.Contains("All KeyColumns must be non-empty strings.", result);
-        Assert.Contains("All IncludeColumns must be non-empty strings.", result);
-        Assert.Contains("EstimatedImpactPercent must be between 0 and 100 inclusive.", result);
-        Assert.Contains("All Reasons must be non-empty strings.", result);
+        Assert.Contains(IndexRecommendationValidationTestsConstants.ErrorTableMustBeNonEmpty, result);
+        Assert.Contains(IndexRecommendationValidationTestsConstants.ErrorKeyColumnsMustBeNonEmpty, result);
+        Assert.Contains(IndexRecommendationValidationTestsConstants.ErrorIncludeColumnsMustBeNonEmpty, result);
+        Assert.Contains(IndexRecommendationValidationTestsConstants.ErrorEstimatedImpactPercentRange, result);
+        Assert.Contains(IndexRecommendationValidationTestsConstants.ErrorReasonsMustBeNonEmpty, result);
     }
 
     [Fact]
@@ -257,7 +257,7 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         // Arrange
         var recommendation = new IndexRecommendation
         {
-            Table = "dbo.Users",
+            Table = IndexRecommendationValidationTestsConstants.DefaultTableName,
             KeyColumns = new List<string> { "UserId" },
             EstimatedImpactPercent = 50
         };
@@ -275,7 +275,7 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         // Arrange
         var recommendation = new IndexRecommendation
         {
-            Table = "   ",
+            Table = IndexRecommendationValidationTestsConstants.InvalidString,
             KeyColumns = new List<string> { "UserId" }
         };
 
@@ -302,7 +302,7 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         // Arrange
         var recommendation = new IndexRecommendation
         {
-            Table = "dbo.Users",
+            Table = IndexRecommendationValidationTestsConstants.DefaultTableName,
             KeyColumns = new List<string> { "UserId" },
             EstimatedImpactPercent = 50
         };
@@ -320,14 +320,14 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         // Arrange
         var recommendation = new IndexRecommendation
         {
-            Table = "   ",
+            Table = IndexRecommendationValidationTestsConstants.InvalidString,
             KeyColumns = new List<string> { "UserId" }
         };
 
         // Act & Assert
         var exception = Assert.Throws<ArgumentException>(() => recommendation.EnsureValid());
-        Assert.Contains("IndexRecommendation is invalid:", exception.Message);
-        Assert.Contains("Table property must be a non-empty string.", exception.Message);
+        Assert.Contains(IndexRecommendationValidationTestsConstants.ErrorIndexRecommendationInvalid, exception.Message);
+        Assert.Contains(IndexRecommendationValidationTestsConstants.ErrorTableMustBeNonEmpty, exception.Message);
     }
 
     [Fact]
@@ -356,9 +356,9 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         // Arrange
         var recommendation = new IndexRecommendation
         {
-            Table = "dbo.Users",
+            Table = IndexRecommendationValidationTestsConstants.DefaultTableName,
             KeyColumns = new List<string> { "UserId" },
-            EstimatedImpactPercent = 0
+            EstimatedImpactPercent = IndexRecommendationValidationTestsConstants.MinEstimatedImpactPercent
         };
 
         // Act
@@ -374,7 +374,7 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         // Arrange
         var recommendation = new IndexRecommendation
         {
-            Table = "dbo.Users",
+            Table = IndexRecommendationValidationTestsConstants.DefaultTableName,
             KeyColumns = new List<string> { "UserId" },
             EstimatedImpactPercent = 0.01
         };
@@ -392,7 +392,7 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         // Arrange
         var recommendation = new IndexRecommendation
         {
-            Table = "dbo.Users",
+            Table = IndexRecommendationValidationTestsConstants.DefaultTableName,
             KeyColumns = new List<string> { "UserId" },
             EstimatedImpactPercent = 99.99
         };
