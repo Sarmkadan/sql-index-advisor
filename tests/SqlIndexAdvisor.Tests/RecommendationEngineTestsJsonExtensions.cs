@@ -28,7 +28,11 @@ public static class RecommendationEngineTestsJsonExtensions
 	public static string ToJson(this SqlIndexAdvisor.Core.Model.IndexRecommendation value, bool indented = false)
 	{
 		ArgumentNullException.ThrowIfNull(value);
-		var options = new JsonSerializerOptions(_options) { WriteIndented = indented };
+		var options = new JsonSerializerOptions(_options) 
+		{
+		    WriteIndented = indented,
+		    PropertyNamingPolicy = RecommendationEngineTestsJsonExtensionsConstants.DefaultJsonNamingPolicy
+		};
 		return JsonSerializer.Serialize(value, options);
 	}
 
