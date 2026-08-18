@@ -7,7 +7,7 @@ namespace SqlIndexAdvisor.Tests;
 /// <summary>
 /// Tests for the RecommendationMerger class.
 /// </summary>
-public class RecommendationMergerTests
+public class RecommendationMergerTests : IRecommendationMergerTests
 {
     [Fact]
     public void Merge_WithPrefixColumns_MergesCorrectly()
