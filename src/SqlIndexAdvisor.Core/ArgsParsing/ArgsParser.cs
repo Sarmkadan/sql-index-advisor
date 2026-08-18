@@ -60,16 +60,22 @@ public static class ArgsParser
         /// </summary>
         /// <param name="message">Help text.</param>
         /// <returns>A help <see cref="ParseResult"/>.</returns>
-        public static ParseResult Help(string message) =>
-            new(null, false, "text", false, 0) { HelpMessage = message };
+        public static ParseResult Help(string message)
+        {
+            ArgumentException.ThrowIfNullOrEmpty(message);
+            return new(null, false, "text", false, 0) { HelpMessage = message };
+        }
 
         /// <summary>
         /// Creates a <see cref="ParseResult"/> that signals a parsing error.
         /// </summary>
         /// <param name="message">Error description.</param>
         /// <returns>An error <see cref="ParseResult"/>.</returns>
-        public static ParseResult Error(string message) =>
-            new(null, false, "text", false, 0) { ErrorMessage = message };
+        public static ParseResult Error(string message)
+        {
+            ArgumentException.ThrowIfNullOrEmpty(message);
+            return new(null, false, "text", false, 0) { ErrorMessage = message };
+        }
     }
 
     /// <summary>
