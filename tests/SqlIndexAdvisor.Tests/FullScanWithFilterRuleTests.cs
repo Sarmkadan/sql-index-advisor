@@ -8,7 +8,7 @@ namespace SqlIndexAdvisor.Tests;
 /// Tests for <see cref="FullScanWithFilterRule"/> which flags table scans with filter predicates
 /// and recommends indexes with predicate columns as keys and output columns as includes.
 /// </summary>
-public class FullScanWithFilterRuleTests
+public class FullScanWithFilterRuleTests : IFullScanWithFilterRuleTests
 {
     private readonly FullScanWithFilterRule _rule = new();
 
