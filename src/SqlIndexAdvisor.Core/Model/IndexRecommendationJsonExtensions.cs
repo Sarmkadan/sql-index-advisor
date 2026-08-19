@@ -6,10 +6,10 @@ namespace SqlIndexAdvisor.Core.Model;
 
 public static class IndexRecommendationJsonExtensions
 {
-    private static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web)
+    private static readonly JsonSerializerOptions Options = new(IndexRecommendationJsonExtensionsConstants.SerializerDefaults)
     {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = false,
+        PropertyNamingPolicy = IndexRecommendationJsonExtensionsConstants.NamingPolicy,
+        WriteIndented = IndexRecommendationJsonExtensionsConstants.WriteIndentedDefault,
     };
 
     /// <summary>
@@ -19,10 +19,10 @@ public static class IndexRecommendationJsonExtensions
     /// <param name="indented">True to format the JSON with indentation; otherwise, false.</param>
     /// <returns>A JSON string representation of <paramref name="value"/>.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="value"/> is null.</exception>
-    public static string ToJson(this IndexRecommendation value, bool indented = false)
+    public static string ToJson(this IndexRecommendation value, bool indented = IndexRecommendationJsonExtensionsConstants.WriteIndentedDefault)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return JsonSerializer.Serialize(value, indented ? new JsonSerializerOptions(Options) { WriteIndented = true } : Options);
+        return JsonSerializer.Serialize(value, indented ? new JsonSerializerOptions(Options) { WriteIndented = IndexRecommendationJsonExtensionsConstants.WriteIndentedIndented } : Options);
     }
 
     /// <summary>
