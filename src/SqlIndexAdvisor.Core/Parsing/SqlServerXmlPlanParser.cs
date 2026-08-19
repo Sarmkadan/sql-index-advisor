@@ -22,8 +22,8 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
 
         var trimmed = content.TrimStart();
         if (!trimmed.StartsWith('<')) return false;
-        return trimmed.Contains("ShowPlanXML", StringComparison.OrdinalIgnoreCase)
-            || trimmed.Contains("StmtSimple", StringComparison.OrdinalIgnoreCase);
+        return trimmed.Contains(SqlServerXmlPlanParserConstants.ShowPlanXmlMarker, StringComparison.OrdinalIgnoreCase)
+            || trimmed.Contains(SqlServerXmlPlanParserConstants.StmtSimpleElement, StringComparison.OrdinalIgnoreCase);
     }
 
     public ExecutionPlan Parse(string content, CancellationToken cancellationToken = default)
@@ -38,8 +38,8 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
             {
                 DtdProcessing = DtdProcessing.Prohibit,
                 XmlResolver = null,
-                MaxCharactersInDocument = 10_000_000,
-                MaxCharactersFromEntities = 1_000_000
+                MaxCharactersInDocument = SqlServerXmlPlanParserConstants.MaxCharactersInDocument,
+                MaxCharactersFromEntities = SqlServerXmlPlanParserConstants.MaxCharactersFromEntities
             };
 
             using var reader = XmlReader.Create(new StringReader(content), settings);
@@ -49,13 +49,11 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
         {
             // Provide context about the file type to help users diagnose issues
             throw new PlanParseException(
-                $"Failed to parse SQL Server execution plan XML at line {ex.LineNumber}, position {ex.LinePosition}. "
-                +"The file may be a saved .sqlplan wrapper rather than raw ShowPlanXML. "
-                +"Verify the file contains valid SQL Server showplan XML.", ex);
+                string.Format(SqlServerXmlPlanParserConstants.ParseFailedMessageFormat, ex.LineNumber, ex.LinePosition), ex);
         }
         catch (Exception ex) when (ex is not PlanParseException)
         {
-            throw new PlanParseException("Content is not well-formed XML.", ex);
+            throw new PlanParseException(SqlServerXmlPlanParserConstants.NotWellFormedXmlMessage, ex);
         }
 
         var stmt = Descendants(doc.Root, "StmtSimple").FirstOrDefault();
