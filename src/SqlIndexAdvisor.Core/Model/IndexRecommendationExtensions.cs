@@ -49,11 +49,11 @@ public static class IndexRecommendationExtensions
     {
         ArgumentNullException.ThrowIfNull(recommendation);
 
-        return $"Index {recommendation.SuggestedName()} on {recommendation.Table} " +
+        return $"{IndexRecommendationExtensionsConstants.IndexPrefix}{recommendation.SuggestedName()}{IndexRecommendationExtensionsConstants.OnTableSeparator}{recommendation.Table} " +
                $"({FormatColumns(recommendation.KeyColumns)}) " +
-               $"INCLUDE ({FormatColumns(recommendation.IncludeColumns)}) " +
-               $"- Impact: {recommendation.EstimatedImpactPercent.ToString("F1", CultureInfo.InvariantCulture)}% " +
-               $"Confidence: {recommendation.Confidence}";
+               $"{IndexRecommendationExtensionsConstants.IncludeColumnsPrefix}{FormatColumns(recommendation.IncludeColumns)}) " +
+               $"{IndexRecommendationExtensionsConstants.ImpactLabel}{recommendation.EstimatedImpactPercent.ToString(IndexRecommendationExtensionsConstants.ImpactPercentFormat, CultureInfo.InvariantCulture)}{IndexRecommendationExtensionsConstants.PercentSuffix}" +
+               $"{IndexRecommendationExtensionsConstants.ConfidenceLabel}{recommendation.Confidence}";
     }
 
     /// <summary>
@@ -67,11 +67,11 @@ public static class IndexRecommendationExtensions
         ArgumentNullException.ThrowIfNull(recommendation);
 
         var includeCols = recommendation.IncludeColumns.Count > 0
-            ? $" INCLUDE ({string.Join(", ", recommendation.IncludeColumns)})"
+            ? $"{IndexRecommendationExtensionsConstants.IncludeColumnsPrefix}{string.Join(IndexRecommendationExtensionsConstants.ColumnSeparator, recommendation.IncludeColumns)}{IndexRecommendationExtensionsConstants.ClosingParenthesis}"
             : string.Empty;
 
-        return $"{recommendation.SuggestedName()} on {recommendation.Table} ({string.Join(", ", recommendation.KeyColumns)}){includeCols} " +
-               $"- {recommendation.EstimatedImpactPercent.ToString("F1", CultureInfo.InvariantCulture)}% impact";
+        return $"{recommendation.SuggestedName()}{IndexRecommendationExtensionsConstants.OnTableSeparator}{recommendation.Table} ({string.Join(IndexRecommendationExtensionsConstants.ColumnSeparator, recommendation.KeyColumns)}){includeCols} " +
+               $"{IndexRecommendationExtensionsConstants.SummarySeparator}{recommendation.EstimatedImpactPercent.ToString(IndexRecommendationExtensionsConstants.ImpactPercentFormat, CultureInfo.InvariantCulture)}{IndexRecommendationExtensionsConstants.ImpactPercentSuffix}";
     }
 
     /// <summary>
@@ -84,7 +84,7 @@ public static class IndexRecommendationExtensions
     {
         ArgumentNullException.ThrowIfNull(columns);
         return columns.Count > 0
-            ? string.Join(", ", columns)
-            : "(none)";
+            ? string.Join(IndexRecommendationExtensionsConstants.ColumnSeparator, columns)
+            : IndexRecommendationExtensionsConstants.NoColumnsPlaceholder;
     }
 }
