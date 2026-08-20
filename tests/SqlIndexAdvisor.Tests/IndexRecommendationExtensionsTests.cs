@@ -1,4 +1,5 @@
 using SqlIndexAdvisor.Core.Model;
+using static SqlIndexAdvisor.Tests.IndexRecommendationExtensionsTestsConstants;
 
 namespace SqlIndexAdvisor.Tests;
 
@@ -6,19 +7,19 @@ public class IndexRecommendationExtensionsTests : IIndexRecommendationExtensions
 {
     private readonly IndexRecommendation _testRecommendation = new()
     {
-        Table = "dbo.Users",
-        KeyColumns = new List<string> { "UserId", "Email" },
-        IncludeColumns = new List<string> { "Name", "CreatedDate" },
-        EstimatedImpactPercent = 85.5,
+        Table = TableUsers,
+        KeyColumns = new List<string> { ColumnUserId, ColumnEmail },
+        IncludeColumns = new List<string> { ColumnName, ColumnCreatedDate },
+        EstimatedImpactPercent = EstimatedImpactPercentHigh,
         Confidence = Confidence.High,
-        Reasons = new List<string> { "Missing index on Users table", "Frequent WHERE clause on UserId and Email" }
+        Reasons = new List<string> { ReasonMissingIndex, ReasonFrequentWhereClause }
     };
 
     [Fact]
     public void ContainsColumn_WithExistingKeyColumn_ReturnsTrue()
     {
         // Act
-        var result = _testRecommendation.ContainsColumn("UserId");
+        var result = _testRecommendation.ContainsColumn(ColumnUserId);
 
         // Assert
         Assert.True(result);
@@ -28,7 +29,7 @@ public class IndexRecommendationExtensionsTests : IIndexRecommendationExtensions
     public void ContainsColumn_WithExistingIncludeColumn_ReturnsTrue()
     {
         // Act
-        var result = _testRecommendation.ContainsColumn("Name");
+        var result = _testRecommendation.ContainsColumn(ColumnName);
 
         // Assert
         Assert.True(result);
@@ -48,9 +49,9 @@ public class IndexRecommendationExtensionsTests : IIndexRecommendationExtensions
     public void ContainsColumn_WithCaseInsensitiveMatch_ReturnsTrue()
     {
         // Act
-        var result1 = _testRecommendation.ContainsColumn("userid");
-        var result2 = _testRecommendation.ContainsColumn("EMAIL");
-        var result3 = _testRecommendation.ContainsColumn("name");
+        var result1 = _testRecommendation.ContainsColumn(ColumnUserId.ToLower());
+        var result2 = _testRecommendation.ContainsColumn(ColumnEmail.ToUpper());
+        var result3 = _testRecommendation.ContainsColumn(ColumnName.ToLower());
 
         // Assert
         Assert.True(result1);
@@ -64,13 +65,13 @@ public class IndexRecommendationExtensionsTests : IIndexRecommendationExtensions
         // Arrange
         var recommendation = new IndexRecommendation
         {
-            Table = "dbo.Products",
+            Table = TableProducts,
             KeyColumns = new List<string>(),
-            IncludeColumns = new List<string> { "ProductName" }
+            IncludeColumns = new List<string> { ColumnProductName }
         };
 
         // Act
-        var result = recommendation.ContainsColumn("ProductName");
+        var result = recommendation.ContainsColumn(ColumnProductName);
 
         // Assert
         Assert.True(result);
@@ -92,8 +93,8 @@ public class IndexRecommendationExtensionsTests : IIndexRecommendationExtensions
         // Arrange
         var recommendation = new IndexRecommendation
         {
-            Table = "dbo.Products",
-            KeyColumns = new List<string> { "ProductId", "CategoryId" },
+            Table = TableProducts,
+            KeyColumns = new List<string> { ColumnProductId, ColumnCategoryId },
             IncludeColumns = new List<string>()
         };
 
@@ -110,9 +111,9 @@ public class IndexRecommendationExtensionsTests : IIndexRecommendationExtensions
         // Arrange
         var recommendation = new IndexRecommendation
         {
-            Table = "dbo.Orders",
+            Table = TableOrders,
             KeyColumns = new List<string>(),
-            IncludeColumns = new List<string> { "OrderDate", "TotalAmount" }
+            IncludeColumns = new List<string> { ColumnOrderDate, ColumnTotalAmount }
         };
 
         // Act
@@ -128,7 +129,7 @@ public class IndexRecommendationExtensionsTests : IIndexRecommendationExtensions
         // Arrange
         var recommendation = new IndexRecommendation
         {
-            Table = "dbo.EmptyTable",
+            Table = TableEmptyTable,
             KeyColumns = new List<string>(),
             IncludeColumns = new List<string>()
         };
@@ -148,10 +149,10 @@ public class IndexRecommendationExtensionsTests : IIndexRecommendationExtensions
 
         // Assert
         Assert.NotNull(result);
-        Assert.Contains("Index IX_Users_UserId_Email on dbo.Users", result);
-        Assert.Contains("(UserId, Email)", result);
-        Assert.Contains("INCLUDE (Name, CreatedDate)", result);
-        Assert.Contains("85.5%", result);
+        Assert.Contains("Index IX_Users_UserId_Email on " + TableUsers, result);
+        Assert.Contains($"({ColumnUserId}, {ColumnEmail})", result);
+        Assert.Contains($"INCLUDE ({ColumnName}, {ColumnCreatedDate})", result);
+        Assert.Contains($"{EstimatedImpactPercentHigh}%", result);
         Assert.Contains("Confidence: High", result);
     }
 
@@ -161,8 +162,8 @@ public class IndexRecommendationExtensionsTests : IIndexRecommendationExtensions
         // Arrange
         var recommendation = new IndexRecommendation
         {
-            Table = "dbo.Products",
-            KeyColumns = new List<string> { "ProductId" },
+            Table = TableProducts,
+            KeyColumns = new List<string> { ColumnProductId },
             IncludeColumns = new List<string>()
         };
 
@@ -170,8 +171,8 @@ public class IndexRecommendationExtensionsTests : IIndexRecommendationExtensions
         var result = recommendation.ToDisplayString();
 
         // Assert
-        Assert.Contains("(ProductId)", result);
-        Assert.Contains("Index IX_Products_ProductId on dbo.Products", result);
+        Assert.Contains($"({ColumnProductId})", result);
+        Assert.Contains($"Index IX_Products_{ColumnProductId} on " + TableProducts, result);
     }
 
     [Fact]
@@ -180,10 +181,10 @@ public class IndexRecommendationExtensionsTests : IIndexRecommendationExtensions
         // Arrange
         var recommendation = new IndexRecommendation
         {
-            Table = "dbo.Orders",
+            Table = TableOrders,
             KeyColumns = new List<string>(),
-            IncludeColumns = new List<string> { "OrderDate" },
-            EstimatedImpactPercent = 42.3
+            IncludeColumns = new List<string> { ColumnOrderDate },
+            EstimatedImpactPercent = EstimatedImpactPercentMedium
         };
 
         // Act
@@ -191,8 +192,8 @@ public class IndexRecommendationExtensionsTests : IIndexRecommendationExtensions
 
         // Assert
         Assert.Contains("(none)", result);
-        Assert.Contains("INCLUDE (OrderDate)", result);
-        Assert.Contains("42.3%", result);
+        Assert.Contains($"INCLUDE ({ColumnOrderDate})", result);
+        Assert.Contains($"{EstimatedImpactPercentMedium}%", result);
     }
 
     [Fact]
@@ -203,10 +204,10 @@ public class IndexRecommendationExtensionsTests : IIndexRecommendationExtensions
 
         // Assert
         Assert.NotNull(result);
-        Assert.Contains("IX_Users_UserId_Email on dbo.Users", result);
-        Assert.Contains("(UserId, Email)", result);
-        Assert.Contains("INCLUDE (Name, CreatedDate)", result);
-        Assert.Contains("85.5% impact", result);
+        Assert.Contains($"IX_Users_{ColumnUserId}_{ColumnEmail} on " + TableUsers, result);
+        Assert.Contains($"({ColumnUserId}, {ColumnEmail})", result);
+        Assert.Contains($"INCLUDE ({ColumnName}, {ColumnCreatedDate})", result);
+        Assert.Contains($"{EstimatedImpactPercentHigh}% impact", result);
     }
 
     [Fact]
@@ -215,8 +216,8 @@ public class IndexRecommendationExtensionsTests : IIndexRecommendationExtensions
         // Arrange
         var recommendation = new IndexRecommendation
         {
-            Table = "dbo.Products",
-            KeyColumns = new List<string> { "ProductId" },
+            Table = TableProducts,
+            KeyColumns = new List<string> { ColumnProductId },
             IncludeColumns = new List<string>()
         };
 
@@ -225,7 +226,7 @@ public class IndexRecommendationExtensionsTests : IIndexRecommendationExtensions
 
         // Assert
         Assert.DoesNotContain("INCLUDE", result);
-        Assert.Contains("(ProductId)", result);
+        Assert.Contains($"({ColumnProductId})", result);
     }
 
     [Fact]
@@ -234,18 +235,18 @@ public class IndexRecommendationExtensionsTests : IIndexRecommendationExtensions
         // Arrange
         var recommendation = new IndexRecommendation
         {
-            Table = "dbo.Orders",
+            Table = TableOrders,
             KeyColumns = new List<string> { "OrderId" },
-            IncludeColumns = new List<string> { "TotalAmount", "CustomerName" },
-            EstimatedImpactPercent = 37.8
+            IncludeColumns = new List<string> { ColumnTotalAmount, ColumnCustomerName },
+            EstimatedImpactPercent = EstimatedImpactPercentMediumLow
         };
 
         // Act
         var result = recommendation.ToSummaryString();
 
         // Assert
-        Assert.Contains("INCLUDE (TotalAmount, CustomerName)", result);
-        Assert.Contains("37.8% impact", result);
+        Assert.Contains($"INCLUDE ({ColumnTotalAmount}, {ColumnCustomerName})", result);
+        Assert.Contains($"{EstimatedImpactPercentMediumLow}% impact", result);
     }
 
     [Fact]
@@ -254,17 +255,17 @@ public class IndexRecommendationExtensionsTests : IIndexRecommendationExtensions
         // Arrange
         var recommendation = new IndexRecommendation
         {
-            Table = "dbo.Customers",
-            KeyColumns = new List<string> { "CustomerId" },
+            Table = TableCustomers,
+            KeyColumns = new List<string> { ColumnCustomerId },
             IncludeColumns = new List<string>(),
-            EstimatedImpactPercent = 12.5
+            EstimatedImpactPercent = EstimatedImpactPercentLow
         };
 
         // Act
         var result = recommendation.ToSummaryString();
 
         // Assert
-        Assert.Equal("IX_Customers_CustomerId on dbo.Customers (CustomerId) - 12.5% impact", result);
+        Assert.Equal($"IX_Customers_{ColumnCustomerId} on {TableCustomers} ({ColumnCustomerId}) - {EstimatedImpactPercentLow}% impact", result);
     }
 
     [Fact]
@@ -274,7 +275,7 @@ public class IndexRecommendationExtensionsTests : IIndexRecommendationExtensions
         IndexRecommendation recommendation = null!;
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => recommendation.ContainsColumn("UserId"));
+        Assert.Throws<ArgumentNullException>(() => recommendation.ContainsColumn(ColumnUserId));
     }
 
     [Fact]
