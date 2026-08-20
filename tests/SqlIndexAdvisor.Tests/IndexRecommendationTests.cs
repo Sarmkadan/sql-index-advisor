@@ -7,11 +7,11 @@ public class IndexRecommendationTests : IIndexRecommendationTests
 {
     private readonly IndexRecommendation _testRecommendation = new()
     {
-        Table = "dbo.Users",
-        KeyColumns = new List<string> { "UserId", "Email" },
-        IncludeColumns = new List<string> { "Name", "CreatedDate" },
-        EstimatedImpactPercent = 85.5,
-        SourceNodeCost = 0.75,
+        Table = IndexRecommendationTestsConstants.TestTableUsers,
+        KeyColumns = new List<string> { IndexRecommendationTestsConstants.TestColumnUserId, IndexRecommendationTestsConstants.TestColumnEmail },
+        IncludeColumns = new List<string> { IndexRecommendationTestsConstants.TestColumnName, IndexRecommendationTestsConstants.TestColumnCreatedDate },
+        EstimatedImpactPercent = IndexRecommendationTestsConstants.TestImpactPercentDefault,
+        SourceNodeCost = IndexRecommendationTestsConstants.TestSourceNodeCostDefault,
         Confidence = Confidence.High,
         Reasons = new List<string> { "Missing index on Users table", "Frequent WHERE clause on UserId and Email" }
     };
@@ -22,21 +22,21 @@ public class IndexRecommendationTests : IIndexRecommendationTests
         // Arrange & Act
         var recommendation = new IndexRecommendation
         {
-            Table = "dbo.Products",
-            KeyColumns = new List<string> { "ProductId" },
-            IncludeColumns = new List<string> { "ProductName", "Price" },
-            EstimatedImpactPercent = 90.0,
-            SourceNodeCost = 0.80,
+            Table = IndexRecommendationTestsConstants.TestTableProducts,
+            KeyColumns = new List<string> { IndexRecommendationTestsConstants.TestColumnProductId },
+            IncludeColumns = new List<string> { IndexRecommendationTestsConstants.TestColumnProductName, IndexRecommendationTestsConstants.TestColumnPrice },
+            EstimatedImpactPercent = IndexRecommendationTestsConstants.TestImpactPercentProducts,
+            SourceNodeCost = IndexRecommendationTestsConstants.TestSourceNodeCostProducts,
             Confidence = Confidence.Medium,
             Reasons = new List<string> { "Common query pattern" }
         };
 
         // Assert
-        Assert.Equal("dbo.Products", recommendation.Table);
-        Assert.Equal(new List<string> { "ProductId" }, recommendation.KeyColumns);
-        Assert.Equal(new List<string> { "ProductName", "Price" }, recommendation.IncludeColumns);
-        Assert.Equal(90.0, recommendation.EstimatedImpactPercent);
-        Assert.Equal(0.80, recommendation.SourceNodeCost);
+        Assert.Equal(IndexRecommendationTestsConstants.TestTableProducts, recommendation.Table);
+        Assert.Equal(new List<string> { IndexRecommendationTestsConstants.TestColumnProductId }, recommendation.KeyColumns);
+        Assert.Equal(new List<string> { IndexRecommendationTestsConstants.TestColumnProductName, IndexRecommendationTestsConstants.TestColumnPrice }, recommendation.IncludeColumns);
+        Assert.Equal(IndexRecommendationTestsConstants.TestImpactPercentProducts, recommendation.EstimatedImpactPercent);
+        Assert.Equal(IndexRecommendationTestsConstants.TestSourceNodeCostProducts, recommendation.SourceNodeCost);
         Assert.Equal(Confidence.Medium, recommendation.Confidence);
         Assert.Equal(new List<string> { "Common query pattern" }, recommendation.Reasons);
     }
@@ -47,8 +47,8 @@ public class IndexRecommendationTests : IIndexRecommendationTests
         // Arrange & Act
         var recommendation = new IndexRecommendation
         {
-            Table = "dbo.Orders",
-            KeyColumns = new List<string> { "OrderId" },
+            Table = IndexRecommendationTestsConstants.TestTableOrders,
+            KeyColumns = new List<string> { IndexRecommendationTestsConstants.TestColumnOrderId },
             IncludeColumns = new List<string>()
         };
 
@@ -153,8 +153,8 @@ public class IndexRecommendationTests : IIndexRecommendationTests
         // Arrange
         var recommendation = new IndexRecommendation
         {
-            Table = "dbo.Products",
-            KeyColumns = new List<string> { "ProductId" }
+            Table = IndexRecommendationTestsConstants.TestTableProducts,
+            KeyColumns = new List<string> { IndexRecommendationTestsConstants.TestColumnProductId }
         };
         var dialect = PlanDialect.Postgres;
 
@@ -171,9 +171,9 @@ public class IndexRecommendationTests : IIndexRecommendationTests
         // Arrange
         var recommendation = new IndexRecommendation
         {
-            Table = "dbo.Orders",
+            Table = IndexRecommendationTestsConstants.TestTableOrders,
             KeyColumns = new List<string>(),
-            IncludeColumns = new List<string> { "TotalAmount" }
+            IncludeColumns = new List<string> { IndexRecommendationTestsConstants.TestColumnTotalAmount }
         };
         var dialect = PlanDialect.SqlServer;
 
