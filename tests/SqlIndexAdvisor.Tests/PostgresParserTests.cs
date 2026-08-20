@@ -11,20 +11,14 @@ namespace SqlIndexAdvisor.Tests;
 /// </summary>
 public class PostgresParserTests : IPostgresParserTests
 {
-    private const string SeqScanPlan = """
-[{"Plan":{"Node Type":"Seq Scan","Relation Name":"users","Total Cost":11822.55,
-"Plan Rows":88,"Output":["id","email"],
-"Filter":"((country = 'PL'::text) AND (is_active = true))"}}]
-""";
-
     /// <summary>
     /// Tests that the parser correctly identifies PostgreSQL JSON plan format and distinguishes it from SQL Server XML format.
     /// Verifies that <see cref="PostgresJsonPlanParser"/> returns true for PostgreSQL plans and false for SQL Server plans.
     /// </summary>
     public void DetectsFormat()
     {
-        Assert.True(new PostgresJsonPlanParser().CanParse(SeqScanPlan));
-        Assert.False(new SqlServerXmlPlanParser().CanParse(SeqScanPlan));
+        Assert.True(new PostgresJsonPlanParser().CanParse(PostgresParserTestsConstants.SeqScanPlan));
+        Assert.False(new SqlServerXmlPlanParser().CanParse(PostgresParserTestsConstants.SeqScanPlan));
     }
 
     /// <summary>
@@ -34,12 +28,12 @@ public class PostgresParserTests : IPostgresParserTests
     /// </summary>
     public void ParsesSeqScanFilterColumns()
     {
-        var plan = new PostgresJsonPlanParser().Parse(SeqScanPlan);
+        var plan = new PostgresJsonPlanParser().Parse(PostgresParserTestsConstants.SeqScanPlan);
         Assert.Equal(PlanDialect.Postgres, plan.Dialect);
-        var scan = plan.Nodes.Single(n => n.Operator == "Seq Scan");
-        Assert.Equal("users", scan.TableName);
-        Assert.Contains("country", scan.PredicateColumns);
-        Assert.Contains("is_active", scan.PredicateColumns);
+        var scan = plan.Nodes.Single(n => n.Operator == PostgresParserTestsConstants.SeqScanOperator);
+        Assert.Equal(PostgresParserTestsConstants.UsersTableName, scan.TableName);
+        Assert.Contains(PostgresParserTestsConstants.CountryColumn, scan.PredicateColumns);
+        Assert.Contains(PostgresParserTestsConstants.IsActiveColumn, scan.PredicateColumns);
     }
 
     /// <summary>
@@ -48,7 +42,7 @@ public class PostgresParserTests : IPostgresParserTests
     /// </summary>
     public void EmptyArrayThrows()
     {
-        Assert.Throws<PlanParseException>(() => new PostgresJsonPlanParser().Parse("[]"));
+        Assert.Throws<PlanParseException>(() => new PostgresJsonPlanParser().Parse(PostgresParserTestsConstants.EmptyJsonArray));
     }
 
     /// <summary>
@@ -57,6 +51,6 @@ public class PostgresParserTests : IPostgresParserTests
     /// </summary>
     public void GarbageThrows()
     {
-        Assert.Throws<PlanParseException>(() => new PostgresJsonPlanParser().Parse("{not json"));
+        Assert.Throws<PlanParseException>(() => new PostgresJsonPlanParser().Parse(PostgresParserTestsConstants.InvalidJson));
     }
 }
