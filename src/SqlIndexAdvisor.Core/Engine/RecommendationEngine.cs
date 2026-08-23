@@ -13,13 +13,31 @@ public sealed class RecommendationEngine : IRecommendationEngine
 {
     private readonly IReadOnlyList<IIndexRule> _rules;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RecommendationEngine"/> class
+    /// using the default set of index rules.
+    /// </summary>
     public RecommendationEngine()
         : this(DefaultRules.All())
     {
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RecommendationEngine"/> class
+    /// with a custom set of index rules.
+    /// </summary>
+    /// <param name="rules">The rules to evaluate against each execution plan.</param>
     public RecommendationEngine(IEnumerable<IIndexRule> rules) => _rules = rules.ToList();
 
+    /// <summary>
+    /// Analyzes the specified execution plan by running every configured rule,
+    /// then merges and de-duplicates the raw recommendations.
+    /// </summary>
+    /// <param name="plan">The execution plan to analyze.</param>
+    /// <returns>
+    /// The merged recommendations, ordered by confidence and then by estimated impact,
+    /// both descending.
+    /// </returns>
     public IReadOnlyList<IndexRecommendation> Analyze(ExecutionPlan plan)
     {
         ArgumentNullException.ThrowIfNull(plan);
