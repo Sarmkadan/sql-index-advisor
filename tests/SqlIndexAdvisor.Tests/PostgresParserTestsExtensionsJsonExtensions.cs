@@ -1,75 +1,74 @@
 using System;
-using System.Collections.Generic;
 using System.Text.Json;
-using System.Text.Json.Serialization;
-using SqlIndexAdvisor.Core.Model;
-using SqlIndexAdvisor.Core.Parsing;
 
-namespace SqlIndexAdvisor.Tests
+namespace SqlIndexAdvisor.Tests;
+
+/// <summary>
+/// Provides JSON serialization extension methods for <see cref="PostgresParserTests"/>.
+/// </summary>
+public static class PostgresParserTestsExtensionsJsonExtensions
 {
-    public static class PostgresParserTestsExtensionsJsonExtensions
+    /// <summary>
+    /// Serializes a <see cref="PostgresParserTests"/> instance to a JSON string.
+    /// </summary>
+    /// <param name="value">The <see cref="PostgresParserTests"/> instance to serialize.</param>
+    /// <param name="indented">If set to <c>true</c> the JSON is indented for readability.</param>
+    /// <returns>A JSON string representing the <see cref="PostgresParserTests"/> instance.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is <see langword="null"/>.</exception>
+    public static string ToJson(this PostgresParserTests value, bool indented = false)
     {
-        private static readonly JsonSerializerOptions JsonOption = new JsonSerializerOptions { WriteIndented = true };
+        ArgumentNullException.ThrowIfNull(value);
+        return JsonSerializer.Serialize(value, indented ? IndentedOptions : CompactOptions);
+    }
 
-        /// <summary>
-        /// Converts the <see cref="PostgresParserTestsExtensions"/> object to a JSON string.
-        /// </summary>
-        /// <param name="value">The object to convert.</param>
-        /// <param name="indented">Whether to format the JSON with indentation.</param>
-        /// <returns>A JSON string representing the object.</returns>
-        public string ToJson(PostgresParserTestsExtensions value, bool indented = false)
+    /// <summary>
+    /// Deserializes a JSON string to a <see cref="PostgresParserTests"/> instance.
+    /// </summary>
+    /// <param name="json">The JSON string to deserialize.</param>
+    /// <returns>A <see cref="PostgresParserTests"/> instance, or <see langword="null"/> if the JSON represents a null value.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is <see langword="null"/> or empty.</exception>
+    /// <exception cref="JsonException">Thrown when <paramref name="json"/> is not valid JSON for a <see cref="PostgresParserTests"/> instance.</exception>
+    public static PostgresParserTests? FromJson(string json)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(json);
+        return JsonSerializer.Deserialize<PostgresParserTests>(json, CompactOptions);
+    }
+
+    /// <summary>
+    /// Attempts to deserialize a JSON string to a <see cref="PostgresParserTests"/> instance.
+    /// </summary>
+    /// <param name="json">The JSON string to deserialize.</param>
+    /// <param name="value">
+    /// When this method returns, contains the <see cref="PostgresParserTests"/> instance if the conversion succeeded,
+    /// or <see langword="null"/> if it failed. This parameter is passed uninitialized.
+    /// </param>
+    /// <returns><see langword="true"/> if <paramref name="json"/> was successfully converted; otherwise, <see langword="false"/>.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is <see langword="null"/> or empty.</exception>
+    public static bool TryFromJson(string json, out PostgresParserTests? value)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(json);
+        try
         {
-            return indented ? JsonSerializer.Serialize(value, JsonOption) : JsonSerializer.Serialize(value);
+            value = JsonSerializer.Deserialize<PostgresParserTests>(json, CompactOptions);
+            return true;
         }
-
-        /// <summary>
-        /// Parses a JSON string to a <see cref="PostgresParserTestsExtensions"/> object.
-        /// </summary>
-        /// <param name="json">The JSON string to parse.</param>
-        /// <returns>A <see cref="PostgresParserTestsExtensions"/> object.</returns>
-        /// <exception cref="JsonException">Failed to parse the JSON string.</exception>
-        public static PostgresParserTestsExtensions FromJson(string json)
+        catch (JsonException)
         {
-            if (string.IsNullOrWhiteSpace(json))
-            {
-                throw new JsonException("Input string is null or empty.");
-            }
-
-            try
-            {
-                return JsonSerializer.Deserialize<PostgresParserTestsExtensions>(json, JsonOption);
-            }
-            catch (JsonException ex)
-            {
-                throw new JsonException("Failed to parse JSON string.", ex);
-            }
-        }
-
-        /// <summary>
-        /// Attempts to parse a JSON string to a <see cref="PostgresParserTestsExtensions"/> object.
-        /// </summary>
-        /// <param name="json">The JSON string to parse.</param>
-        /// <param name="value">The output object.</param>
-        /// <returns>True if the parsing was successful; otherwise, false.</returns>
-        /// <exception cref="JsonException">Failed to parse the JSON string.</exception>
-        public static bool TryFromJson(string json, out PostgresParserTestsExtensions? value)
-        {
-            if (string.IsNullOrWhiteSpace(json))
-            {
-                value = null;
-                return false;
-            }
-
-            try
-            {
-                value = JsonSerializer.Deserialize<PostgresParserTestsExtensions>(json, JsonOption);
-                return true;
-            }
-            catch (JsonException)
-            {
-                value = null;
-                return false;
-            }
+            value = null;
+            return false;
         }
     }
+
+    /// <summary>Shared compact serializer options (camelCase property names).</summary>
+    private static readonly JsonSerializerOptions CompactOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
+    /// <summary>Shared indented serializer options (camelCase property names).</summary>
+    private static readonly JsonSerializerOptions IndentedOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = true
+    };
 }
