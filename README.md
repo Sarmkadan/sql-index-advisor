@@ -431,6 +431,44 @@ class Example
 }
 ```
 
+## RecommendationMergerTests
+
+`RecommendationMergerTests` covers the merge/de-duplication step that collapses overlapping index suggestions before they are ranked. It verifies that suggestions for the same table whose key columns form a prefix chain are merged into a single wider recommendation, while suggestions targeting different tables - or overlapping on columns that are not a prefix of each other - are kept separate. The edge cases are guarded too: an empty input yields an empty list and a lone recommendation passes through unchanged.
+
+**Example usage**
+
+```csharp
+using System;
+using SqlIndexAdvisor.Tests;
+
+class Example
+{
+    static void Main()
+    {
+        // Instantiate the test suite for the recommendation merge step.
+        var tests = new RecommendationMergerTests();
+
+        // 1️⃣ Key columns that extend each other (prefix) merge into one index.
+        tests.Merge_WithPrefixColumns_MergesCorrectly();
+
+        // 2️⃣ Identical key columns collapse into a single merged recommendation.
+        tests.Merge_WithSameColumns_MergesCorrectly();
+
+        // 3️⃣ Suggestions for different tables are never merged.
+        tests.Merge_WithDifferentTables_DoesNotMerge();
+
+        // 4️⃣ Partially overlapping (non-prefix) columns stay separate.
+        tests.Merge_WithNonPrefixColumns_DoesNotMerge();
+
+        // 5️⃣ Merging an empty list returns an empty list.
+        tests.Merge_EmptyList_ReturnsEmptyList();
+
+        // 6️⃣ A single recommendation passes through unchanged.
+        tests.Merge_SingleRecommendation_ReturnsSame();
+    }
+}
+```
+
 ## License
 
 MIT.
