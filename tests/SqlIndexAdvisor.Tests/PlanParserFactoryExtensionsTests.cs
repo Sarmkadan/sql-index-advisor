@@ -7,12 +7,23 @@ using Xunit;
 
 namespace SqlIndexAdvisor.Tests
 {
+    /// <summary>
+    /// Unit tests for the <see cref="PlanParserFactory"/> extension methods, covering TryParse,
+    /// ParseMany, CanParse, GetRegisteredParserNames, GetRegisteredParsers and ParseWith.
+    /// </summary>
     public class PlanParserFactoryExtensionsTests
     {
+        /// <summary>
+        /// Factory instance under test, initialized with the default set of registered plan parsers.
+        /// </summary>
         private readonly PlanParserFactory _factory = new PlanParserFactory();
 
         #region TryParse
 
+        /// <summary>
+        /// Verifies that <c>TryParse</c> recognizes well-formed SQL Server XML plan content and
+        /// returns <c>true</c> together with a non-null <see cref="ExecutionPlan"/>.
+        /// </summary>
         [Fact]
         public void TryParse_ValidXml_ReturnsTrueAndPlan()
         {
@@ -25,6 +36,10 @@ namespace SqlIndexAdvisor.Tests
             Assert.IsType<ExecutionPlan>(plan);
         }
 
+        /// <summary>
+        /// Verifies that <c>TryParse</c> recognizes well-formed PostgreSQL JSON plan content and
+        /// returns <c>true</c> together with a non-null <see cref="ExecutionPlan"/>.
+        /// </summary>
         [Fact]
         public void TryParse_ValidJson_ReturnsTrueAndPlan()
         {
@@ -37,6 +52,10 @@ namespace SqlIndexAdvisor.Tests
             Assert.IsType<ExecutionPlan>(plan);
         }
 
+        /// <summary>
+        /// Verifies that <c>TryParse</c> reports failure for content matching no registered parser
+        /// format, returning <c>false</c> and leaving the output plan null.
+        /// </summary>
         [Fact]
         public void TryParse_InvalidContent_ReturnsFalseAndNullPlan()
         {
@@ -48,6 +67,12 @@ namespace SqlIndexAdvisor.Tests
             Assert.Null(plan);
         }
 
+        /// <summary>
+        /// Verifies that <c>TryParse</c> throws an <see cref="ArgumentNullException"/> when either
+        /// the factory instance or the plan content is null.
+        /// </summary>
+        /// <param name="factoryArg">InlineData marker; when null, the factory argument passed to <c>TryParse</c> is null.</param>
+        /// <param name="contentArg">InlineData marker; when null, the content argument passed to <c>TryParse</c> is null.</param>
         [Theory]
         [InlineData(null, "content")]
         [InlineData("content", null)]
@@ -65,6 +90,10 @@ namespace SqlIndexAdvisor.Tests
 
         #region ParseMany
 
+        /// <summary>
+        /// Verifies that <c>ParseMany</c> skips unparsable entries and yields results only for the
+        /// XML and JSON inputs that parse successfully.
+        /// </summary>
         [Fact]
         public void ParseMany_MixedContents_ReturnsOnlyParsable()
         {
@@ -82,6 +111,9 @@ namespace SqlIndexAdvisor.Tests
             Assert.Contains(results, r => r.SourceId == "json1" && r.Plan != null);
         }
 
+        /// <summary>
+        /// Verifies that <c>ParseMany</c> applied to an empty input collection produces no results.
+        /// </summary>
         [Fact]
         public void ParseMany_EmptyCollection_ReturnsEmpty()
         {
@@ -89,6 +121,10 @@ namespace SqlIndexAdvisor.Tests
             Assert.Empty(results);
         }
 
+        /// <summary>
+        /// Verifies that invoking <c>ParseMany</c> on a null factory instance throws an
+        /// <see cref="ArgumentNullException"/>.
+        /// </summary>
         [Fact]
         public void ParseMany_NullFactory_ThrowsArgumentNullException()
         {
@@ -97,6 +133,10 @@ namespace SqlIndexAdvisor.Tests
             Assert.Throws<ArgumentNullException>(() => nullFactory!.ParseMany(inputs));
         }
 
+        /// <summary>
+        /// Verifies that passing a null collection of source contents to <c>ParseMany</c> throws
+        /// an <see cref="ArgumentNullException"/>.
+        /// </summary>
         [Fact]
         public void ParseMany_NullContents_ThrowsArgumentNullException()
         {
@@ -107,6 +147,9 @@ namespace SqlIndexAdvisor.Tests
 
         #region CanParse
 
+        /// <summary>
+        /// Verifies that <c>CanParse</c> detects valid SQL Server XML plan content as parsable.
+        /// </summary>
         [Fact]
         public void CanParse_RecognizedXml_ReturnsTrue()
         {
@@ -114,6 +157,9 @@ namespace SqlIndexAdvisor.Tests
             Assert.True(_factory.CanParse(xml));
         }
 
+        /// <summary>
+        /// Verifies that <c>CanParse</c> detects valid PostgreSQL JSON plan content as parsable.
+        /// </summary>
         [Fact]
         public void CanParse_RecognizedJson_ReturnsTrue()
         {
@@ -121,12 +167,19 @@ namespace SqlIndexAdvisor.Tests
             Assert.True(_factory.CanParse(json));
         }
 
+        /// <summary>
+        /// Verifies that <c>CanParse</c> rejects content in no known plan format by returning <c>false</c>.
+        /// </summary>
         [Fact]
         public void CanParse_UnrecognizedContent_ReturnsFalse()
         {
             Assert.False(_factory.CanParse(PlanParserFactoryExtensionsTestsConstants.InvalidContent));
         }
 
+        /// <summary>
+        /// Verifies that passing null content to <c>CanParse</c> throws an
+        /// <see cref="ArgumentNullException"/>.
+        /// </summary>
         [Fact]
         public void CanParse_NullArguments_ThrowArgumentNullException()
         {
@@ -137,6 +190,10 @@ namespace SqlIndexAdvisor.Tests
 
         #region GetRegisteredParserNames
 
+        /// <summary>
+        /// Verifies that the registered parser names include both the SQL Server XML plan parser
+        /// and the PostgreSQL JSON plan parser.
+        /// </summary>
         [Fact]
         public void GetRegisteredParserNames_ContainsExpectedParsers()
         {
@@ -150,6 +207,10 @@ namespace SqlIndexAdvisor.Tests
 
         #region GetRegisteredParsers
 
+        /// <summary>
+        /// Verifies that the registered parser instances include objects of the expected SQL Server
+        /// XML and PostgreSQL JSON parser types.
+        /// </summary>
         [Fact]
         public void GetRegisteredParsers_ReturnsParsersWithExpectedTypes()
         {
@@ -163,6 +224,10 @@ namespace SqlIndexAdvisor.Tests
 
         #region ParseWith
 
+        /// <summary>
+        /// Verifies that <c>ParseWith</c> parses JSON plan content successfully when the selector
+        /// picks the PostgreSQL JSON plan parser.
+        /// </summary>
         [Fact]
         public void ParseWith_SelectorChoosesCorrectParser_ParsesSuccessfully()
         {
@@ -175,6 +240,10 @@ namespace SqlIndexAdvisor.Tests
             Assert.NotNull(plan);
         }
 
+        /// <summary>
+        /// Verifies that <c>ParseWith</c> throws a <see cref="PlanParseException"/> when the
+        /// selector does not return any parser.
+        /// </summary>
         [Fact]
         public void ParseWith_SelectorReturnsNull_ThrowsPlanParseException()
         {
@@ -184,6 +253,10 @@ namespace SqlIndexAdvisor.Tests
                 _factory.ParseWith(json, parsers => null));
         }
 
+        /// <summary>
+        /// Verifies that <c>ParseWith</c> throws an <see cref="ArgumentNullException"/> when the
+        /// factory instance, the plan content, or the parser selector is null.
+        /// </summary>
         [Fact]
         public void ParseWith_NullArguments_ThrowArgumentNullException()
         {
