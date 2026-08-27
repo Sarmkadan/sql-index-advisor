@@ -4,8 +4,14 @@ using Xunit;
 
 namespace SqlIndexAdvisor.Tests;
 
+/// <summary>
+/// Contains unit tests for the <see cref="ArgsParser"/> class.
+/// </summary>
 public class ArgsParserTests
 {
+    /// <summary>
+    /// Tests that parsing an empty argument list returns a help request.
+    /// </summary>
     [Fact]
     public void Parse_EmptyArgs_ReturnsHelpRequest()
     {
@@ -18,6 +24,9 @@ public class ArgsParserTests
         Assert.Contains("sql-index-advisor", result.HelpMessage);
     }
 
+    /// <summary>
+    /// Tests that parsing the --help flag returns a help request.
+    /// </summary>
     [Fact]
     public void Parse_HelpFlag_ReturnsHelpRequest()
     {
@@ -30,6 +39,9 @@ public class ArgsParserTests
         Assert.Contains("sql-index-advisor", result.HelpMessage);
     }
 
+    /// <summary>
+    /// Tests that parsing the -h flag returns a help request.
+    /// </summary>
     [Fact]
     public void Parse_HelpShortFlag_ReturnsHelpRequest()
     {
@@ -42,6 +54,9 @@ public class ArgsParserTests
         Assert.Contains("sql-index-advisor", result.HelpMessage);
     }
 
+    /// <summary>
+    /// Tests that parsing an unknown option throws an ArgumentException.
+    /// </summary>
     [Fact]
     public void Parse_UnknownOption_ThrowsArgumentException()
     {
@@ -50,6 +65,9 @@ public class ArgsParserTests
         Assert.Contains("unknown option", ex.Message);
     }
 
+    /// <summary>
+    /// Tests that parsing an unknown short option throws an ArgumentException.
+    /// </summary>
     [Fact]
     public void Parse_UnknownShortOption_ThrowsArgumentException()
     {
@@ -58,6 +76,9 @@ public class ArgsParserTests
         Assert.Contains("unknown option", ex.Message);
     }
 
+    /// <summary>
+    /// Tests that parsing --format without a value throws an ArgumentException.
+    /// </summary>
     [Fact]
     public void Parse_MissingFormatValue_ThrowsArgumentException()
     {
@@ -66,6 +87,9 @@ public class ArgsParserTests
         Assert.Contains("--format requires a value", ex.Message);
     }
 
+    /// <summary>
+    /// Tests that parsing --format with an invalid value throws an ArgumentException.
+    /// </summary>
     [Fact]
     public void Parse_InvalidFormatValue_ThrowsArgumentException()
     {
@@ -74,6 +98,9 @@ public class ArgsParserTests
         Assert.Contains("--format must be", ex.Message);
     }
 
+    /// <summary>
+    /// Tests that parsing --format text returns the correct format.
+    /// </summary>
     [Fact]
     public void Parse_ValidTextFormat_ReturnsCorrectFormat()
     {
@@ -88,6 +115,9 @@ public class ArgsParserTests
         Assert.Equal(0, result.MinImpact);
     }
 
+    /// <summary>
+    /// Tests that parsing --format json returns the correct format.
+    /// </summary>
     [Fact]
     public void Parse_ValidJsonFormat_ReturnsCorrectFormat()
     {
@@ -99,6 +129,9 @@ public class ArgsParserTests
         Assert.Equal("json", result.Format);
     }
 
+    /// <summary>
+    /// Tests that parsing --format html returns the correct format.
+    /// </summary>
     [Fact]
     public void Parse_ValidHtmlFormat_ReturnsCorrectFormat()
     {
@@ -110,6 +143,9 @@ public class ArgsParserTests
         Assert.Equal("html", result.Format);
     }
 
+    /// <summary>
+    /// Tests that parsing --format csv returns the correct format.
+    /// </summary>
     [Fact]
     public void Parse_ValidCsvFormat_ReturnsCorrectFormat()
     {
@@ -121,6 +157,9 @@ public class ArgsParserTests
         Assert.Equal("csv", result.Format);
     }
 
+    /// <summary>
+    /// Tests that parsing --format with case-insensitive value returns the lowercased format.
+    /// </summary>
     [Fact]
     public void Parse_FormatIsCaseInsensitive_ReturnsLowercasedFormat()
     {
@@ -131,6 +170,9 @@ public class ArgsParserTests
         Assert.Equal("json", result.Format);
     }
 
+    /// <summary>
+    /// Tests that parsing --min-impact without a value throws an ArgumentException.
+    /// </summary>
     [Fact]
     public void Parse_MissingMinImpactValue_ThrowsArgumentException()
     {
@@ -139,6 +181,9 @@ public class ArgsParserTests
         Assert.Contains("--min-impact requires a value", ex.Message);
     }
 
+    /// <summary>
+    /// Tests that parsing --min-impact with a non-numeric value throws an ArgumentException.
+    /// </summary>
     [Fact]
     public void Parse_InvalidMinImpactValue_ThrowsArgumentException()
     {
@@ -147,6 +192,9 @@ public class ArgsParserTests
         Assert.Contains("--min-impact expects a number", ex.Message);
     }
 
+    /// <summary>
+    /// Tests that parsing --min-impact with a valid number returns the correct min impact.
+    /// </summary>
     [Fact]
     public void Parse_ValidMinImpactValue_ReturnsCorrectMinImpact()
     {
@@ -157,6 +205,9 @@ public class ArgsParserTests
         Assert.Equal(50.5, result.MinImpact);
     }
 
+    /// <summary>
+    /// Tests that parsing --stdin sets UseStdin to true.
+    /// </summary>
     [Fact]
     public void Parse_StdinFlag_ReturnsUseStdinTrue()
     {
@@ -168,6 +219,9 @@ public class ArgsParserTests
         Assert.Null(result.Path);
     }
 
+    /// <summary>
+    /// Tests that parsing --stdin with --format sets UseStdin to true and the format.
+    /// </summary>
     [Fact]
     public void Parse_StdinWithFormat_ReturnsUseStdinTrueAndFormat()
     {
@@ -179,6 +233,9 @@ public class ArgsParserTests
         Assert.Equal("json", result.Format);
     }
 
+    /// <summary>
+    /// Tests that parsing a file path returns a normalized absolute path.
+    /// </summary>
     [Fact]
     public void Parse_FilePath_ReturnsNormalizedPath()
     {
@@ -193,6 +250,9 @@ public class ArgsParserTests
         Assert.Equal(0, result.MinImpact);
     }
 
+    /// <summary>
+    /// Tests that parsing a single dash returns the dash as the path.
+    /// </summary>
     [Fact]
     public void Parse_FilePathWithDash_ReturnsPath()
     {
@@ -206,6 +266,9 @@ public class ArgsParserTests
         Assert.Equal(0, result.MinImpact);
     }
 
+    /// <summary>
+    /// Tests that parsing a file path with --format returns a normalized path and the format.
+    /// </summary>
     [Fact]
     public void Parse_FilePathWithFormat_ReturnsNormalizedPathAndFormat()
     {
@@ -218,6 +281,9 @@ public class ArgsParserTests
         Assert.Equal("json", result.Format);
     }
 
+    /// <summary>
+    /// Tests that parsing a file path with --min-impact returns a normalized path and the min impact.
+    /// </summary>
     [Fact]
     public void Parse_FilePathWithMinImpact_ReturnsNormalizedPathAndMinImpact()
     {
@@ -230,6 +296,9 @@ public class ArgsParserTests
         Assert.Equal(25, result.MinImpact);
     }
 
+    /// <summary>
+    /// Tests that specifying both --stdin and a file path throws an ArgumentException.
+    /// </summary>
     [Fact]
     public void Parse_StdinAndFilePath_ThrowsArgumentException()
     {
@@ -238,6 +307,9 @@ public class ArgsParserTests
         Assert.Contains("cannot specify both --stdin and a file path", ex.Message);
     }
 
+    /// <summary>
+    /// Tests that specifying both --stdin and a dash throws an ArgumentException.
+    /// </summary>
     [Fact]
     public void Parse_StdinAndDash_ThrowsArgumentException()
     {
@@ -246,6 +318,9 @@ public class ArgsParserTests
         Assert.Contains("cannot specify both --stdin and a file path", ex.Message);
     }
 
+    /// <summary>
+    /// Tests that parsing all options together returns the correct values.
+    /// </summary>
     [Fact]
     public void Parse_AllOptionsCombined_ReturnsAllValues()
     {
@@ -260,6 +335,9 @@ public class ArgsParserTests
         Assert.False(result.UseStdin);
     }
 
+    /// <summary>
+    /// Tests that parsing a path with parent directory traversal (..) throws an ArgumentException.
+    /// </summary>
     [Fact]
     public void Parse_PathWithParentDirectoryTraversal_ThrowsArgumentException()
     {
@@ -268,6 +346,9 @@ public class ArgsParserTests
         Assert.Contains("Path traversal sequences (..) are not allowed", ex.Message);
     }
 
+    /// <summary>
+    /// Tests that parsing a path with nested parent directory traversal throws an ArgumentException.
+    /// </summary>
     [Fact]
     public void Parse_PathWithNestedParentDirectoryTraversal_ThrowsArgumentException()
     {
@@ -276,6 +357,9 @@ public class ArgsParserTests
         Assert.Contains("Path traversal sequences (..) are not allowed", ex.Message);
     }
 
+    /// <summary>
+    /// Tests that parsing a path with parent directory in the middle throws an ArgumentException.
+    /// </summary>
     [Fact]
     public void Parse_PathWithParentDirectoryInMiddle_ThrowsArgumentException()
     {
@@ -285,6 +369,9 @@ public class ArgsParserTests
         Assert.Contains("Path traversal sequences (..) are not allowed", ex.Message);
     }
 
+    /// <summary>
+    /// Tests that parsing an absolute path outside the current directory throws an ArgumentException.
+    /// </summary>
     [Fact]
     public void Parse_AbsolutePathOutsideCurrentDirectory_ThrowsArgumentException()
     {
@@ -293,6 +380,9 @@ public class ArgsParserTests
         Assert.Contains("Paths outside the current directory are not allowed", ex.Message);
     }
 
+    /// <summary>
+    /// Tests that parsing a UNC path throws an ArgumentException.
+    /// </summary>
     [Fact]
     public void Parse_UncPath_ThrowsArgumentException()
     {
@@ -301,6 +391,9 @@ public class ArgsParserTests
         Assert.Contains("UNC paths are not allowed", ex.Message);
     }
 
+    /// <summary>
+    /// Tests that parsing a path with forward slash UNC throws an ArgumentException.
+    /// </summary>
     [Fact]
     public void Parse_PathWithForwardSlashUnc_ThrowsArgumentException()
     {
@@ -309,6 +402,9 @@ public class ArgsParserTests
         Assert.Contains("UNC paths are not allowed", ex.Message);
     }
 
+    /// <summary>
+    /// Tests that parsing a valid relative path returns a normalized absolute path.
+    /// </summary>
     [Fact]
     public void Parse_ValidRelativePath_ReturnsNormalizedPath()
     {
@@ -321,6 +417,9 @@ public class ArgsParserTests
         Assert.EndsWith("test.xml", result.Path);
     }
 
+    /// <summary>
+    /// Tests that parsing a simple path returns the normalized path.
+    /// </summary>
     [Fact]
     public void Parse_ValidSimplePath_ReturnsPath()
     {
@@ -331,6 +430,9 @@ public class ArgsParserTests
         Assert.Equal(Path.GetFullPath("test.xml"), result.Path);
     }
 
+    /// <summary>
+    /// Tests that parsing --stdin with all options returns the correct values.
+    /// </summary>
     [Fact]
     public void Parse_StdinWithAllOptions_ReturnsAllValues()
     {
@@ -344,6 +446,9 @@ public class ArgsParserTests
         Assert.Equal(75, result.MinImpact);
     }
 
+    /// <summary>
+    /// Tests that reading from stdin with the dash argument returns the content.
+    /// </summary>
     [Fact]
     public void ReadFileWithEncoding_Stdin_ReturnsContent()
     {
@@ -367,6 +472,9 @@ public class ArgsParserTests
         }
     }
 
+    /// <summary>
+    /// Tests that reading a file with UTF-8 BOM returns the correct content.
+    /// </summary>
     [Fact]
     public void ReadFileWithEncoding_FileWithUtf8Bom_ReturnsCorrectContent()
     {
@@ -390,6 +498,9 @@ public class ArgsParserTests
         }
     }
 
+    /// <summary>
+    /// Tests that reading a file with UTF-16 LE BOM returns the correct content.
+    /// </summary>
     [Fact]
     public void ReadFileWithEncoding_FileWithUtf16LeBom_ReturnsCorrectContent()
     {
@@ -413,6 +524,9 @@ public class ArgsParserTests
         }
     }
 
+    /// <summary>
+    /// Tests that reading a file with UTF-16 BE BOM returns the correct content.
+    /// </summary>
     [Fact]
     public void ReadFileWithEncoding_FileWithUtf16BeBom_ReturnsCorrectContent()
     {
@@ -436,6 +550,9 @@ public class ArgsParserTests
         }
     }
 
+    /// <summary>
+    /// Tests that reading a non-existent file throws a FileNotFoundException.
+    /// </summary>
     [Fact]
     public void ReadFileWithEncoding_NonExistentFile_ThrowsFileNotFoundException()
     {
@@ -443,6 +560,9 @@ public class ArgsParserTests
         Assert.Throws<FileNotFoundException>(() => ArgsParser.ReadFileWithEncoding("non-existent-file.txt"));
     }
 
+    /// <summary>
+    /// Tests that reading a UTF-16 LE sqlplan file returns the correct content.
+    /// </summary>
     [Fact]
     public void ReadFileWithEncoding_Utf16LeSqlplan_ReturnsCorrectContent()
     {
