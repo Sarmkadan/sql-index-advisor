@@ -2,6 +2,9 @@ using SqlIndexAdvisor.Core.Model;
 
 namespace SqlIndexAdvisor.Tests;
 
+/// <summary>
+/// Test class for ExecutionPlanExtensions methods.
+/// </summary>
 public class ExecutionPlanExtensionsTests
 {
     private readonly ExecutionPlan _emptyPlan = new()
@@ -86,6 +89,9 @@ public class ExecutionPlanExtensionsTests
         EngineMissingIndexes = new List<EngineMissingIndex>()
     };
 
+    /// <summary>
+    /// Tests that GetScanCandidates returns scan nodes when given a valid execution plan with scan operators.
+    /// </summary>
     [Fact]
     public void GetScanCandidates_WithValidPlan_ReturnsScanNodes()
     {
@@ -99,6 +105,9 @@ public class ExecutionPlanExtensionsTests
         Assert.DoesNotContain(scanCandidates, node => node.Operator.Contains("Index Only"));
     }
 
+    /// <summary>
+    /// Tests that GetScanCandidates excludes index only scans when present in the execution plan.
+    /// </summary>
     [Fact]
     public void GetScanCandidates_WithIndexOnlyScans_ReturnsEmpty()
     {
@@ -109,6 +118,9 @@ public class ExecutionPlanExtensionsTests
         Assert.DoesNotContain(scanCandidates, node => node.Operator.Contains("Index Only"));
     }
 
+    /// <summary>
+    /// Tests that GetScanCandidates returns an empty collection when given an execution plan with no nodes.
+    /// </summary>
     [Fact]
     public void GetScanCandidates_WithEmptyPlan_ReturnsEmpty()
     {
@@ -120,6 +132,9 @@ public class ExecutionPlanExtensionsTests
         Assert.Empty(scanCandidates);
     }
 
+    /// <summary>
+    /// Tests that GetScanCandidates throws ArgumentNullException when given a null execution plan.
+    /// </summary>
     [Fact]
     public void GetScanCandidates_WithNullPlan_ThrowsArgumentNullException()
     {
@@ -130,6 +145,9 @@ public class ExecutionPlanExtensionsTests
         Assert.Throws<ArgumentNullException>(() => nullPlan!.GetScanCandidates());
     }
 
+    /// <summary>
+    /// Tests that GetTotalScanCost returns the sum of relative costs for all scan nodes in the execution plan.
+    /// </summary>
     [Fact]
     public void GetTotalScanCost_WithValidPlan_ReturnsSumOfScanCosts()
     {
@@ -140,6 +158,9 @@ public class ExecutionPlanExtensionsTests
         Assert.Equal(1.0, totalCost); // 0.75 + 0.25
     }
 
+    /// <summary>
+    /// Tests that GetTotalScanCost returns zero when given an execution plan with no scan nodes.
+    /// </summary>
     [Fact]
     public void GetTotalScanCost_WithEmptyPlan_ReturnsZero()
     {
@@ -150,6 +171,9 @@ public class ExecutionPlanExtensionsTests
         Assert.Equal(0.0, totalCost);
     }
 
+    /// <summary>
+    /// Tests that GetTotalScanCost throws ArgumentNullException when given a null execution plan.
+    /// </summary>
     [Fact]
     public void GetTotalScanCost_WithNullPlan_ThrowsArgumentNullException()
     {
@@ -160,6 +184,9 @@ public class ExecutionPlanExtensionsTests
         Assert.Throws<ArgumentNullException>(() => nullPlan!.GetTotalScanCost());
     }
 
+    /// <summary>
+    /// Tests that GetScannedTables returns distinct table names from scan nodes in the execution plan.
+    /// </summary>
     [Fact]
     public void GetScannedTables_WithValidPlan_ReturnsDistinctTableNames()
     {
@@ -174,6 +201,9 @@ public class ExecutionPlanExtensionsTests
         Assert.DoesNotContain("dbo.Products", scannedTables, StringComparer.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// Tests that GetScannedTables returns an empty collection when given an execution plan with no scan nodes.
+    /// </summary>
     [Fact]
     public void GetScannedTables_WithEmptyPlan_ReturnsEmpty()
     {
@@ -195,6 +225,9 @@ public class ExecutionPlanExtensionsTests
         Assert.Throws<ArgumentNullException>(() => nullPlan!.GetScannedTables());
     }
 
+    /// <summary>
+    /// Tests that GetPredicateColumns returns distinct predicate columns from scan nodes in the execution plan.
+    /// </summary>
     [Fact]
     public void GetPredicateColumns_WithValidPlan_ReturnsDistinctPredicateColumns()
     {
@@ -208,6 +241,9 @@ public class ExecutionPlanExtensionsTests
         Assert.Contains("OrderDate", predicateColumns, StringComparer.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// Tests that GetPredicateColumns returns an empty collection when given an execution plan with no scan nodes.
+    /// </summary>
     [Fact]
     public void GetPredicateColumns_WithEmptyPlan_ReturnsEmpty()
     {
@@ -219,6 +255,9 @@ public class ExecutionPlanExtensionsTests
         Assert.Empty(predicateColumns);
     }
 
+    /// <summary>
+    /// Tests that GetPredicateColumns throws ArgumentNullException when given a null execution plan.
+    /// </summary>
     [Fact]
     public void GetPredicateColumns_WithNullPlan_ThrowsArgumentNullException()
     {
@@ -229,6 +268,9 @@ public class ExecutionPlanExtensionsTests
         Assert.Throws<ArgumentNullException>(() => nullPlan!.GetPredicateColumns());
     }
 
+    /// <summary>
+    /// Tests that GetIncludeCandidateColumns returns non-predicate output columns from scan nodes in the execution plan.
+    /// </summary>
     [Fact]
     public void GetIncludeCandidateColumns_WithValidPlan_ReturnsNonPredicateOutputColumns()
     {
@@ -246,6 +288,9 @@ public class ExecutionPlanExtensionsTests
         Assert.DoesNotContain("OrderDate", includeCandidates, StringComparer.OrdinalIgnoreCase); // predicate column
     }
 
+    /// <summary>
+    /// Tests that GetIncludeCandidateColumns returns an empty collection when given an execution plan with no scan nodes.
+    /// </summary>
     [Fact]
     public void GetIncludeCandidateColumns_WithEmptyPlan_ReturnsEmpty()
     {
@@ -257,6 +302,9 @@ public class ExecutionPlanExtensionsTests
         Assert.Empty(includeCandidates);
     }
 
+    /// <summary>
+    /// Tests that GetIncludeCandidateColumns throws ArgumentNullException when given a null execution plan.
+    /// </summary>
     [Fact]
     public void GetIncludeCandidateColumns_WithNullPlan_ThrowsArgumentNullException()
     {
@@ -267,6 +315,9 @@ public class ExecutionPlanExtensionsTests
         Assert.Throws<ArgumentNullException>(() => nullPlan!.GetIncludeCandidateColumns());
     }
 
+    /// <summary>
+    /// Tests that GetMissingIndexEqualityColumns returns equality columns from missing index recommendations in the execution plan.
+    /// </summary>
     [Fact]
     public void GetMissingIndexEqualityColumns_WithValidPlan_ReturnsEqualityColumns()
     {
@@ -280,6 +331,9 @@ public class ExecutionPlanExtensionsTests
         Assert.Contains("Email", equalityColumns, StringComparer.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// Tests that GetMissingIndexEqualityColumns returns an empty collection when given an execution plan with no missing index recommendations.
+    /// </summary>
     [Fact]
     public void GetMissingIndexEqualityColumns_WithEmptyPlan_ReturnsEmpty()
     {
@@ -291,6 +345,9 @@ public class ExecutionPlanExtensionsTests
         Assert.Empty(equalityColumns);
     }
 
+    /// <summary>
+    /// Tests that GetMissingIndexEqualityColumns throws ArgumentNullException when given a null execution plan.
+    /// </summary>
     [Fact]
     public void GetMissingIndexEqualityColumns_WithNullPlan_ThrowsArgumentNullException()
     {
@@ -301,6 +358,9 @@ public class ExecutionPlanExtensionsTests
         Assert.Throws<ArgumentNullException>(() => nullPlan!.GetMissingIndexEqualityColumns());
     }
 
+    /// <summary>
+    /// Tests that GetMissingIndexInequalityColumns returns inequality columns from missing index recommendations in the execution plan.
+    /// </summary>
     [Fact]
     public void GetMissingIndexInequalityColumns_WithValidPlan_ReturnsInequalityColumns()
     {
@@ -330,6 +390,9 @@ public class ExecutionPlanExtensionsTests
         Assert.Contains("OrderDate", inequalityColumns, StringComparer.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// Tests that GetMissingIndexInequalityColumns returns an empty collection when given an execution plan with no missing index recommendations.
+    /// </summary>
     [Fact]
     public void GetMissingIndexInequalityColumns_WithEmptyPlan_ReturnsEmpty()
     {
@@ -341,6 +404,9 @@ public class ExecutionPlanExtensionsTests
         Assert.Empty(inequalityColumns);
     }
 
+    /// <summary>
+    /// Tests that GetMissingIndexInequalityColumns throws ArgumentNullException when given a null execution plan.
+    /// </summary>
     [Fact]
     public void GetMissingIndexInequalityColumns_WithNullPlan_ThrowsArgumentNullException()
     {
@@ -351,6 +417,9 @@ public class ExecutionPlanExtensionsTests
         Assert.Throws<ArgumentNullException>(() => nullPlan!.GetMissingIndexInequalityColumns());
     }
 
+    /// <summary>
+    /// Tests that GetMissingIndexIncludeColumns returns include columns from missing index recommendations in the execution plan.
+    /// </summary>
     [Fact]
     public void GetMissingIndexIncludeColumns_WithValidPlan_ReturnsIncludeColumns()
     {
@@ -363,6 +432,9 @@ public class ExecutionPlanExtensionsTests
         Assert.Contains("CreatedDate", includeColumns, StringComparer.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// Tests that GetMissingIndexIncludeColumns returns an empty collection when given an execution plan with no missing index recommendations.
+    /// </summary>
     [Fact]
     public void GetMissingIndexIncludeColumns_WithEmptyPlan_ReturnsEmpty()
     {
@@ -374,6 +446,9 @@ public class ExecutionPlanExtensionsTests
         Assert.Empty(includeColumns);
     }
 
+    /// <summary>
+    /// Tests that GetMissingIndexIncludeColumns throws ArgumentNullException when given a null execution plan.
+    /// </summary>
     [Fact]
     public void GetMissingIndexIncludeColumns_WithNullPlan_ThrowsArgumentNullException()
     {
@@ -384,6 +459,9 @@ public class ExecutionPlanExtensionsTests
         Assert.Throws<ArgumentNullException>(() => nullPlan!.GetMissingIndexIncludeColumns());
     }
 
+    /// <summary>
+    /// Tests that HasIndexableScans returns true when the execution plan contains scan nodes that can be indexed.
+    /// </summary>
     [Fact]
     public void HasIndexableScans_WithScans_ReturnsTrue()
     {
@@ -394,6 +472,9 @@ public class ExecutionPlanExtensionsTests
         Assert.True(hasIndexableScans);
     }
 
+    /// <summary>
+    /// Tests that HasIndexableScans returns false when the execution plan contains no scan nodes.
+    /// </summary>
     [Fact]
     public void HasIndexableScans_WithNoScans_ReturnsFalse()
     {
@@ -404,6 +485,9 @@ public class ExecutionPlanExtensionsTests
         Assert.False(hasIndexableScans);
     }
 
+    /// <summary>
+    /// Tests that HasIndexableScans returns false when given an execution plan with no nodes.
+    /// </summary>
     [Fact]
     public void HasIndexableScans_WithEmptyPlan_ReturnsFalse()
     {
@@ -414,6 +498,9 @@ public class ExecutionPlanExtensionsTests
         Assert.False(hasIndexableScans);
     }
 
+    /// <summary>
+    /// Tests that HasIndexableScans throws ArgumentNullException when given a null execution plan.
+    /// </summary>
     [Fact]
     public void HasIndexableScans_WithNullPlan_ThrowsArgumentNullException()
     {
@@ -424,6 +511,9 @@ public class ExecutionPlanExtensionsTests
         Assert.Throws<ArgumentNullException>(() => nullPlan!.HasIndexableScans());
     }
 
+    /// <summary>
+    /// Tests that GetHighestCostScan returns the scan node with the highest relative cost from the execution plan.
+    /// </summary>
     [Fact]
     public void GetHighestCostScan_WithValidPlan_ReturnsHighestCostScan()
     {
@@ -437,6 +527,9 @@ public class ExecutionPlanExtensionsTests
         Assert.Equal(0.75, highestCostScan.RelativeCost);
     }
 
+    /// <summary>
+    /// Tests that GetHighestCostScan returns null when the execution plan contains no scan nodes.
+    /// </summary>
     [Fact]
     public void GetHighestCostScan_WithNoScans_ReturnsNull()
     {
@@ -447,6 +540,9 @@ public class ExecutionPlanExtensionsTests
         Assert.Null(highestCostScan);
     }
 
+    /// <summary>
+    /// Tests that GetHighestCostScan returns null when given an execution plan with no nodes.
+    /// </summary>
     [Fact]
     public void GetHighestCostScan_WithEmptyPlan_ReturnsNull()
     {
@@ -457,6 +553,9 @@ public class ExecutionPlanExtensionsTests
         Assert.Null(highestCostScan);
     }
 
+    /// <summary>
+    /// Tests that GetHighestCostScan throws ArgumentNullException when given a null execution plan.
+    /// </summary>
     [Fact]
     public void GetHighestCostScan_WithNullPlan_ThrowsArgumentNullException()
     {
@@ -467,6 +566,9 @@ public class ExecutionPlanExtensionsTests
         Assert.Throws<ArgumentNullException>(() => nullPlan!.GetHighestCostScan());
     }
 
+    /// <summary>
+    /// Tests that GetAlreadyCoveredColumns returns columns that appear in both predicate and output columns of scan nodes.
+    /// </summary>
     [Fact]
     public void GetAlreadyCoveredColumns_WithValidPlan_ReturnsColumnsInBothPredicateAndOutput()
     {
@@ -501,6 +603,9 @@ public class ExecutionPlanExtensionsTests
         Assert.Contains("Name", coveredColumns, StringComparer.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// Tests that GetAlreadyCoveredColumns returns an empty collection when given an execution plan with no scan nodes.
+    /// </summary>
     [Fact]
     public void GetAlreadyCoveredColumns_WithEmptyPlan_ReturnsEmpty()
     {
@@ -512,6 +617,9 @@ public class ExecutionPlanExtensionsTests
         Assert.Empty(coveredColumns);
     }
 
+    /// <summary>
+    /// Tests that GetAlreadyCoveredColumns throws ArgumentNullException when given a null execution plan.
+    /// </summary>
     [Fact]
     public void GetAlreadyCoveredColumns_WithNullPlan_ThrowsArgumentNullException()
     {
