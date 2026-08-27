@@ -4,9 +4,17 @@ using Xunit;
 
 namespace SqlIndexAdvisor.Tests
 {
+    /// <summary>
+    /// Test class for verifying the JSON extension methods of the RecommendationEngine class.
+    /// Contains tests for serialization to JSON and deserialization from JSON.
+    /// </summary>
     public class RecommendationEngineJsonExtensionsTests : IRecommendationEngineJsonExtensionsTests
     {
         [Fact]
+        /// <summary>
+        /// Verifies that calling ToJson on a valid RecommendationEngine instance returns a non-empty JSON string.
+        /// For an empty engine the default (non-indented) JSON is expected to be "{}".
+        /// </summary>
         public void ToJson_WithValidEngine_ReturnsNonEmptyJson()
         {
             // Arrange
@@ -22,6 +30,10 @@ namespace SqlIndexAdvisor.Tests
         }
 
         [Fact]
+        /// <summary>
+        /// Verifies that calling ToJson with indented: true on a RecommendationEngine produces indented JSON.
+        /// For an empty object, indented JSON contains newline characters.
+        /// </summary>
         public void ToJson_WithIndentation_ProducesIndentedJson()
         {
             // Arrange
@@ -36,6 +48,9 @@ namespace SqlIndexAdvisor.Tests
         }
 
         [Fact]
+        /// <summary>
+        /// Verifies that calling ToJson on a null RecommendationEngine throws an ArgumentNullException.
+        /// </summary>
         public void ToJson_NullEngine_ThrowsArgumentNullException()
         {
             // Arrange
@@ -46,6 +61,10 @@ namespace SqlIndexAdvisor.Tests
         }
 
         [Fact]
+        /// <summary>
+        /// Verifies that FromJson successfully deserializes valid JSON into a RecommendationEngine instance.
+        /// The returned instance should be of type RecommendationEngine.
+        /// </summary>
         public void FromJson_ValidJson_ReturnsEngineInstance()
         {
             // Arrange
@@ -61,6 +80,9 @@ namespace SqlIndexAdvisor.Tests
         }
 
         [Fact]
+        /// <summary>
+        /// Verifies that FromJson returns null when given an empty string or a string containing only whitespace.
+        /// </summary>
         public void FromJson_EmptyOrWhiteSpace_ReturnsNull()
         {
             // Arrange
@@ -77,6 +99,9 @@ namespace SqlIndexAdvisor.Tests
         }
 
         [Fact]
+        /// <summary>
+        /// Verifies that FromJson throws an ArgumentNullException when given a null JSON string.
+        /// </summary>
         public void FromJson_NullJson_ThrowsArgumentNullException()
         {
             // Arrange
@@ -87,6 +112,10 @@ namespace SqlIndexAdvisor.Tests
         }
 
         [Fact]
+        /// <summary>
+        /// Verifies that TryFromJson returns true and a valid RecommendationEngine instance when given valid JSON.
+        /// The out parameter should contain an instance of RecommendationEngine.
+        /// </summary>
         public void TryFromJson_ValidJson_ReturnsTrueAndEngine()
         {
             // Arrange
@@ -102,6 +131,9 @@ namespace SqlIndexAdvisor.Tests
         }
 
         [Fact]
+        /// <summary>
+        /// Verifies that TryFromJson returns false and a null engine when given invalid JSON.
+        /// </summary>
         public void TryFromJson_InvalidJson_ReturnsFalseAndNull()
         {
             // Arrange
@@ -116,6 +148,9 @@ namespace SqlIndexAdvisor.Tests
         }
 
         [Fact]
+        /// <summary>
+        /// Verifies that TryFromJson throws an ArgumentNullException when given a null JSON string.
+        /// </summary>
         public void TryFromJson_NullJson_ThrowsArgumentNullException()
         {
             // Arrange
