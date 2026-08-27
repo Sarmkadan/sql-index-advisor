@@ -3,6 +3,9 @@ using System.Text.Json;
 
 namespace SqlIndexAdvisor.Tests;
 
+/// <summary>
+/// Contains unit tests for JSON serialization and deserialization of <see cref="IndexRecommendation"/>.
+/// </summary>
 public class IndexRecommendationJsonExtensionsTests
 {
     private readonly IndexRecommendation _testRecommendation = new()
@@ -16,6 +19,9 @@ public class IndexRecommendationJsonExtensionsTests
         Reasons = new List<string> { IndexRecommendationJsonExtensionsTestsConstants.ReasonMissingIndexOnUsersTable, IndexRecommendationJsonExtensionsTestsConstants.ReasonFrequentWhereClause }
     };
 
+    /// <summary>
+    /// Verifies that serializing a valid recommendation produces a non-null and non-empty JSON string.
+    /// </summary>
     [Fact]
     public void ToJson_WithValidRecommendation_ReturnsJsonString()
     {
@@ -27,6 +33,9 @@ public class IndexRecommendationJsonExtensionsTests
         Assert.NotEmpty(result);
     }
 
+    /// <summary>
+    /// Verifies that the serialized JSON string contains the correct table name.
+    /// </summary>
     [Fact]
     public void ToJson_WithValidRecommendation_ContainsTableName()
     {
@@ -37,6 +46,9 @@ public class IndexRecommendationJsonExtensionsTests
         Assert.Contains($"\"table\":\"{IndexRecommendationJsonExtensionsTestsConstants.TableUsers}\"", result);
     }
 
+    /// <summary>
+    /// Verifies that the serialized JSON string contains the correct key columns array.
+    /// </summary>
     [Fact]
     public void ToJson_WithValidRecommendation_ContainsKeyColumns()
     {
@@ -47,6 +59,9 @@ public class IndexRecommendationJsonExtensionsTests
         Assert.Contains($"\"keyColumns\":[\"{IndexRecommendationJsonExtensionsTestsConstants.ColumnUserId}\",\"{IndexRecommendationJsonExtensionsTestsConstants.ColumnEmail}\"]", result);
     }
 
+    /// <summary>
+    /// Verifies that the serialized JSON string contains the correct include columns array.
+    /// </summary>
     [Fact]
     public void ToJson_WithValidRecommendation_ContainsIncludeColumns()
     {
@@ -57,6 +72,9 @@ public class IndexRecommendationJsonExtensionsTests
         Assert.Contains($"\"includeColumns\":[\"{IndexRecommendationJsonExtensionsTestsConstants.ColumnName}\",\"{IndexRecommendationJsonExtensionsTestsConstants.ColumnCreatedDate}\"]", result);
     }
 
+    /// <summary>
+    /// Verifies that the serialized JSON string contains the correct estimated impact percentage.
+    /// </summary>
     [Fact]
     public void ToJson_WithValidRecommendation_ContainsEstimatedImpactPercent()
     {
@@ -67,6 +85,9 @@ public class IndexRecommendationJsonExtensionsTests
         Assert.Contains($"\"estimatedImpactPercent\":{IndexRecommendationJsonExtensionsTestsConstants.EstimatedImpactPercent85_5}", result);
     }
 
+    /// <summary>
+    /// Verifies that the serialized JSON string contains the correct confidence enum value (serialized as an integer).
+    /// </summary>
     [Fact]
     public void ToJson_WithValidRecommendation_ContainsConfidence()
     {
@@ -77,6 +98,9 @@ public class IndexRecommendationJsonExtensionsTests
         Assert.Contains("\"confidence\":2", result);
     }
 
+    /// <summary>
+    /// Verifies that the serialized JSON string contains the reasons array and the specific reason strings.
+    /// </summary>
     [Fact]
     public void ToJson_WithValidRecommendation_ContainsReasons()
     {
@@ -89,6 +113,9 @@ public class IndexRecommendationJsonExtensionsTests
         Assert.Contains(IndexRecommendationJsonExtensionsTestsConstants.ReasonFrequentWhereClause, result);
     }
 
+    /// <summary>
+    /// Verifies that calling <see cref="IndexRecommendation.ToJson(bool)"/> with <c>indented: true</c> produces a formatted JSON string containing newlines.
+    /// </summary>
     [Fact]
     public void ToJson_WithIndentedTrue_ReturnsFormattedJson()
     {
@@ -100,6 +127,9 @@ public class IndexRecommendationJsonExtensionsTests
         Assert.True(result.Contains("\n") || result.Contains("\r\n"), "Indented JSON should contain newlines");
     }
 
+    /// <summary>
+    /// Verifies that calling <see cref="IndexRecommendation.ToJson()"/> on a null recommendation throws an <see cref="ArgumentNullException"/>.
+    /// </summary>
     [Fact]
     public void ToJson_WithNullRecommendation_ThrowsArgumentNullException()
     {
@@ -110,6 +140,9 @@ public class IndexRecommendationJsonExtensionsTests
         Assert.Throws<ArgumentNullException>(() => recommendation!.ToJson());
     }
 
+    /// <summary>
+    /// Verifies that deserializing a valid JSON string correctly populates all properties of an <see cref="IndexRecommendation"/>.
+    /// </summary>
     [Fact]
     public void FromJson_WithValidJsonString_ReturnsIndexRecommendation()
     {
@@ -134,6 +167,9 @@ public class IndexRecommendationJsonExtensionsTests
         Assert.Equal(2, result.Reasons.Count);
     }
 
+    /// <summary>
+    /// Verifies that deserializing JSON with camelCase property names and integer enum values correctly populates the recommendation.
+    /// </summary>
     [Fact]
     public void FromJson_WithValidJsonStringWithCamelCase_ReturnsIndexRecommendation()
     {
@@ -157,6 +193,9 @@ public class IndexRecommendationJsonExtensionsTests
         Assert.Equal(2, result.Reasons.Count);
     }
 
+    /// <summary>
+    /// Verifies that calling <see cref="IndexRecommendationJsonExtensions.FromJson(string)"/> with a null string throws an <see cref="ArgumentNullException"/>.
+    /// </summary>
     [Fact]
     public void FromJson_WithNullJsonString_ThrowsArgumentNullException()
     {
@@ -164,6 +203,9 @@ public class IndexRecommendationJsonExtensionsTests
         Assert.Throws<ArgumentNullException>(() => IndexRecommendationJsonExtensions.FromJson(null!));
     }
 
+    /// <summary>
+    /// Verifies that calling <see cref="IndexRecommendationJsonExtensions.FromJson(string)"/> with an empty string throws an <see cref="ArgumentException"/>.
+    /// </summary>
     [Fact]
     public void FromJson_WithEmptyJsonString_ThrowsArgumentException()
     {
@@ -171,6 +213,9 @@ public class IndexRecommendationJsonExtensionsTests
         Assert.Throws<ArgumentException>(() => IndexRecommendationJsonExtensions.FromJson(""));
     }
 
+    /// <summary>
+    /// Verifies that calling <see cref="IndexRecommendationJsonExtensions.FromJson(string)"/> with invalid JSON throws a <see cref="JsonException"/>.
+    /// </summary>
     [Fact]
     public void FromJson_WithInvalidJson_ThrowsJsonException()
     {
@@ -181,6 +226,9 @@ public class IndexRecommendationJsonExtensionsTests
         Assert.Throws<JsonException>(() => IndexRecommendationJsonExtensions.FromJson(invalidJson));
     }
 
+    /// <summary>
+    /// Verifies that <see cref="IndexRecommendationJsonExtensions.TryFromJson(string, out IndexRecommendation?)"/> returns true and correctly sets the output parameter for valid JSON.
+    /// </summary>
     [Fact]
     public void TryFromJson_WithValidJsonString_ReturnsTrueAndSetsValue()
     {
@@ -197,6 +245,9 @@ public class IndexRecommendationJsonExtensionsTests
         Assert.Equal(Confidence.High, value.Confidence);
     }
 
+    /// <summary>
+    /// Verifies that <see cref="IndexRecommendationJsonExtensions.TryFromJson(string, out IndexRecommendation?)"/> handles camelCase JSON and integer enums correctly.
+    /// </summary>
     [Fact]
     public void TryFromJson_WithValidJsonStringWithCamelCase_ReturnsTrueAndSetsValue()
     {
@@ -218,6 +269,9 @@ public class IndexRecommendationJsonExtensionsTests
         Assert.Equal(Confidence.Low, value.Confidence);
     }
 
+    /// <summary>
+    /// Verifies that <see cref="IndexRecommendationJsonExtensions.TryFromJson(string, out IndexRecommendation?)"/> throws an <see cref="ArgumentNullException"/> for null input.
+    /// </summary>
     [Fact]
     public void TryFromJson_WithNullJsonString_ThrowsArgumentNullException()
     {
@@ -225,6 +279,9 @@ public class IndexRecommendationJsonExtensionsTests
         Assert.Throws<ArgumentNullException>(() => IndexRecommendationJsonExtensions.TryFromJson(null!, out _));
     }
 
+    /// <summary>
+    /// Verifies that <see cref="IndexRecommendationJsonExtensions.TryFromJson(string, out IndexRecommendation?)"/> throws an <see cref="ArgumentException"/> for empty input.
+    /// </summary>
     [Fact]
     public void TryFromJson_WithEmptyJsonString_ThrowsArgumentException()
     {
@@ -232,6 +289,9 @@ public class IndexRecommendationJsonExtensionsTests
         Assert.Throws<ArgumentException>(() => IndexRecommendationJsonExtensions.TryFromJson("", out _));
     }
 
+    /// <summary>
+    /// Verifies that <see cref="IndexRecommendationJsonExtensions.TryFromJson(string, out IndexRecommendation?)"/> returns false and sets the output to null for whitespace-only input.
+    /// </summary>
     [Fact]
     public void TryFromJson_WithWhitespaceJsonString_ReturnsFalseAndSetsValueToNull()
     {
@@ -246,6 +306,9 @@ public class IndexRecommendationJsonExtensionsTests
         Assert.Null(value);
     }
 
+    /// <summary>
+    /// Verifies that <see cref="IndexRecommendationJsonExtensions.TryFromJson(string, out IndexRecommendation?)"/> returns false and sets the output to null for invalid JSON.
+    /// </summary>
     [Fact]
     public void TryFromJson_WithInvalidJson_ReturnsFalseAndSetsValueToNull()
     {
@@ -260,6 +323,9 @@ public class IndexRecommendationJsonExtensionsTests
         Assert.Null(value);
     }
 
+    /// <summary>
+    /// Verifies that serializing and deserializing a recommendation preserves all data fields.
+    /// </summary>
     [Fact]
     public void RoundTrip_WithValidRecommendation_PreservesAllData()
     {
@@ -293,6 +359,9 @@ public class IndexRecommendationJsonExtensionsTests
         }
     }
 
+    /// <summary>
+    /// Verifies that serializing and deserializing a minimal recommendation preserves its data.
+    /// </summary>
     [Fact]
     public void RoundTrip_WithMinimalRecommendation_PreservesData()
     {
@@ -323,6 +392,9 @@ public class IndexRecommendationJsonExtensionsTests
         Assert.Equal(minimal.Reasons.Count, deserialized.Reasons.Count);
     }
 
+    /// <summary>
+    /// Verifies that all <see cref="Confidence"/> enum values are correctly preserved through serialization and deserialization.
+    /// </summary>
     [Fact]
     public void RoundTrip_WithAllConfidenceLevels_PreservesConfidence()
     {
