@@ -3,6 +3,9 @@ using SqlIndexAdvisor.Core.Model;
 
 namespace SqlIndexAdvisor.Tests;
 
+/// <summary>
+/// Contains tests for the <see cref="ExecutionPlanJsonExtensions"/> class.
+/// </summary>
 public class ExecutionPlanJsonExtensionsTests
 {
     private readonly ExecutionPlan _samplePlan = new()
@@ -55,6 +58,9 @@ public class ExecutionPlanJsonExtensionsTests
         EngineMissingIndexes = new List<EngineMissingIndex>()
     };
 
+    /// <summary>
+    /// Tests that converting a valid execution plan to JSON returns a non-empty string.
+    /// </summary>
     [Fact]
     public void ToJson_WithValidPlan_ReturnsNonEmptyJsonString()
     {
@@ -66,6 +72,9 @@ public class ExecutionPlanJsonExtensionsTests
         Assert.NotEmpty(json);
     }
 
+    /// <summary>
+    /// Tests that converting a valid execution plan to JSON contains the expected property names.
+    /// </summary>
     [Fact]
     public void ToJson_WithValidPlan_ContainsExpectedProperties()
     {
@@ -79,6 +88,9 @@ public class ExecutionPlanJsonExtensionsTests
         Assert.Contains("\"engineMissingIndexes\"", json, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// Tests that converting an execution plan to JSON with indented=true returns formatted JSON with newlines.
+    /// </summary>
     [Fact]
     public void ToJson_WithIndentedTrue_ReturnsFormattedJson()
     {
@@ -91,6 +103,9 @@ public class ExecutionPlanJsonExtensionsTests
         Assert.Contains("\n", json); // Should have newlines for formatting
     }
 
+    /// <summary>
+    /// Tests that converting an execution plan to JSON with indented=false returns compact JSON without newlines.
+    /// </summary>
     [Fact]
     public void ToJson_WithIndentedFalse_ReturnsCompactJson()
     {
@@ -102,6 +117,9 @@ public class ExecutionPlanJsonExtensionsTests
         Assert.DoesNotContain("\n", json); // Should not have newlines
     }
 
+    /// <summary>
+    /// Tests that converting a null execution plan to JSON throws an ArgumentNullException.
+    /// </summary>
     [Fact]
     public void ToJson_WithNullPlan_ThrowsArgumentNullException()
     {
@@ -112,6 +130,9 @@ public class ExecutionPlanJsonExtensionsTests
         Assert.Throws<ArgumentNullException>(() => nullPlan!.ToJson());
     }
 
+    /// <summary>
+    /// Tests that deserializing a valid JSON string returns a correctly populated ExecutionPlan object.
+    /// </summary>
     [Fact]
     public void FromJson_WithValidJson_ReturnsExecutionPlan()
     {
@@ -129,6 +150,9 @@ public class ExecutionPlanJsonExtensionsTests
         Assert.Equal(1, result.EngineMissingIndexes.Count);
     }
 
+    /// <summary>
+    /// Tests that deserializing a JSON string representing an empty plan returns an ExecutionPlan with default values.
+    /// </summary>
     [Fact]
     public void FromJson_WithEmptyPlanJson_ReturnsEmptyPlan()
     {
@@ -145,6 +169,9 @@ public class ExecutionPlanJsonExtensionsTests
         Assert.Empty(result.EngineMissingIndexes);
     }
 
+    /// <summary>
+    /// Tests that deserializing JSON with camelCase properties correctly maps to PascalCase properties in the ExecutionPlan object.
+    /// </summary>
     [Fact]
     public void FromJson_WithCamelCaseProperties_ReturnsCorrectlyDeserializedPlan()
     {
@@ -165,6 +192,9 @@ public class ExecutionPlanJsonExtensionsTests
         Assert.Equal("Name", result.Nodes[0].PredicateColumns[0]);
     }
 
+    /// <summary>
+    /// Tests that deserializing a null JSON string throws an ArgumentNullException.
+    /// </summary>
     [Fact]
     public void FromJson_WithNullJson_ThrowsArgumentNullException()
     {
@@ -172,6 +202,9 @@ public class ExecutionPlanJsonExtensionsTests
         Assert.Throws<ArgumentNullException>(() => ExecutionPlanJsonExtensions.FromJson(null!));
     }
 
+    /// <summary>
+    /// Tests that deserializing an empty JSON string throws an ArgumentException.
+    /// </summary>
     [Fact]
     public void FromJson_WithEmptyJson_ThrowsArgumentException()
     {
@@ -302,6 +335,9 @@ public class ExecutionPlanJsonExtensionsTests
         }
     }
 
+    /// <summary>
+    /// Tests that serializing and then deserializing an empty plan yields an equivalent plan.
+    /// </summary>
     [Fact]
     public void RoundTripSerialization_WithEmptyPlan_ReturnsEquivalentPlan()
     {
