@@ -469,6 +469,28 @@ class Example
 }
 ```
 
+## ReportRendererTests
+
+The `ReportRendererTests` class verifies the correctness of the `ReportRenderer` class's text and JSON output for index recommendations. It tests scenarios such as empty recommendation lists, single and multiple recommendations, proper inclusion of table and column names, and validation of JSON structure and impact disclaimers.
+
+**Example usage**
+
+```csharp
+using SqlIndexAdvisor.Tests;
+using Xunit;
+
+class Example
+{
+    static void Main()
+    {
+        var tests = new ReportRendererTests();
+        tests.RenderText_EmptyRecommendations_ReturnsNoRecommendationsMessage();
+        tests.RenderText_SingleRecommendation_IncludesTableName();
+        // Additional test methods can be called similarly to verify other rendering behaviors.
+    }
+}
+```
+
 ## License
 
 MIT.
