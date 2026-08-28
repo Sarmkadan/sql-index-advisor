@@ -5,8 +5,14 @@ using Xunit;
 
 namespace SqlIndexAdvisor.Tests
 {
+    /// <summary>
+    /// Tests for the <see cref="PlanParserFactoryJsonExtensions"/> class.
+    /// </summary>
     public class PlanParserFactoryJsonExtensionsTests : IPlanParserFactoryJsonExtensionsTests
     {
+        /// <summary>
+        /// Tests that <see cref="PlanParserFactoryJsonExtensions.ToJson(PlanParserFactory)"/> throws an <see cref="ArgumentNullException"/> when the factory is null.
+        /// </summary>
         [Fact]
         public void ToJson_NullFactory_ThrowsArgumentNullException()
         {
@@ -14,6 +20,9 @@ namespace SqlIndexAdvisor.Tests
             Assert.Throws<ArgumentNullException>(() => factory!.ToJson());
         }
 
+        /// <summary>
+        /// Tests that <see cref="PlanParserFactoryJsonExtensions.ToJson(PlanParserFactory)"/> returns non-indented JSON by default.
+        /// </summary>
         [Fact]
         public void ToJson_Default_IsNonIndentedJson()
         {
@@ -25,6 +34,9 @@ namespace SqlIndexAdvisor.Tests
             Assert.DoesNotContain("\n", json);
         }
 
+        /// <summary>
+        /// Tests that <see cref="PlanParserFactoryJsonExtensions.ToJson(PlanParserFactory)"/> returns indented JSON when the indented parameter is true.
+        /// </summary>
         [Fact]
         public void ToJson_IndentedTrue_ContainsNewlines()
         {
@@ -36,6 +48,9 @@ namespace SqlIndexAdvisor.Tests
             Assert.Contains("\n", json);
         }
 
+        /// <summary>
+        /// Tests that <see cref="PlanParserFactoryJsonExtensions.FromJson(System.String)"/> returns a factory when given valid JSON.
+        /// </summary>
         [Fact]
         public void FromJson_ValidJson_ReturnsFactory()
         {
@@ -51,6 +66,10 @@ namespace SqlIndexAdvisor.Tests
             Assert.Equal(originalNames, deserializedNames);
         }
 
+        /// <summary>
+        /// Tests that <see cref="PlanParserFactoryJsonExtensions.FromJson(System.String)"/> throws an <see cref="ArgumentException"/> when the JSON is null, empty, or whitespace.
+        /// </summary>
+        /// <param name="json">The JSON string to test, which is null, empty, or whitespace.</param>
         [Theory]
         [InlineData(null)]
         [InlineData("")]
@@ -60,6 +79,9 @@ namespace SqlIndexAdvisor.Tests
             Assert.Throws<ArgumentException>(() => PlanParserFactoryJsonExtensions.FromJson(json!));
         }
 
+        /// <summary>
+        /// Tests that <see cref="PlanParserFactoryJsonExtensions.TryFromJson(System.String, out PlanParserFactory?)"/> returns true and a factory when given valid JSON.
+        /// </summary>
         [Fact]
         public void TryFromJson_ValidJson_ReturnsTrueAndFactory()
         {
@@ -72,6 +94,9 @@ namespace SqlIndexAdvisor.Tests
             Assert.NotNull(result);
         }
 
+        /// <summary>
+        /// Tests that <see cref="PlanParserFactoryJsonExtensions.TryFromJson(System.String, out PlanParserFactory?)"/> returns false and null when given invalid JSON.
+        /// </summary>
         [Fact]
         public void TryFromJson_InvalidJson_ReturnsFalseAndNull()
         {
@@ -83,6 +108,10 @@ namespace SqlIndexAdvisor.Tests
             Assert.Null(result);
         }
 
+        /// <summary>
+        /// Tests that <see cref="PlanParserFactoryJsonExtensions.TryFromJson(System.String, out PlanParserFactory?)"/> throws an <see cref="ArgumentException"/> when the JSON is null, empty, or whitespace.
+        /// </summary>
+        /// <param name="json">The JSON string to test, which is null, empty, or whitespace.</param>
         [Theory]
         [InlineData(null)]
         [InlineData("")]
