@@ -565,6 +565,30 @@ class Example
 }
 ```
 
+## IndexRecommendationValidationTests
+
+The `IndexRecommendationValidationTests` class verifies the validation logic for `IndexRecommendation` objects. It tests that validation correctly identifies issues like null/empty table names, missing key columns, invalid impact percentages, and whitespace-only strings, while allowing null values for optional fields like include columns and reasons.
+
+**Example usage**
+
+```csharp
+using SqlIndexAdvisor.Tests;
+using Xunit;
+
+class Example
+{
+    static void Main()
+    {
+        var tests = new IndexRecommendationValidationTests();
+        tests.Validate_WithValidRecommendation_ReturnsEmptyList();
+        tests.Validate_WithNullTable_ReturnsError();
+        tests.IsValid_WithValidRecommendation_ReturnsTrue();
+        tests.EnsureValid_WithValidRecommendation_DoesNotThrow();
+        // Additional test methods can be called similarly to verify validation behaviors.
+    }
+}
+```
+
 ## License
 
 MIT.
