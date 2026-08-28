@@ -589,6 +589,28 @@ class Example
 }
 ```
 
+## ExecutionPlanExtensionsTests
+
+The `ExecutionPlanExtensionsTests` class contains unit tests for the extension methods on `ExecutionPlan`, covering methods such as `GetScanCandidates`, `GetTotalScanCost`, `GetScannedTables`, `GetPredicateColumns`, `GetIncludeCandidateColumns`, and others related to missing index hints and scan analysis. It verifies correct behavior for valid plans, empty plans, and null plans.
+
+**Example usage**
+
+```csharp
+using SqlIndexAdvisor.Tests;
+using Xunit;
+
+class Example
+{
+    static void Main()
+    {
+        var tests = new ExecutionPlanExtensionsTests();
+        tests.GetScanCandidates_WithValidPlan_ReturnsScanNodes();
+        tests.GetTotalScanCost_WithValidPlan_ReturnsSumOfScanCosts();
+        // Additional test methods can be called similarly to verify other behaviors.
+    }
+}
+```
+
 ## License
 
 MIT.
