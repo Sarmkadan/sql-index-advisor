@@ -491,6 +491,28 @@ class Example
 }
 ```
 
+## PlanParserFactoryExtensionsTests
+
+The `PlanParserFactoryExtensionsTests` class contains unit tests for the extension methods of `PlanParserFactory`, covering `TryParse`, `ParseMany`, `CanParse`, `GetRegisteredParserNames`, `GetRegisteredParsers` and `ParseWith`. It verifies correct behavior for valid and invalid inputs, null arguments, and edge cases.
+
+**Example usage**
+
+```csharp
+using SqlIndexAdvisor.Tests;
+using Xunit;
+
+class Example
+{
+    static void Main()
+    {
+        var tests = new PlanParserFactoryExtensionsTests();
+        tests.TryParse_ValidXml_ReturnsTrueAndPlan();
+        tests.TryParse_ValidJson_ReturnsTrueAndPlan();
+        // Additional test methods can be called similarly to verify other behaviors.
+    }
+}
+```
+
 ## License
 
 MIT.
