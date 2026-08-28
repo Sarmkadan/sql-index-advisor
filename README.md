@@ -543,6 +543,28 @@ Console.WriteLine(result.Path); // Absolute path to query_plan.sqlplan
 Console.WriteLine(result.Format); // text (default)
 ```
 
+## IndexRecommendationExtensionsTests
+
+The `IndexRecommendationExtensionsTests` class contains unit tests for the extension methods on `IndexRecommendation`, covering methods such as `ContainsColumn`, `GetTotalColumnCount`, `ToDisplayString`, and `ToSummaryString`. It verifies correct behavior for various inputs, including edge cases like null or empty values.
+
+**Example usage**
+
+```csharp
+using SqlIndexAdvisor.Tests;
+using Xunit;
+
+class Example
+{
+    static void Main()
+    {
+        var tests = new IndexRecommendationExtensionsTests();
+        tests.ContainsColumn_WithExistingKeyColumn_ReturnsTrue();
+        tests.ContainsColumn_WithExistingIncludeColumn_ReturnsTrue();
+        // Additional test methods can be called similarly to verify other behaviors.
+    }
+}
+```
+
 ## License
 
 MIT.
