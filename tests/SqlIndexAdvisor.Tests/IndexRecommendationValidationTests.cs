@@ -2,8 +2,14 @@ using SqlIndexAdvisor.Core.Model;
 
 namespace SqlIndexAdvisor.Tests;
 
+/// <summary>
+/// Tests for validating index recommendations.
+/// </summary>
 public class IndexRecommendationValidationTests : IIndexRecommendationValidationTests
 {
+    /// <summary>
+    /// Tests that validating a valid index recommendation returns an empty list of errors.
+    /// </summary>
     [Fact]
     public void Validate_WithValidRecommendation_ReturnsEmptyList()
     {
@@ -25,6 +31,9 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         Assert.Empty(result);
     }
 
+    /// <summary>
+    /// Tests that validating an index recommendation with a null table returns an error.
+    /// </summary>
     [Fact]
     public void Validate_WithNullTable_ReturnsError()
     {
@@ -43,6 +52,9 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         Assert.Equal(IndexRecommendationValidationTestsConstants.ErrorTableMustBeNonEmpty, result[0]);
     }
 
+    /// <summary>
+    /// Tests that validating an index recommendation with an empty table returns an error.
+    /// </summary>
     [Fact]
     public void Validate_WithEmptyTable_ReturnsError()
     {
@@ -61,6 +73,9 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         Assert.Equal(IndexRecommendationValidationTestsConstants.ErrorTableMustBeNonEmpty, result[0]);
     }
 
+    /// <summary>
+    /// Tests that validating an index recommendation with null key columns returns an error.
+    /// </summary>
     [Fact]
     public void Validate_WithNullKeyColumns_ReturnsError()
     {
@@ -79,6 +94,9 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         Assert.Equal(IndexRecommendationValidationTestsConstants.ErrorKeyColumnsNotNull, result[0]);
     }
 
+    /// <summary>
+    /// Tests that validating an index recommendation with empty key columns returns an error.
+    /// </summary>
     [Fact]
     public void Validate_WithEmptyKeyColumns_ReturnsError()
     {
@@ -97,6 +115,9 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         Assert.Equal(IndexRecommendationValidationTestsConstants.ErrorKeyColumnsMustContainAtLeastOne, result[0]);
     }
 
+    /// <summary>
+    /// Tests that validating an index recommendation with whitespace key columns returns an error.
+    /// </summary>
     [Fact]
     public void Validate_WithWhitespaceKeyColumns_ReturnsError()
     {
@@ -115,6 +136,9 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         Assert.Equal(IndexRecommendationValidationTestsConstants.ErrorKeyColumnsMustBeNonEmpty, result[0]);
     }
 
+    /// <summary>
+    /// Tests that validating an index recommendation with null include columns does not add an error.
+    /// </summary>
     [Fact]
     public void Validate_WithNullIncludeColumns_DoesNotAddError()
     {
@@ -133,6 +157,9 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         Assert.Empty(result);
     }
 
+    /// <summary>
+    /// Tests that validating an index recommendation with whitespace include columns returns an error.
+    /// </summary>
     [Fact]
     public void Validate_WithWhitespaceIncludeColumns_ReturnsError()
     {
@@ -152,6 +179,9 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         Assert.Equal(IndexRecommendationValidationTestsConstants.ErrorIncludeColumnsMustBeNonEmpty, result[0]);
     }
 
+    /// <summary>
+    /// Tests that validating an index recommendation with invalid estimated impact percent returns an error.
+    /// </summary>
     [Fact]
     public void Validate_WithInvalidEstimatedImpactPercent_ReturnsError()
     {
@@ -171,6 +201,9 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         Assert.Equal(IndexRecommendationValidationTestsConstants.ErrorEstimatedImpactPercentRange, result[0]);
     }
 
+    /// <summary>
+    /// Tests that validating an index recommendation with maximum estimated impact percent returns no error.
+    /// </summary>
     [Fact]
     public void Validate_WithMaxEstimatedImpactPercent_ReturnsNoError()
     {
@@ -189,6 +222,9 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         Assert.Empty(result);
     }
 
+    /// <summary>
+    /// Tests that validating an index recommendation with null reasons does not add an error.
+    /// </summary>
     [Fact]
     public void Validate_WithNullReasons_DoesNotAddError()
     {
@@ -207,6 +243,9 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         Assert.Empty(result);
     }
 
+    /// <summary>
+    /// Tests that validating an index recommendation with whitespace reasons returns an error.
+    /// </summary>
     [Fact]
     public void Validate_WithWhitespaceReasons_ReturnsError()
     {
@@ -226,6 +265,9 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         Assert.Equal(IndexRecommendationValidationTestsConstants.ErrorReasonsMustBeNonEmpty, result[0]);
     }
 
+    /// <summary>
+    /// Tests that validating an index recommendation with multiple problems returns all errors.
+    /// </summary>
     [Fact]
     public void Validate_WithMultipleProblems_ReturnsAllErrors()
     {
@@ -251,6 +293,9 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         Assert.Contains(IndexRecommendationValidationTestsConstants.ErrorReasonsMustBeNonEmpty, result);
     }
 
+    /// <summary>
+    /// Tests that IsValid returns true for a valid index recommendation.
+    /// </summary>
     [Fact]
     public void IsValid_WithValidRecommendation_ReturnsTrue()
     {
@@ -269,6 +314,9 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         Assert.True(result);
     }
 
+    /// <summary>
+    /// Tests that IsValid returns false for an invalid index recommendation.
+    /// </summary>
     [Fact]
     public void IsValid_WithInvalidRecommendation_ReturnsFalse()
     {
@@ -286,6 +334,9 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         Assert.False(result);
     }
 
+    /// <summary>
+    /// Tests that IsValid throws an ArgumentNullException when the recommendation is null.
+    /// </summary>
     [Fact]
     public void IsValid_WithNullRecommendation_ThrowsArgumentNullException()
     {
@@ -296,6 +347,9 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         Assert.Throws<ArgumentNullException>(() => recommendation.IsValid());
     }
 
+    /// <summary>
+    /// Tests that EnsureValid does not throw for a valid index recommendation.
+    /// </summary>
     [Fact]
     public void EnsureValid_WithValidRecommendation_DoesNotThrow()
     {
@@ -314,6 +368,9 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         Assert.Null(exception);
     }
 
+    /// <summary>
+    /// Tests that EnsureValid throws an ArgumentException for an invalid index recommendation.
+    /// </summary>
     [Fact]
     public void EnsureValid_WithInvalidRecommendation_ThrowsArgumentException()
     {
@@ -330,6 +387,9 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         Assert.Contains(IndexRecommendationValidationTestsConstants.ErrorTableMustBeNonEmpty, exception.Message);
     }
 
+    /// <summary>
+    /// Tests that EnsureValid throws an ArgumentNullException when the recommendation is null.
+    /// </summary>
     [Fact]
     public void EnsureValid_WithNullRecommendation_ThrowsArgumentNullException()
     {
@@ -340,6 +400,9 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         Assert.Throws<ArgumentNullException>(() => recommendation.EnsureValid());
     }
 
+    /// <summary>
+    /// Tests that Validate throws an ArgumentNullException when the recommendation is null.
+    /// </summary>
     [Fact]
     public void Validate_WithNullRecommendation_ThrowsArgumentNullException()
     {
@@ -350,6 +413,9 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         Assert.Throws<ArgumentNullException>(() => recommendation.Validate());
     }
 
+    /// <summary>
+    /// Tests that validating an index recommendation with minimum estimated impact percent returns no error.
+    /// </summary>
     [Fact]
     public void Validate_WithMinEstimatedImpactPercent_ReturnsNoError()
     {
@@ -368,6 +434,9 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         Assert.Empty(result);
     }
 
+    /// <summary>
+    /// Tests that validating an index recommendation with boundary minimum estimated impact percent returns no error.
+    /// </summary>
     [Fact]
     public void Validate_WithBoundaryEstimatedImpactPercent_ReturnsNoError()
     {
@@ -386,6 +455,9 @@ public class IndexRecommendationValidationTests : IIndexRecommendationValidation
         Assert.Empty(result);
     }
 
+    /// <summary>
+    /// Tests that validating an index recommendation with boundary maximum estimated impact percent returns no error.
+    /// </summary>
     [Fact]
     public void Validate_WithBoundaryMaxEstimatedImpactPercent_ReturnsNoError()
     {
