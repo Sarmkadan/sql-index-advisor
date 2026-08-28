@@ -513,6 +513,36 @@ class Example
 }
 ```
 
+## ArgsParserTests
+
+The `ArgsParserTests` class contains unit tests for the `ArgsParser.Parse` method, which handles command-line argument parsing for the sql-index-advisor CLI. It verifies correct handling of help flags, format specification, minimum impact thresholds, stdin usage, file path normalization, and various error conditions.
+
+**Example usage**
+
+```csharp
+using SqlIndexAdvisor.Core.ArgsParsing;
+using System;
+
+// Parse empty arguments (shows help)
+var result = ArgsParser.Parse(Array.Empty<string>());
+Console.WriteLine(result.ShouldShowHelp); // True
+
+// Parse with format and minimum impact
+result = ArgsParser.Parse(new[] { "--format", "json", "--min-impact", "25.5" });
+Console.WriteLine(result.Format); // json
+Console.WriteLine(result.MinImpact); // 25.5
+
+// Parse file path with stdin flag
+result = ArgsParser.Parse(new[] { "--stdin", "--format", "csv" });
+Console.WriteLine(result.UseStdin); // True
+Console.WriteLine(result.Format); // csv
+
+// Parse a plan file path
+result = ArgsParser.Parse(new[] { "query_plan.sqlplan" });
+Console.WriteLine(result.Path); // Absolute path to query_plan.sqlplan
+Console.WriteLine(result.Format); // text (default)
+```
+
 ## License
 
 MIT.
