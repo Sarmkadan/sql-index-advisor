@@ -611,6 +611,28 @@ class Example
 }
 ```
 
+## ExecutionPlanValidationTests
+
+The `ExecutionPlanValidationTests` class contains unit tests for validating `ExecutionPlan` instances using the `IExecutionPlanValidationTests` interface. It verifies that validation methods (`Validate`, `IsValid`, `EnsureValid`) correctly handle valid plans, null inputs, and various invalid conditions such as negative costs, null nodes, and invalid enum values.
+
+**Example usage**
+
+```csharp
+using SqlIndexAdvisor.Tests;
+using Xunit;
+
+class Example
+{
+    static void Main()
+    {
+        var tests = new ExecutionPlanValidationTests();
+        tests.Validate_HappyPath_ForEachMajorPublicMethod_ReturnsNoProblems();
+        tests.Validate_NullInput_ThrowsArgumentNullException();
+        // Additional test methods can be called similarly to verify validation behaviors.
+    }
+}
+```
+
 ## RecommendationEngineJsonExtensionsTests
 
 The `RecommendationEngineJsonExtensionsTests` class verifies the JSON serialization and deserialization functionality of the `RecommendationEngine` class through its extension methods. It tests serialization to JSON with and without indentation, deserialization from valid and invalid JSON strings, and proper handling of null inputs.
