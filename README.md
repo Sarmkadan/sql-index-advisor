@@ -611,6 +611,50 @@ class Example
 }
 ```
 
+## RecommendationEngineJsonExtensionsTests
+
+The `RecommendationEngineJsonExtensionsTests` class verifies the JSON serialization and deserialization functionality of the `RecommendationEngine` class through its extension methods. It tests serialization to JSON with and without indentation, deserialization from valid and invalid JSON strings, and proper handling of null inputs.
+
+**Example usage**
+
+```csharp
+using SqlIndexAdvisor.Core.Engine;
+using SqlIndexAdvisor.Tests;
+using Xunit;
+
+class Example
+{
+    static void Main()
+    {
+        var tests = new RecommendationEngineJsonExtensionsTests();
+        
+        // Test serialization to JSON
+        var engine = new RecommendationEngine();
+        string json = engine.ToJson(); // Returns "{}"
+        Assert.False(string.IsNullOrWhiteSpace(json));
+        
+        // Test serialization with indentation
+        string indentedJson = engine.ToJson(indented: true);
+        Assert.Contains("\n", indentedJson);
+        
+        // Test deserialization from valid JSON
+        var deserialized = RecommendationEngineJsonExtensions.FromJson("{}");
+        Assert.NotNull(deserialized);
+        Assert.IsType<RecommendationEngine>(deserialized);
+        
+        // Test TryFromJson with valid JSON
+        bool success = RecommendationEngineJsonExtensions.TryFromJson("{}", out var engineFromTry);
+        Assert.True(success);
+        Assert.NotNull(engineFromTry);
+        
+        // Test TryFromJson with invalid JSON
+        bool successInvalid = RecommendationEngineJsonExtensions.TryFromJson("invalid json", out var engineInvalid);
+        Assert.False(successInvalid);
+        Assert.Null(engineInvalid);
+    }
+}
+```
+
 ## License
 
 MIT.
