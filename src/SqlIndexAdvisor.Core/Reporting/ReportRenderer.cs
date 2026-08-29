@@ -24,6 +24,7 @@ public static class ReportRenderer
     /// <param name="plan">The execution plan containing dialect and cost information.</param>
     /// <param name="recs">The list of index recommendations to include in the report.</param>
     /// <returns>A formatted text report string.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when plan or recs is null.</exception>
     public static string RenderText(ExecutionPlan plan, IReadOnlyList<IndexRecommendation> recs)
     {
         ArgumentNullException.ThrowIfNull(plan);
@@ -75,7 +76,7 @@ public static class ReportRenderer
     {
         ArgumentNullException.ThrowIfNull(plan);
         ArgumentNullException.ThrowIfNull(recs);
-        ArgumentException.ThrowIfNullOrEmpty(schemaVersion);
+        ArgumentNullException.ThrowIfNull(schemaVersion);
 
         var payload = new
         {
