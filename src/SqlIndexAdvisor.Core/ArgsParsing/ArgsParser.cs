@@ -10,6 +10,14 @@ namespace SqlIndexAdvisor.Core.ArgsParsing;
 /// </summary>
 public static class ArgsParser
 {
+    private static readonly System.Diagnostics.ActivitySource DiagnosticSource = new("SqlIndexAdvisor.ArgsParsing");
+
+    private const int ParseStartedEventId = 100;
+    private const int OptionRecognizedEventId = 110;
+    private const int DefaultAppliedEventId = 120;
+    private const int ParseCompletedEventId = 190;
+    private const int SuspiciousArgumentEventId = 290;
+
     /// <summary>
     /// Result of parsing the command‑line arguments.
     /// </summary>
@@ -88,12 +96,31 @@ public static class ArgsParser
     {
         ArgumentNullException.ThrowIfNull(args);
 
+        using var activity = DiagnosticSource.HasListeners()
+            ? DiagnosticSource.StartActivity("Parse")
+            : null;
+        if (activity is not null)
+        {
+            AddEvent(activity, ParseStartedEventId, "ParseStarted", "Information",
+                Tag("args.count", args.Length));
+        }
+
         // No arguments – show help (usage) immediately.
         if (args.Length == 0)
-            return ParseResult.Help(Usage);
+        {
+            var result = ParseResult.Help(Usage);
+            if (activity is not null)
+            {
+                AddEvent(activity, DefaultAppliedEventId, "FormatDefaulted", "Information",
+                    Tag("format", result.Format));
+                AddParseResultEvent(activity, result);
+            }
+            return result;
+        }
 
         var useStdin = false;
         var format = "text";
+        var formatSpecified = false;
         var failOnFindings = false;
         var minImpact = 0.0;
         string? path = null;
@@ -111,6 +138,8 @@ public static class ArgsParser
                 {
                     case "--stdin":
                         useStdin = true;
+                        if (activity is not null)
+                            AddOptionEvent(activity, "--stdin", useStdin);
                         break;
 
                     case "--plan":
@@ -119,37 +148,60 @@ public static class ArgsParser
                         if (path is not null)
                             throw new ArgumentException("multiple plan sources specified (positional argument and --plan).");
                         path = ValidateAndResolvePath(planPath);
+                        if (activity is not null)
+                            AddOptionEvent(activity, "--plan", path);
                         break;
 
                     case "--format":
                         format = RequireValue(args, ref i, "--format").ToLowerInvariant();
+                        formatSpecified = true;
+                        if (activity is not null)
+                            AddOptionEvent(activity, "--format", format);
                         break;
 
                     case "--min-impact":
                         var raw = RequireValue(args, ref i, "--min-impact");
                         if (!double.TryParse(raw, System.Globalization.CultureInfo.InvariantCulture, out minImpact))
                             throw new ArgumentException($"--min-impact expects a number, got '{raw}'.");
+                        if (activity is not null)
+                            AddOptionEvent(activity, "--min-impact", minImpact);
                         break;
 
                     case "--fail-on-findings":
                         failOnFindings = true;
+                        if (activity is not null)
+                            AddOptionEvent(activity, "--fail-on-findings", failOnFindings);
                         break;
 
                     case "--sqlserver":
                         sqlServerFlag = true;
+                        if (activity is not null)
+                            AddOptionEvent(activity, "--sqlserver", sqlServerFlag);
                         break;
 
                     case "--postgres":
                         postgresFlag = true;
+                        if (activity is not null)
+                            AddOptionEvent(activity, "--postgres", postgresFlag);
                         break;
 
                     case "--version":
                         // Version is treated as a help screen that only shows version info.
-                        return ParseResult.Help($"sql-index-advisor version {Version}");
+                        if (activity is not null)
+                            AddOptionEvent(activity, "--version", Version);
+                        var versionResult = ParseResult.Help($"sql-index-advisor version {Version}");
+                        if (activity is not null)
+                            AddParseResultEvent(activity, versionResult);
+                        return versionResult;
 
                     case "-h":
                     case "--help":
-                        return ParseResult.Help(Usage);
+                        if (activity is not null)
+                            AddOptionEvent(activity, a, true);
+                        var helpResult = ParseResult.Help(Usage);
+                        if (activity is not null)
+                            AddParseResultEvent(activity, helpResult);
+                        return helpResult;
 
                     default:
                         // Positional argument – treat as plan file unless it looks like an unknown option.
@@ -158,6 +210,8 @@ public static class ArgsParser
                         if (path is not null)
                             throw new ArgumentException("multiple plan sources specified.");
                         path = ValidateAndResolvePath(a);
+                        if (activity is not null)
+                            AddOptionEvent(activity, "plan-path", path);
                         break;
                 }
             }
@@ -174,16 +228,71 @@ public static class ArgsParser
             if (useStdin && path is not null)
                 throw new ArgumentException("cannot specify both --stdin and a file path.");
 
-            return new ParseResult(path, useStdin, format, failOnFindings, minImpact);
+            if (!formatSpecified && activity is not null)
+            {
+                AddEvent(activity, DefaultAppliedEventId, "FormatDefaulted", "Information",
+                    Tag("format", format));
+            }
+
+            var result = new ParseResult(path, useStdin, format, failOnFindings, minImpact);
+            if (activity is not null)
+                AddParseResultEvent(activity, result);
+            return result;
         }
         catch (ArgumentException ex)
         {
-            return ParseResult.Error(ex.Message);
+            return TraceErrorResult(activity, ex.Message);
         }
         catch (SecurityException ex)
         {
-            return ParseResult.Error(ex.Message);
+            return TraceErrorResult(activity, ex.Message);
         }
+    }
+
+    private static ParseResult TraceErrorResult(System.Diagnostics.Activity? activity, string message)
+    {
+        var result = ParseResult.Error(message);
+        if (activity is not null)
+        {
+            AddEvent(activity, SuspiciousArgumentEventId, "ArgumentRejected", "Warning",
+                Tag("error.message", message));
+            AddParseResultEvent(activity, result);
+        }
+        return result;
+    }
+
+    private static void AddOptionEvent(System.Diagnostics.Activity activity, string option, object value) =>
+        AddEvent(activity, OptionRecognizedEventId, "OptionRecognized", "Information",
+            Tag("option.name", option), Tag("option.value", value));
+
+    private static void AddParseResultEvent(System.Diagnostics.Activity activity, ParseResult result) =>
+        AddEvent(activity, ParseCompletedEventId, "ParseCompleted", result.IsError ? "Warning" : "Information",
+            Tag("result.status", result.IsError ? "error" : result.ShouldShowHelp ? "help" : "success"),
+            Tag("result.path", result.Path),
+            Tag("result.use_stdin", result.UseStdin),
+            Tag("result.format", result.Format),
+            Tag("result.fail_on_findings", result.FailOnFindings),
+            Tag("result.min_impact", result.MinImpact),
+            Tag("result.schema_version", result.SchemaVersion));
+
+    private static System.Collections.Generic.KeyValuePair<string, object?> Tag(string key, object? value) =>
+        new(key, value);
+
+    private static void AddEvent(
+        System.Diagnostics.Activity activity,
+        int eventId,
+        string eventName,
+        string level,
+        params System.Collections.Generic.KeyValuePair<string, object?>[] tags)
+    {
+        var eventTags = new System.Diagnostics.ActivityTagsCollection
+        {
+            ["event.id"] = eventId,
+            ["event.level"] = level
+        };
+        foreach (var tag in tags)
+            eventTags[tag.Key] = tag.Value;
+        activity.AddEvent(new System.Diagnostics.ActivityEvent(eventName, tags: eventTags));
     }
 
     /// <summary>
