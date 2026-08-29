@@ -723,6 +723,28 @@ class Example
 }
 ```
 
+## FullScanWithFilterRuleTests
+
+The `FullScanWithFilterRuleTests` class contains unit tests for the `FullScanWithFilterRule` class, which identifies table or index scans that have filter predicates and recommends indexes to eliminate those scans. It verifies the rule's behavior for various scan types (sequential, clustered index, index scan) and conditions (presence of predicate, cost levels, etc.).
+
+**Example usage**
+
+```csharp
+using SqlIndexAdvisor.Tests;
+using Xunit;
+
+class Example
+{
+    static void Main()
+    {
+        var tests = new FullScanWithFilterRuleTests();
+        tests.Evaluate_SeqScanWithFilterPredicate_ReturnsRecommendation();
+        tests.Evaluate_ScanWithLowCost_ReturnsLowConfidence();
+        // Additional test methods can be called similarly to verify other behaviors.
+    }
+}
+```
+
 ## License
 
 MIT.
