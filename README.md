@@ -543,6 +543,52 @@ Console.WriteLine(result.Path); // Absolute path to query_plan.sqlplan
 Console.WriteLine(result.Format); // text (default)
 ```
 
+## PlanParserFactoryJsonExtensionsTests
+
+The `PlanParserFactoryJsonExtensionsTests` class verifies the JSON serialization and deserialization functionality of the `PlanParserFactory` class through its extension methods. It tests serialization to JSON with and without indentation, deserialization from valid and invalid JSON strings, and proper handling of null inputs.
+
+**Example usage**
+
+```csharp
+using SqlIndexAdvisor.Core.Parsing;
+using SqlIndexAdvisor.Tests;
+using Xunit;
+
+class Example
+{
+    static void Main()
+    {
+        var tests = new PlanParserFactoryJsonExtensionsTests();
+        
+        // Test serialization to JSON (non-indented by default)
+        var factory = new PlanParserFactory();
+        string json = factory.ToJson(); 
+        Assert.False(string.IsNullOrWhiteSpace(json));
+        Assert.DoesNotContain("\n", json); // Non-indented JSON should not contain line breaks
+        
+        // Test serialization with indentation
+        string indentedJson = factory.ToJson(indented: true);
+        Assert.False(string.IsNullOrWhiteSpace(indentedJson));
+        Assert.Contains("\n", indentedJson); // Indented JSON should contain line breaks
+        
+        // Test deserialization from valid JSON
+        var deserialized = PlanParserFactoryJsonExtensions.FromJson(json);
+        Assert.NotNull(deserialized);
+        Assert.IsType<PlanParserFactory>(deserialized);
+        
+        // Test TryFromJson with valid JSON
+        bool success = PlanParserFactoryJsonExtensions.TryFromJson(json, out var factoryFromTry);
+        Assert.True(success);
+        Assert.NotNull(factoryFromTry);
+        
+        // Test TryFromJson with invalid JSON
+        bool successInvalid = PlanParserFactoryJsonExtensions.TryFromJson("invalid json", out var factoryInvalid);
+        Assert.False(successInvalid);
+        Assert.Null(factoryInvalid);
+    }
+}
+```
+
 ## IndexRecommendationExtensionsTests
 
 The `IndexRecommendationExtensionsTests` class contains unit tests for the extension methods on `IndexRecommendation`, covering methods such as `ContainsColumn`, `GetTotalColumnCount`, `ToDisplayString`, and `ToSummaryString`. It verifies correct behavior for various inputs, including edge cases like null or empty values.
