@@ -745,6 +745,30 @@ class Example
 }
 ```
 
+## IndexRecommendationTests
+
+The `IndexRecommendationTests` class exercises `IndexRecommendation` initialization, suggested index-name generation, and SQL `CREATE INDEX` statement generation. It also covers edge cases involving schemas, special characters, null collections, impact percentages, and source-node costs.
+
+**Example usage**
+
+```csharp
+using SqlIndexAdvisor.Tests;
+
+class Example
+{
+    static void Main()
+    {
+        var tests = new IndexRecommendationTests();
+
+        tests.Constructor_WithRequiredProperties_InitializesCorrectly();
+        tests.SuggestedName_WithSchemaQualifiedTable_ReturnsCorrectFormat();
+        tests.ToCreateStatement_WithKeyAndIncludeColumns_ReturnsCorrectSql();
+        tests.EstimatedImpactPercent_WithBoundaryValues_StoresCorrectly();
+        tests.SourceNodeCost_WithValidValue_StoresCorrectly();
+    }
+}
+```
+
 ## License
 
 MIT.
