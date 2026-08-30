@@ -27,7 +27,11 @@ public sealed class RecommendationEngine : IRecommendationEngine
     /// with a custom set of index rules.
     /// </summary>
     /// <param name="rules">The rules to evaluate against each execution plan.</param>
-    public RecommendationEngine(IEnumerable<IIndexRule> rules) => _rules = rules.ToList();
+    public RecommendationEngine(IEnumerable<IIndexRule> rules)
+    {
+        ArgumentNullException.ThrowIfNull(rules);
+        _rules = rules.Where(r => r != null).ToList();
+    }
 
     /// <summary>
     /// Analyzes the specified execution plan by running every configured rule,
@@ -42,20 +46,31 @@ public sealed class RecommendationEngine : IRecommendationEngine
     {
         ArgumentNullException.ThrowIfNull(plan);
 
-        var raw = new List<IndexRecommendation>();
+        var raw = CollectRaw(plan);
+        var merged = RecommendationMerger.Merge(raw);
+        return Rank(merged);
+    }
 
-        // Single-pass traversal: visit each node once and dispatch to all rules
-        // This reduces complexity from O(rules × nodes) to O(nodes) for PlanNodeVisitorBase rules
+    private List<IndexRecommendation> CollectRaw(ExecutionPlan plan)
+    {
+        var raw = new List<IndexRecommendation>();
         foreach (var rule in _rules)
         {
-            foreach (var rec in rule.Evaluate(plan))
+            var ruleResults = rule.Evaluate(plan);
+            if (ruleResults != null)
             {
-                raw.Add(rec);
+                foreach (var rec in ruleResults)
+                {
+                    raw.Add(rec);
+                }
             }
         }
+        return raw;
+    }
 
-        var merged = RecommendationMerger.Merge(raw);
-        return merged
+    private List<IndexRecommendation> Rank(IEnumerable<IndexRecommendation> recommendations)
+    {
+        return recommendations
             .OrderByDescending(r => r.Confidence)
             .ThenByDescending(r => r.EstimatedImpactPercent)
             .ToList();
