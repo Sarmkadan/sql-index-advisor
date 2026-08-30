@@ -20,12 +20,21 @@ catch (Exception ex)
 
 static int Run(string[] args)
 {
+    const string usage = "Usage: sql-index-advisor <plan-file>|--stdin [--format text|json|html|csv] [options]";
+
     var parseResult = ArgsParser.Parse(args);
 
     if (parseResult.ShouldShowHelp)
     {
-        Console.WriteLine(parseResult.HelpMessage ?? ArgsParser.Parse(Array.Empty<string>()).HelpMessage);
-        return parseResult.HelpMessage is null ? 1 : 0;
+        Console.WriteLine(parseResult.HelpMessage ?? usage);
+        var helpWasRequested = args.Any(arg => arg is "-h" or "--help" or "--version");
+        return helpWasRequested ? 0 : 1;
+    }
+
+    if (parseResult.Format is not ("text" or "json" or "html" or "csv"))
+    {
+        Console.Error.WriteLine($"error: unknown format '{parseResult.Format}'");
+        return 1;
     }
 
     string content;
@@ -63,7 +72,7 @@ static int Run(string[] args)
 
     // Exit code logic:
     // 0 = success, no findings (or findings ignored with --fail-on-findings false)
-    // 1 = findings present and --fail-on-findings is true
+    // 1 = usage/IO error, or findings present and --fail-on-findings is true
     // 2 = parse error (already handled in catch block)
     return parseResult.FailOnFindings && recs.Count > 0 ? 1 : 0;
 }
