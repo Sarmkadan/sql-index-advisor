@@ -20,7 +20,7 @@ catch (Exception ex)
 
 static int Run(string[] args)
 {
-    const string usage = "Usage: sql-index-advisor <plan-file>|--stdin [--format text|json|html|csv] [options]";
+    const string usage = "Usage: sql-index-advisor <plan-file>|--stdin [--format text|json|html|csv|markdown] [options]";
 
     var parseResult = ArgsParser.Parse(args);
 
@@ -31,7 +31,7 @@ static int Run(string[] args)
         return helpWasRequested ? 0 : 1;
     }
 
-    if (parseResult.Format is not ("text" or "json" or "html" or "csv"))
+    if (parseResult.Format is not ("text" or "json" or "html" or "csv" or "markdown"))
     {
         Console.Error.WriteLine($"error: unknown format '{parseResult.Format}'");
         return 1;
@@ -65,6 +65,7 @@ static int Run(string[] args)
         "json" => ReportRenderer.RenderJson(plan, recs, parseResult.SchemaVersion),
         "html" => HtmlReportRenderer.RenderHtml(plan, recs),
         "csv" => CsvReportRenderer.RenderCsv(plan, recs),
+        "markdown" => MarkdownReportRenderer.RenderMarkdown(plan, recs),
         _ => ReportRenderer.RenderText(plan, recs),
     };
 
