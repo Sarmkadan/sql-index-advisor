@@ -47,9 +47,10 @@ public sealed class PostgresJsonPlanParser : IPlanParser
     {
         ArgumentException.ThrowIfNullOrEmpty(content);
 
-        if (content.Length > MaxFileSizeBytes)
+        var contentSizeBytes = System.Text.Encoding.UTF8.GetByteCount(content);
+        if (contentSizeBytes > MaxFileSizeBytes)
             throw new PlanParseException(
-                $"Plan file size exceeds the allowed limit of {MaxFileSizeBytes} bytes.");
+                $"Plan file size of {contentSizeBytes} bytes exceeds the allowed limit of {MaxFileSizeBytes} bytes.");
 
         JsonDocument doc;
         try
@@ -59,7 +60,8 @@ public sealed class PostgresJsonPlanParser : IPlanParser
             var options = new JsonDocumentOptions
             {
                 AllowTrailingCommas = true,
-                CommentHandling = JsonCommentHandling.Skip
+                CommentHandling = JsonCommentHandling.Skip,
+                MaxDepth = MaxNestingDepth
             };
             doc = JsonDocument.Parse(content, options);
         }
