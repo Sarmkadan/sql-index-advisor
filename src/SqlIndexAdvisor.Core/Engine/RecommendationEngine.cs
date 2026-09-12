@@ -4,10 +4,8 @@ using SqlIndexAdvisor.Core.Rules;
 namespace SqlIndexAdvisor.Core.Engine;
 
 /// <summary>
-/// Runs every rule against a plan, then de-duplicates. Two recommendations are
-/// considered the same index if they target the same table with the same key
-/// columns in the same order (a prefix match is treated as a dup - the wider one
-/// wins and absorbs the other's includes/reasons).
+/// Evaluates execution plans with a collection of index rules and returns ranked,
+/// de-duplicated index recommendations.
 /// </summary>
 public sealed class RecommendationEngine : IRecommendationEngine
 {
@@ -26,7 +24,9 @@ public sealed class RecommendationEngine : IRecommendationEngine
     /// Initializes a new instance of the <see cref="RecommendationEngine"/> class
     /// with a custom set of index rules.
     /// </summary>
-    /// <param name="rules">The rules to evaluate against each execution plan.</param>
+    /// <param name="rules">
+    /// The index rules to evaluate against each execution plan. Null entries are ignored.
+    /// </param>
     public RecommendationEngine(IEnumerable<IIndexRule> rules)
     {
         ArgumentNullException.ThrowIfNull(rules);
@@ -34,13 +34,13 @@ public sealed class RecommendationEngine : IRecommendationEngine
     }
 
     /// <summary>
-    /// Analyzes the specified execution plan by running every configured rule,
-    /// then merges and de-duplicates the raw recommendations.
+    /// Analyzes an execution plan by evaluating every configured rule and merging
+    /// duplicate index recommendations.
     /// </summary>
     /// <param name="plan">The execution plan to analyze.</param>
     /// <returns>
-    /// The merged recommendations, ordered by confidence and then by estimated impact,
-    /// both descending.
+    /// A read-only list of merged recommendations ordered by descending confidence,
+    /// then by descending estimated impact.
     /// </returns>
     public IReadOnlyList<IndexRecommendation> Analyze(ExecutionPlan plan)
     {
