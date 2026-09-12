@@ -3,27 +3,18 @@ using SqlIndexAdvisor.Core.Model;
 namespace SqlIndexAdvisor.Core.Engine;
 
 /// <summary>
-/// Merges duplicate index recommendations for the same table where one column set is a prefix of another.
-/// Keeps the wider index (with more key columns) and merges include columns from both recommendations.
-/// When both an optimizer-native hint (EngineHintRule) and a heuristic rule fire for the same table,
-/// the optimizer hint is preferred as it has real Impact % from the query optimizer.
-/// Also suppresses index recommendations (Kind = CreateIndex) on columns that have implicit conversions
-/// (SchemaFix recommendations) to prevent suggesting indexes that won't be used due to conversions.
+/// Provides operations for consolidating compatible index recommendations and suppressing indexes
+/// whose key columns require schema fixes for implicit conversions.
 /// </summary>
 public static class RecommendationMerger
 {
     /// <summary>
-    /// Merges a list of index recommendations, deduplicating recommendations for the same table.
-    /// Two recommendations are considered duplicates if they target the same table with key columns
-    /// where one is a prefix of the other. The wider index (with more key columns) is kept and
-    /// absorbs the include columns and reasons from the narrower index.
-    /// When both an optimizer-native hint (EngineHintRule) and a heuristic rule fire for the same table,
-    /// the optimizer hint is preferred as it has real Impact % from the query optimizer.
-    /// Also suppresses index recommendations (Kind = CreateIndex) on columns that have implicit conversions
-    /// (SchemaFix recommendations) to prevent suggesting indexes that won't be used due to conversions.
+    /// Merges recommendations for the same table when one key-column sequence is a prefix of another,
+    /// combining their included columns and reasons. Optimizer-native recommendations take precedence
+    /// over heuristic recommendations, and indexes affected by implicit conversions are omitted.
     /// </summary>
-    /// <param name="recommendations">The list of recommendations to merge.</param>
-    /// <returns>A new list with merged recommendations.</returns>
+    /// <param name="recommendations">The index and schema-fix recommendations to consolidate.</param>
+    /// <returns>A new list containing the consolidated recommendations.</returns>
     public static List<IndexRecommendation> Merge(List<IndexRecommendation> recommendations)
     {
         ArgumentNullException.ThrowIfNull(recommendations);
