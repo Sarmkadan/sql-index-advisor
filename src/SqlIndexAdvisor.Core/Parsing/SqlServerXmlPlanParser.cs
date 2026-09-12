@@ -16,6 +16,11 @@ namespace SqlIndexAdvisor.Core.Parsing;
 /// </summary>
 public sealed class SqlServerXmlPlanParser : IPlanParser
 {
+    /// <summary>
+    /// Determines whether the supplied content appears to be a SQL Server showplan XML document.
+    /// </summary>
+    /// <param name="content">The plan content to inspect.</param>
+    /// <returns><see langword="true"/> if the content appears to contain a SQL Server execution plan; otherwise, <see langword="false"/>.</returns>
     public bool CanParse(string content)
     {
         ArgumentNullException.ThrowIfNull(content);
@@ -26,6 +31,12 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
             || trimmed.Contains(SqlServerXmlPlanParserConstants.StmtSimpleElement, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// Parses SQL Server showplan XML into an execution plan.
+    /// </summary>
+    /// <param name="content">The SQL Server showplan XML content to parse.</param>
+    /// <param name="cancellationToken">A token that can be used to cancel parsing.</param>
+    /// <returns>The execution plan represented by the supplied XML.</returns>
     public ExecutionPlan Parse(string content, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(content);
