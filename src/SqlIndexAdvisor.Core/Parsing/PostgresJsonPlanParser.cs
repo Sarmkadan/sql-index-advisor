@@ -5,10 +5,13 @@ using SqlIndexAdvisor.Core.Model;
 namespace SqlIndexAdvisor.Core.Parsing;
 
 /// <summary>
-/// Parses the output of EXPLAIN (FORMAT JSON) / EXPLAIN (ANALYZE, FORMAT JSON)
-/// from PostgreSQL. Postgres does not emit missing-index hints, so all the
-/// recommendations for PG come from the rules walking Seq Scan nodes with filters.
+/// Parses PostgreSQL execution plans produced by <c>EXPLAIN (FORMAT JSON)</c> or
+/// <c>EXPLAIN (ANALYZE, FORMAT JSON)</c>.
 /// </summary>
+/// <remarks>
+/// PostgreSQL plans do not contain missing-index hints. Index recommendations are
+/// derived by inspecting sequential-scan nodes and their filter predicates.
+/// </remarks>
 public sealed class PostgresJsonPlanParser : IPlanParser
 {
     // --------------------------------------------------------------------
@@ -19,10 +22,16 @@ public sealed class PostgresJsonPlanParser : IPlanParser
     private const int MaxNestingDepth = 1_000; // reasonable depth for a plan
 
     /// <summary>
-    /// Determines whether the supplied content looks like a PostgreSQL JSON plan.
+    /// Determines whether the supplied text appears to contain a PostgreSQL JSON execution plan.
     /// </summary>
-    /// <param name="content">The raw plan text.</param>
-    /// <returns>True if the content appears to be a PostgreSQL JSON plan; otherwise false.</returns>
+    /// <param name="content">The plan text to inspect.</param>
+    /// <returns>
+    /// <see langword="true"/> when <paramref name="content"/> resembles a PostgreSQL JSON plan;
+    /// otherwise, <see langword="false"/>.
+    /// </returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="content"/> is <see langword="null"/> or empty.
+    /// </exception>
     public bool CanParse(string content)
     {
         ArgumentException.ThrowIfNullOrEmpty(content);
@@ -37,11 +46,18 @@ public sealed class PostgresJsonPlanParser : IPlanParser
     /// <summary>
     /// Parses a PostgreSQL JSON execution plan into an <see cref="ExecutionPlan"/>.
     /// </summary>
-    /// <param name="content">The JSON plan text.</param>
-    /// <param name="cancellationToken">Optional token to cancel the operation.</param>
-    /// <returns>An <see cref="ExecutionPlan"/> representing the parsed plan.</returns>
+    /// <param name="content">The PostgreSQL JSON plan text to parse.</param>
+    /// <param name="cancellationToken">A token that can cancel traversal of the execution plan.</param>
+    /// <returns>The execution plan represented by <paramref name="content"/>.</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="content"/> is <see langword="null"/> or empty.
+    /// </exception>
     /// <exception cref="PlanParseException">
-    /// Thrown when the input exceeds size or nesting limits, or when the JSON is malformed.
+    /// The input exceeds the supported size or nesting limits, contains malformed JSON,
+    /// or does not contain a PostgreSQL <c>Plan</c> object.
+    /// </exception>
+    /// <exception cref="OperationCanceledException">
+    /// <paramref name="cancellationToken"/> is canceled while traversing the plan.
     /// </exception>
     public ExecutionPlan Parse(string content, CancellationToken cancellationToken = default)
     {
