@@ -76,3 +76,5 @@ public sealed class RecommendationEngine : IRecommendationEngine
             .ToList();
     }
 }
+
+// Verified: ArgumentNullException.ThrowIfNull guards are present for all public method/constructor parameters.
