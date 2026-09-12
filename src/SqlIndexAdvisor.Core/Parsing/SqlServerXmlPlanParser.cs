@@ -23,7 +23,7 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
     /// <returns><see langword="true"/> if the content appears to contain a SQL Server execution plan; otherwise, <see langword="false"/>.</returns>
     public bool CanParse(string content)
     {
-        ArgumentNullException.ThrowIfNull(content);
+        ArgumentException.ThrowIfNullOrEmpty(content);
 
         var trimmed = content.TrimStart();
         if (!trimmed.StartsWith('<')) return false;
@@ -39,7 +39,7 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
     /// <returns>The execution plan represented by the supplied XML.</returns>
     public ExecutionPlan Parse(string content, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(content);
+        ArgumentException.ThrowIfNullOrEmpty(content);
 
         XDocument doc;
         try
