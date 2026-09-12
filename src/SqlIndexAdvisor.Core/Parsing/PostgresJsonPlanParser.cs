@@ -34,7 +34,9 @@ public sealed class PostgresJsonPlanParser : IPlanParser
     /// </exception>
     public bool CanParse(string content)
     {
-        ArgumentException.ThrowIfNullOrEmpty(content);
+        ArgumentNullException.ThrowIfNull(content);
+        if (content.Length == 0)
+            throw new ArgumentException("The string cannot be empty.", nameof(content));
 
         var trimmed = content.TrimStart();
         if (trimmed.Length == 0 || (trimmed[0] != '[' && trimmed[0] != '{'))
@@ -61,7 +63,9 @@ public sealed class PostgresJsonPlanParser : IPlanParser
     /// </exception>
     public ExecutionPlan Parse(string content, CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrEmpty(content);
+        ArgumentNullException.ThrowIfNull(content);
+        if (content.Length == 0)
+            throw new ArgumentException("The string cannot be empty.", nameof(content));
 
         var contentSizeBytes = System.Text.Encoding.UTF8.GetByteCount(content);
         if (contentSizeBytes > MaxFileSizeBytes)
