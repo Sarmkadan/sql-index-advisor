@@ -17,6 +17,9 @@ public abstract class PlanNodeVisitorBase : IIndexRule
     /// </summary>
     private const int MaxTraversalDepth = 1000;
 
+    /// <summary>
+    /// Gets the name of the rule.
+    /// </summary>
     public virtual string Name => GetType().Name.ToLowerInvariant().Replace("rule", "");
 
     /// <summary>
