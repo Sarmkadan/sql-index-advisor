@@ -70,7 +70,9 @@ public static class ArgsParser
         /// <returns>A help <see cref="ParseResult"/>.</returns>
         public static ParseResult Help(string message)
         {
-            ArgumentException.ThrowIfNullOrEmpty(message);
+            ArgumentNullException.ThrowIfNull(message);
+            if (message.Length == 0)
+                throw new ArgumentException("Message cannot be empty.", nameof(message));
             return new(null, false, "text", false, 0) { HelpMessage = message };
         }
 
@@ -81,7 +83,9 @@ public static class ArgsParser
         /// <returns>An error <see cref="ParseResult"/>.</returns>
         public static ParseResult Error(string message)
         {
-            ArgumentException.ThrowIfNullOrEmpty(message);
+            ArgumentNullException.ThrowIfNull(message);
+            if (message.Length == 0)
+                throw new ArgumentException("Message cannot be empty.", nameof(message));
             return new(null, false, "text", false, 0) { ErrorMessage = message };
         }
     }
@@ -356,12 +360,15 @@ public static class ArgsParser
     /// </summary>
     /// <param name="path">File path, or <c>-</c> for stdin.</param>
     /// <returns>Decoded file content.</returns>
-    /// <exception cref="ArgumentException">When <paramref name="path"/> is null or empty.</exception>
+    /// <exception cref="ArgumentNullException">When <paramref name="path"/> is null.</exception>
+    /// <exception cref="ArgumentException">When <paramref name="path"/> is empty.</exception>
     /// <exception cref="FileNotFoundException">When the file does not exist and <paramref name="path"/> is not <c>-</c>.</exception>
     /// <exception cref="IOException">When the file cannot be read.</exception>
     public static string ReadFileWithEncoding(string path)
     {
-        ArgumentException.ThrowIfNullOrEmpty(path);
+        ArgumentNullException.ThrowIfNull(path);
+        if (path.Length == 0)
+            throw new ArgumentException("Path cannot be empty.", nameof(path));
 
         if (path == "-")
         {
