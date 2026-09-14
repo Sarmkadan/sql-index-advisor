@@ -3,10 +3,16 @@ using SqlIndexAdvisor.Core.Model;
 
 namespace SqlIndexAdvisor.Core.Model;
 
+/// <summary>
+/// Represents the confidence level of a recommendation.
+/// </summary>
 public enum Confidence
 {
+    /// <summary>Low confidence.</summary>
     Low,
+    /// <summary>Medium confidence.</summary>
     Medium,
+    /// <summary>High confidence.</summary>
     High
 }
 
@@ -29,27 +35,48 @@ public enum RecommendationKind
 /// </summary>
 public sealed class IndexRecommendation : IIndexRecommendation
 {
+    /// <summary>
+    /// The name of the table on which the index should be created.
+    /// </summary>
     public required string Table { get; init; }
+
+    /// <summary>
+    /// The list of column names that form the key of the index.
+    /// </summary>
     public required List<string> KeyColumns { get; init; }
+
+    /// <summary>
+    /// The list of column names to include in the index as non-key (included) columns.
+    /// </summary>
     public List<string> IncludeColumns { get; init; } = new();
 
-    /// <summary>0..100. Rough share of statement cost we expect this to remove.</summary>
+    /// <summary>
+    /// Estimated percentage of statement cost that this index is expected to remove (0-100).
+    /// </summary>
     public double EstimatedImpactPercent { get; init; }
 
-    /// <summary>Fraction of the whole statement cost attributed to the source plan node (0..1).</summary>
+    /// <summary>
+    /// Fraction of the whole statement cost attributed to the source plan node (0-1).
+    /// </summary>
     public double SourceNodeCost { get; init; }
 
+    /// <summary>
+    /// The confidence level in this recommendation.
+    /// </summary>
     public Confidence Confidence { get; init; }
 
-    /// <summary>Name of the rule that produced this recommendation. Stamped by the engine.</summary>
+    /// <summary>
+    /// The name of the rule that generated this recommendation. Set by the engine.
+    /// </summary>
     public string? Rule { get; set; }
 
-    /// <summary>Which rule(s) fired to produce this recommendation.</summary>
+    /// <summary>
+    /// A list of rule names that contributed to producing this recommendation.
+    /// </summary>
     public List<string> Reasons { get; init; } = new();
 
-    ///
-    /// The kind of recommendation this is. Determines whether it suggests creating an index
-    /// or fixing a query/schema issue.
+    /// <summary>
+    /// The type of recommendation: whether to create an index or fix the query/schema.
     /// </summary>
     public RecommendationKind Kind { get; init; } = RecommendationKind.CreateIndex;
 
@@ -59,6 +86,11 @@ public sealed class IndexRecommendation : IIndexRecommendation
     /// </summary>
     public string? ExistingIndexName { get; init; }
 
+    /// <summary>
+    /// Generates a suggested index name based on the table and key columns, or uses an existing index name if provided.
+    /// </summary>
+    /// <param name="existingIndexName">Optional existing index name to use instead of generating a new one.</param>
+    /// <returns>A string suitable for use as an index name.</returns>
     public string SuggestedName(string? existingIndexName = null)
     {
         // If a specific existing index name is provided as parameter, use it
