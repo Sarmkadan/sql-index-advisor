@@ -19,14 +19,22 @@ public sealed class ImplicitConversionRule : PlanNodeVisitorBase
     /// </summary>
     /// <param name="node">The plan node to evaluate.</param>
     /// <returns>False, indicating nodes should not be visited directly.</returns>
-    protected override bool ShouldVisit(PlanNode node) => false; // Doesn't visit nodes directly
+    protected override bool ShouldVisit(PlanNode node)
+    {
+        ArgumentNullException.ThrowIfNull(node);
+        return false; // Doesn't visit nodes directly
+    }
 
     /// <summary>
     /// Visits a plan node and returns index recommendations. This rule does not generate recommendations during node visitation.
     /// </summary>
     /// <param name="node">The plan node to visit.</param>
     /// <returns>An empty enumeration of index recommendations.</returns>
-    protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node) => Array.Empty<IndexRecommendation>();
+    protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node)
+    {
+        ArgumentNullException.ThrowIfNull(node);
+        return Array.Empty<IndexRecommendation>();
+    }
 
     /// <summary>
     /// Evaluates an execution plan for implicit conversions and returns index recommendations.
@@ -35,6 +43,7 @@ public sealed class ImplicitConversionRule : PlanNodeVisitorBase
     /// <returns>An enumeration of index recommendations for addressing implicit conversions.</returns>
     public override IEnumerable<IndexRecommendation> Evaluate(ExecutionPlan plan)
     {
+        ArgumentNullException.ThrowIfNull(plan);
         // Get conversion columns from statement text
         var conversionColumns = FindImplicitConversionColumns(plan);
         if (conversionColumns.Count == 0)
