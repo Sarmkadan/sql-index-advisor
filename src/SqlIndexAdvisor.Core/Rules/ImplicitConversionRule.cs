@@ -9,12 +9,30 @@ namespace SqlIndexAdvisor.Core.Rules;
 /// </summary>
 public sealed class ImplicitConversionRule : PlanNodeVisitorBase
 {
+    /// <summary>
+    /// Gets the name of this rule.
+    /// </summary>
     public override string Name => "implicit-conversion";
 
+    /// <summary>
+    /// Determines whether to visit a plan node. This rule does not visit nodes directly.
+    /// </summary>
+    /// <param name="node">The plan node to evaluate.</param>
+    /// <returns>False, indicating nodes should not be visited directly.</returns>
     protected override bool ShouldVisit(PlanNode node) => false; // Doesn't visit nodes directly
 
+    /// <summary>
+    /// Visits a plan node and returns index recommendations. This rule does not generate recommendations during node visitation.
+    /// </summary>
+    /// <param name="node">The plan node to visit.</param>
+    /// <returns>An empty enumeration of index recommendations.</returns>
     protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node) => Array.Empty<IndexRecommendation>();
 
+    /// <summary>
+    /// Evaluates an execution plan for implicit conversions and returns index recommendations.
+    /// </summary>
+    /// <param name="plan">The execution plan to evaluate.</param>
+    /// <returns>An enumeration of index recommendations for addressing implicit conversions.</returns>
     public override IEnumerable<IndexRecommendation> Evaluate(ExecutionPlan plan)
     {
         // Get conversion columns from statement text
