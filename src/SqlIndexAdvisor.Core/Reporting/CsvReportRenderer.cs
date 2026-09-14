@@ -21,6 +21,9 @@ public static class CsvReportRenderer
     /// <returns>A CSV string.</returns>
     public static string RenderCsv(ExecutionPlan plan, IReadOnlyList<IndexRecommendation> recs)
     {
+        ArgumentNullException.ThrowIfNull(plan);
+        ArgumentNullException.ThrowIfNull(recs);
+
         var sb = new StringBuilder();
 
         // Header
