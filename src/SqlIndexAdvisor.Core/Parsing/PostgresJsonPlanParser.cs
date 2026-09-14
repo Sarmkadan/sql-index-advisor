@@ -21,6 +21,20 @@ public sealed class PostgresJsonPlanParser : IPlanParser
     private const int MaxFileSizeBytes = 10 * 1024 * 1024; // 10 MiB
     private const int MaxNestingDepth = 1_000; // reasonable depth for a plan
 
+    // JSON property names as constants to avoid magic strings
+    private const string NodeTypePropertyName = "Node Type";
+    private const string PlanPropertyName = "Plan";
+    private const string TotalCostPropertyName = "Total Cost";
+    private const string RelationNamePropertyName = "Relation Name";
+    private const string IndexNamePropertyName = "Index Name";
+    private const string PlanRowsPropertyName = "Plan Rows";
+    private const string OutputPropertyName = "Output";
+    private const string PlansPropertyName = "Plans";
+    private const string FilterPropertyName = "Filter";
+    private const string IndexCondPropertyName = "Index Cond";
+    private const string RecheckCondPropertyName = "Recheck Cond";
+    private const string HashCondPropertyName = "Hash Cond";
+
     /// <summary>
     /// Determines whether the supplied text appears to contain a PostgreSQL JSON execution plan.
     /// </summary>
@@ -41,8 +55,8 @@ public sealed class PostgresJsonPlanParser : IPlanParser
         var trimmed = content.TrimStart();
         if (trimmed.Length == 0 || (trimmed[0] != '[' && trimmed[0] != '{'))
             return false;
-        return trimmed.Contains("\"Node Type\"", StringComparison.OrdinalIgnoreCase)
-            || trimmed.Contains("\"Plan\"", StringComparison.OrdinalIgnoreCase);
+        return trimmed.Contains($"\"{NodeTypePropertyName}\"", StringComparison.OrdinalIgnoreCase)
+            || trimmed.Contains($"\"{PlanPropertyName}\"", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
@@ -101,10 +115,10 @@ public sealed class PostgresJsonPlanParser : IPlanParser
                 root = root[0];
             }
 
-            if (!root.TryGetProperty("Plan", out var planRoot))
-                throw new PlanParseException("No 'Plan' property in JSON plan.");
+            if (!root.TryGetProperty(PlanPropertyName, out var planRoot))
+                throw new PlanParseException($"No '{PlanPropertyName}' property in JSON plan.");
 
-            var totalCost = ReadDouble(planRoot, "Total Cost");
+            var totalCost = ReadDouble(planRoot, TotalCostPropertyName);
             var nodes = new List<PlanNode>();
             Walk(planRoot, null, totalCost, nodes, 0, cancellationToken);
 
@@ -126,24 +140,24 @@ public sealed class PostgresJsonPlanParser : IPlanParser
             throw new PlanParseException(
                 $"Plan nesting depth exceeds the allowed limit of {MaxNestingDepth} levels.");
 
-        var nodeType = ReadString(el, "Node Type") ?? "Unknown";
-        var nodeCost = ReadDouble(el, "Total Cost");
+        var nodeType = ReadString(el, NodeTypePropertyName) ?? "Unknown";
+        var nodeCost = ReadDouble(el, TotalCostPropertyName);
 
         var node = new PlanNode
         {
             Operator = nodeType,
-            TableName = ReadString(el, "Relation Name"),
-            IndexName = ReadString(el, "Index Name"),
-            EstimatedRows = ReadDouble(el, "Plan Rows"),
-            EstimatedRowsRead = ReadDouble(el, "Plan Rows"),
+            TableName = ReadString(el, RelationNamePropertyName),
+            IndexName = ReadString(el, IndexNamePropertyName),
+            EstimatedRows = ReadDouble(el, PlanRowsPropertyName),
+            EstimatedRowsRead = ReadDouble(el, PlanRowsPropertyName),
             RelativeCost = totalCost > 0 ? nodeCost / totalCost : 0,
             PredicateColumns = ExtractFilterColumns(el),
-            OutputColumns = ReadStringArray(el, "Output"),
+            OutputColumns = ReadStringArray(el, OutputPropertyName),
             Parent = parent
         };
         sink.Add(node);
 
-        if (el.TryGetProperty("Plans", out var children) && children.ValueKind == JsonValueKind.Array)
+        if (el.TryGetProperty(PlansPropertyName, out var children) && children.ValueKind == JsonValueKind.Array)
         {
             foreach (var child in children.EnumerateArray())
                 Walk(child, node, totalCost, sink, currentDepth + 1, cancellationToken);
@@ -158,7 +172,7 @@ public sealed class PostgresJsonPlanParser : IPlanParser
     private static List<string> ExtractFilterColumns(JsonElement el)
     {
         var cols = new List<string>();
-        foreach (var key in new[] { "Filter", "Index Cond", "Recheck Cond", "Hash Cond" })
+        foreach (var key in new[] { FilterPropertyName, IndexCondPropertyName, RecheckCondPropertyName, HashCondPropertyName })
         {
             var expr = ReadString(el, key);
             if (string.IsNullOrEmpty(expr)) continue;
