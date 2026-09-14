@@ -9,10 +9,17 @@ namespace SqlIndexAdvisor.Core.Rules;
 /// </summary>
 public sealed class MissingJoinIndexRule : PlanNodeVisitorBase
 {
-    // A join with full scan cheaper than this share of the statement isn't worth an index.
+    /// <summary>
+    /// A join with full scan cheaper than this share of the statement isn't worth an index.
+    /// </summary>
     private const double MinRelativeCost = 0.10;
 
 
+    /// <summary>
+    /// Determines whether the specified plan node should be visited by this rule.
+    /// </summary>
+    /// <param name="node">The plan node to evaluate.</param>
+    /// <returns>True if the node represents a scan with join predicate columns that is part of a join operation and meets the minimum cost threshold; otherwise, false.</returns>
     protected override bool ShouldVisit(PlanNode node)
     {
         // Look for scan nodes that are part of join operations
@@ -24,6 +31,11 @@ public sealed class MissingJoinIndexRule : PlanNodeVisitorBase
             && IsJoinParent(node.Parent);
     }
 
+    /// <summary>
+    /// Visits the specified plan node to generate index recommendations for missing join indexes.
+    /// </summary>
+    /// <param name="node">The plan node representing a scan with join predicate columns that is part of a join operation.</param>
+    /// <returns>An enumerable of index recommendations for the scan node.</returns>
     protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node)
     {
         // The output columns that aren't part of the join predicate become INCLUDE candidates
@@ -56,6 +68,11 @@ public sealed class MissingJoinIndexRule : PlanNodeVisitorBase
         };
     }
 
+    /// <summary>
+    /// Determines whether the specified parent node represents a join operation (nested loops, hash match, or merge join).
+    /// </summary>
+    /// <param name="parent">The parent plan node to evaluate.</param>
+    /// <returns>True if the parent node represents a join operation; otherwise, false.</returns>
     private static bool IsJoinParent(PlanNode? parent)
     {
         if (parent == null)
