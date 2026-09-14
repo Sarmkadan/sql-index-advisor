@@ -2,6 +2,7 @@ using System.Text;
 using System.Linq;
 using System.Collections.Generic;
 using SqlIndexAdvisor.Core.Model;
+using System;
 
 namespace SqlIndexAdvisor.Core.Reporting;
 
@@ -20,6 +21,8 @@ public static class HtmlReportRenderer
     /// <returns>A string containing a complete HTML document.</returns>
     public static string RenderHtml(ExecutionPlan plan, IReadOnlyList<IndexRecommendation> recs)
     {
+        ArgumentNullException.ThrowIfNull(plan);
+        ArgumentNullException.ThrowIfNull(recs);
         var sb = new StringBuilder();
 
         // HTML header with inline CSS
