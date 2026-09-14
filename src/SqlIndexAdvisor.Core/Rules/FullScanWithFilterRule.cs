@@ -30,6 +30,7 @@ public sealed class FullScanWithFilterRule : PlanNodeVisitorBase
     /// </returns>
     protected override bool ShouldVisit(PlanNode node)
     {
+        ArgumentNullException.ThrowIfNull(node);
         return LooksLikeFullScan(node)
             && !string.IsNullOrEmpty(node.TableName)
             && node.PredicateColumns.Count > 0
@@ -43,6 +44,7 @@ public sealed class FullScanWithFilterRule : PlanNodeVisitorBase
 /// <returns>An enumerable of index recommendations for the full scan with filter operation.</returns>
 protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node)
     {
+        ArgumentNullException.ThrowIfNull(node);
         var include = node.OutputColumns
             .Where(c => !node.PredicateColumns.Contains(c))
             .ToList();
