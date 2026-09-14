@@ -18,6 +18,9 @@ public static class MarkdownReportRenderer
     /// <returns>A Markdown report.</returns>
     public static string RenderMarkdown(ExecutionPlan plan, IReadOnlyList<IndexRecommendation> recs)
     {
+        ArgumentNullException.ThrowIfNull(plan);
+        ArgumentNullException.ThrowIfNull(recs);
+
         var sb = new StringBuilder();
 
         sb.AppendLine("# SQL Index Advisor Report");
