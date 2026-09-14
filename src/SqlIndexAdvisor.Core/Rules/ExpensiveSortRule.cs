@@ -1,4 +1,5 @@
 using SqlIndexAdvisor.Core.Model;
+using System;
 
 namespace SqlIndexAdvisor.Core.Rules;
 
@@ -29,6 +30,7 @@ public sealed class ExpensiveSortRule : PlanNodeVisitorBase
     /// <returns>True if the node represents a sort operation with sufficient cost; otherwise, false.</returns>
     protected override bool ShouldVisit(PlanNode node)
     {
+        ArgumentNullException.ThrowIfNull(node);
         return IsSortOperation(node) && node.RelativeCost >= MinRelativeCost;
     }
 
@@ -38,8 +40,11 @@ public sealed class ExpensiveSortRule : PlanNodeVisitorBase
     /// <param name="node">The plan node to visit.</param>
     /// <returns>An empty enumerable; this method always throws NotSupportedException.</returns>
     /// <exception cref="NotSupportedException">Sort analysis requires the full execution plan; use the plan-aware overload.</exception>
-    protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node) =>
+    protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node)
+    {
+        ArgumentNullException.ThrowIfNull(node);
         throw new NotSupportedException("Sort analysis needs the whole plan; the plan-aware overload is used.");
+    }
 
     /// <summary>
     /// Visits the specified plan node within the context of an execution plan to generate index recommendations for expensive sort operations.
@@ -49,6 +54,9 @@ public sealed class ExpensiveSortRule : PlanNodeVisitorBase
     /// <returns>An enumerable of index recommendations for the sort operation.</returns>
     protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node, ExecutionPlan plan)
     {
+        ArgumentNullException.ThrowIfNull(node);
+        ArgumentNullException.ThrowIfNull(plan);
+
         // Extract columns from the Sort operation
         var sortColumns = ExtractSortColumns(node);
         if (sortColumns.Count == 0)
