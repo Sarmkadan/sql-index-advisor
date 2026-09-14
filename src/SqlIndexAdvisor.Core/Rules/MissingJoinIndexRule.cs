@@ -1,4 +1,5 @@
 using SqlIndexAdvisor.Core.Model;
+using System;
 
 namespace SqlIndexAdvisor.Core.Rules;
 
@@ -22,6 +23,8 @@ public sealed class MissingJoinIndexRule : PlanNodeVisitorBase
     /// <returns>True if the node represents a scan with join predicate columns that is part of a join operation and meets the minimum cost threshold; otherwise, false.</returns>
     protected override bool ShouldVisit(PlanNode node)
     {
+        ArgumentNullException.ThrowIfNull(node);
+
         // Look for scan nodes that are part of join operations
         // These scans on the inner side of joins often have join predicate columns
         return node.IsScan
@@ -38,6 +41,8 @@ public sealed class MissingJoinIndexRule : PlanNodeVisitorBase
     /// <returns>An enumerable of index recommendations for the scan node.</returns>
     protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node)
     {
+        ArgumentNullException.ThrowIfNull(node);
+
         // The output columns that aren't part of the join predicate become INCLUDE candidates
         var include = node.OutputColumns
             .Where(c => !node.PredicateColumns.Contains(c))
