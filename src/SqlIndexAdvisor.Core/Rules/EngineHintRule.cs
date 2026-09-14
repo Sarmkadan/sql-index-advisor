@@ -38,6 +38,7 @@ public sealed class EngineHintRule : PlanNodeVisitorBase
     /// <returns>A collection of index recommendations derived from engine hints.</returns>
     public override IEnumerable<IndexRecommendation> Evaluate(ExecutionPlan plan)
     {
+        ArgumentNullException.ThrowIfNull(plan);
         var recommendations = new List<IndexRecommendation>();
 
         foreach (var hint in plan.EngineMissingIndexes)
