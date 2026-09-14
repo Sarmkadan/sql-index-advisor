@@ -122,6 +122,28 @@ public sealed class IndexRecommendation : IIndexRecommendation
         return DdlRenderer.RenderCreateIndex(this, dialect);
     }
 
+    /// <summary>
+    /// Returns a concise human-readable summary of the recommendation's key fields.
+    /// </summary>
+    /// <returns>A string summarizing the recommendation.</returns>
+    public override string ToString()
+    {
+        var keyColumnsPart = KeyColumns.Any() ? $"({string.Join(", ", KeyColumns)})" : "";
+        var includeColumnsPart = IncludeColumns.Any() ? $" INCLUDE ({string.Join(", ", IncludeColumns)})" : "";
+
+        string recommendationPart;
+        if (Kind == RecommendationKind.CreateIndex)
+        {
+            recommendationPart = $"INDEX ON {Table}{keyColumnsPart}{includeColumnsPart}";
+        }
+        else
+        {
+            recommendationPart = $"SCHEMA FIX for {Table}";
+        }
+
+        return $"{recommendationPart} - Impact: {EstimatedImpactPercent}%, Confidence: {Confidence}";
+    }
+
     private static string Sanitize(string raw) =>
         new string(raw.Where(c => char.IsLetterOrDigit(c) || c == '_').ToArray());
 }
