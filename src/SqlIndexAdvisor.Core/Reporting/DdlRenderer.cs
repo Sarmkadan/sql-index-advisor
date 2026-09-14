@@ -24,6 +24,7 @@ public static class DdlRenderer
     /// <param name="dialect">The target SQL dialect (SQL Server or Postgres).</param>
     /// <returns>A ready-to-run CREATE INDEX statement string.</returns>
     /// <exception cref="ArgumentNullException">Thrown when recommendation is null.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when dialect is not a supported SQL dialect.</exception>
     public static string RenderCreateIndex(IndexRecommendation recommendation, PlanDialect dialect)
     {
         ArgumentNullException.ThrowIfNull(recommendation);
