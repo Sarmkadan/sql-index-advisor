@@ -31,6 +31,7 @@ internal static class SqlServerXmlPlanParserConstants
     public const string BracketOpen = "[";
     public const string BracketClose = "]";
     public const string SchemaTableSeparator = ".";
+    public const string ColumnAttribute = "Column";
 
     public const int MaxCharactersInDocument = 10_000_000;
     public const int MaxCharactersFromEntities = 1_000_000;

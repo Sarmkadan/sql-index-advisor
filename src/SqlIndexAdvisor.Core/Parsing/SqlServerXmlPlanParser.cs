@@ -67,26 +67,26 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
             throw new PlanParseException(SqlServerXmlPlanParserConstants.NotWellFormedXmlMessage, ex);
         }
 
-        var stmt = Descendants(doc.Root, "StmtSimple").FirstOrDefault();
-        var statementText = stmt?.Attribute("StatementText")?.Value ?? string.Empty;
-        var totalCost = ParseDouble(stmt?.Attribute("StatementSubTreeCost")?.Value);
+        var stmt = Descendants(doc.Root, SqlServerXmlPlanParserConstants.StmtSimpleElement).FirstOrDefault();
+        var statementText = stmt?.Attribute(SqlServerXmlPlanParserConstants.StatementTextAttribute)?.Value ?? string.Empty;
+        var totalCost = ParseDouble(stmt?.Attribute(SqlServerXmlPlanParserConstants.StatementSubTreeCostAttribute)?.Value);
 
         var nodes = new List<PlanNode>();
         var byElement = new Dictionary<XElement, PlanNode>();
-        var relOps = Descendants(doc.Root, "RelOp").ToList();
+        var relOps = Descendants(doc.Root, SqlServerXmlPlanParserConstants.RelOpElement).ToList();
 
         foreach (var relOp in relOps)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var estRows = ParseDouble(relOp.Attribute("EstimateRows")?.Value);
+            var estRows = ParseDouble(relOp.Attribute(SqlServerXmlPlanParserConstants.EstimateRowsAttribute)?.Value);
             var node = new PlanNode
             {
-                Operator = relOp.Attribute("PhysicalOp")?.Value ?? relOp.Attribute("LogicalOp")?.Value ?? "Unknown",
+                Operator = relOp.Attribute(SqlServerXmlPlanParserConstants.PhysicalOpAttribute)?.Value ?? relOp.Attribute(SqlServerXmlPlanParserConstants.LogicalOpAttribute)?.Value ?? SqlServerXmlPlanParserConstants.UnknownOperator,
                 EstimatedRows = estRows,
                 EstimatedRowsRead = estRows,
                 RelativeCost = totalCost > 0
-                    ? ParseDouble(relOp.Attribute("EstimatedTotalSubtreeCost")?.Value) / totalCost
+                    ? ParseDouble(relOp.Attribute(SqlServerXmlPlanParserConstants.EstimatedTotalSubtreeCostAttribute)?.Value) / totalCost
                     : 0,
                 TableName = FindObjectName(relOp),
                 IndexName = FindIndexName(relOp),
@@ -103,7 +103,7 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var parentEl = relOp.Ancestors().FirstOrDefault(a => a.Name.LocalName == "RelOp");
+            var parentEl = relOp.Ancestors().FirstOrDefault(a => a.Name.LocalName == SqlServerXmlPlanParserConstants.RelOpElement);
             if (parentEl is not null && byElement.TryGetValue(parentEl, out var parentNode))
                 node.Parent = parentNode;
         }
@@ -125,27 +125,27 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
         ArgumentNullException.ThrowIfNull(root);
 
         var result = new List<EngineMissingIndex>();
-        foreach (var group in Descendants(root, "MissingIndexGroup"))
+        foreach (var group in Descendants(root, SqlServerXmlPlanParserConstants.MissingIndexGroupElement))
         {
-            var impact = ParseDouble(group.Attribute("Impact")?.Value);
-            foreach (var idx in Descendants(group, "MissingIndex"))
+            var impact = ParseDouble(group.Attribute(SqlServerXmlPlanParserConstants.ImpactAttribute)?.Value);
+            foreach (var idx in Descendants(group, SqlServerXmlPlanParserConstants.MissingIndexElement))
             {
-                var bareTable = idx.Attribute("Table")?.Value?.Trim('[', ']') ?? string.Empty;
-                var schema = idx.Attribute("Schema")?.Value?.Trim('[', ']');
-                var table = string.IsNullOrEmpty(schema) ? bareTable : $"{schema}.{bareTable}";
+                var bareTable = idx.Attribute(SqlServerXmlPlanParserConstants.TableAttribute)?.Value?.Trim(SqlServerXmlPlanParserConstants.BracketOpen[0], SqlServerXmlPlanParserConstants.BracketClose[0]) ?? string.Empty;
+                var schema = idx.Attribute(SqlServerXmlPlanParserConstants.SchemaAttribute)?.Value?.Trim(SqlServerXmlPlanParserConstants.BracketOpen[0], SqlServerXmlPlanParserConstants.BracketClose[0]);
+                var table = string.IsNullOrEmpty(schema) ? bareTable : $"{schema}{SqlServerXmlPlanParserConstants.SchemaTableSeparator}{bareTable}";
                 var eq = new List<string>();
                 var ineq = new List<string>();
                 var incl = new List<string>();
-                foreach (var col in Descendants(idx, "ColumnGroup"))
+                foreach (var col in Descendants(idx, SqlServerXmlPlanParserConstants.ColumnGroupElement))
                 {
-                    var usage = col.Attribute("Usage")?.Value ?? string.Empty;
-                    var names = Descendants(col, "Column")
-                        .Select(c => c.Attribute("Name")?.Value?.Trim('[', ']') ?? string.Empty)
+                    var usage = col.Attribute(SqlServerXmlPlanParserConstants.UsageAttribute)?.Value ?? string.Empty;
+                    var names = Descendants(col, SqlServerXmlPlanParserConstants.ColumnElement)
+                        .Select(c => c.Attribute(SqlServerXmlPlanParserConstants.NameAttribute)?.Value?.Trim(SqlServerXmlPlanParserConstants.BracketOpen[0], SqlServerXmlPlanParserConstants.BracketClose[0]) ?? string.Empty)
                         .Where(n => n.Length > 0);
                     var target = usage switch
                     {
-                        "EQUALITY" => eq,
-                        "INEQUALITY" => ineq,
+                        SqlServerXmlPlanParserConstants.EqualityUsage => eq,
+                        SqlServerXmlPlanParserConstants.InequalityUsage => ineq,
                         _ => incl
                     };
                     target.AddRange(names);
@@ -167,20 +167,20 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
     {
         ArgumentNullException.ThrowIfNull(relOp);
 
-        var obj = Descendants(relOp, "Object").FirstOrDefault();
+        var obj = Descendants(relOp, SqlServerXmlPlanParserConstants.ObjectElement).FirstOrDefault();
         if (obj is null) return null;
-        var table = obj.Attribute("Table")?.Value?.Trim('[', ']');
-        var schema = obj.Attribute("Schema")?.Value?.Trim('[', ']');
+        var table = obj.Attribute(SqlServerXmlPlanParserConstants.TableAttribute)?.Value?.Trim(SqlServerXmlPlanParserConstants.BracketOpen[0], SqlServerXmlPlanParserConstants.BracketClose[0]);
+        var schema = obj.Attribute(SqlServerXmlPlanParserConstants.SchemaAttribute)?.Value?.Trim(SqlServerXmlPlanParserConstants.BracketOpen[0], SqlServerXmlPlanParserConstants.BracketClose[0]);
         if (string.IsNullOrEmpty(table)) return null;
-        return string.IsNullOrEmpty(schema) ? table : $"{schema}.{table}";
+        return string.IsNullOrEmpty(schema) ? table : $"{schema}{SqlServerXmlPlanParserConstants.SchemaTableSeparator}{table}";
     }
 
     private static string? FindIndexName(XElement relOp)
     {
         ArgumentNullException.ThrowIfNull(relOp);
 
-        var obj = Descendants(relOp, "Object").FirstOrDefault();
-        return obj?.Attribute("Index")?.Value?.Trim('[', ']');
+        var obj = Descendants(relOp, SqlServerXmlPlanParserConstants.ObjectElement).FirstOrDefault();
+        return obj?.Attribute(SqlServerXmlPlanParserConstants.IndexAttribute)?.Value?.Trim(SqlServerXmlPlanParserConstants.BracketOpen[0], SqlServerXmlPlanParserConstants.BracketClose[0]);
     }
 
     private static List<string> FindPredicateColumns(XElement relOp)
@@ -189,11 +189,11 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
 
         // Only look at predicates directly under this RelOp, not nested RelOps.
         var cols = new List<string>();
-        foreach (var pred in DirectDescendantsBeforeNestedRelOp(relOp, "Predicate"))
+        foreach (var pred in DirectDescendantsBeforeNestedRelOp(relOp, SqlServerXmlPlanParserConstants.PredicateElement))
         {
-            foreach (var c in Descendants(pred, "ColumnReference"))
+            foreach (var c in Descendants(pred, SqlServerXmlPlanParserConstants.ColumnReferenceElement))
             {
-                var name = c.Attribute("Column")?.Value?.Trim('[', ']');
+                var name = c.Attribute(SqlServerXmlPlanParserConstants.ColumnAttribute)?.Value?.Trim(SqlServerXmlPlanParserConstants.BracketOpen[0], SqlServerXmlPlanParserConstants.BracketClose[0]);
                 if (!string.IsNullOrEmpty(name) && !cols.Contains(name))
                     cols.Add(name);
             }
@@ -206,11 +206,11 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
         ArgumentNullException.ThrowIfNull(relOp);
 
         var cols = new List<string>();
-        var outputList = DirectDescendantsBeforeNestedRelOp(relOp, "OutputList").FirstOrDefault();
+        var outputList = DirectDescendantsBeforeNestedRelOp(relOp, SqlServerXmlPlanParserConstants.OutputListElement).FirstOrDefault();
         if (outputList is null) return cols;
-        foreach (var c in Descendants(outputList, "ColumnReference"))
+        foreach (var c in Descendants(outputList, SqlServerXmlPlanParserConstants.ColumnReferenceElement))
         {
-            var name = c.Attribute("Column")?.Value?.Trim('[', ']');
+            var name = c.Attribute(SqlServerXmlPlanParserConstants.ColumnAttribute)?.Value?.Trim(SqlServerXmlPlanParserConstants.BracketOpen[0], SqlServerXmlPlanParserConstants.BracketClose[0]);
             if (!string.IsNullOrEmpty(name) && !cols.Contains(name))
                 cols.Add(name);
         }
@@ -229,7 +229,7 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
 
         foreach (var el in relOp.Elements())
         {
-            if (el.Name.LocalName == "RelOp") continue; // skip the child operator subtree
+            if (el.Name.LocalName == SqlServerXmlPlanParserConstants.RelOpElement) continue; // skip the child operator subtree
             if (el.Name.LocalName == localName) yield return el;
             foreach (var nested in DirectDescendantsBeforeNestedRelOp(el, localName))
                 yield return nested;
