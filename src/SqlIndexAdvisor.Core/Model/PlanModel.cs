@@ -16,6 +16,7 @@ public enum PlanDialect
 /// </summary>
 public sealed class ExecutionPlan
 {
+    /// <summary>The database engine dialect of the plan.</summary>
     public PlanDialect Dialect { get; init; }
 
     /// <summary>Raw statement text if the plan carried it. May be empty.</summary>
@@ -24,6 +25,7 @@ public sealed class ExecutionPlan
     /// <summary>Optimizer estimated total cost for the statement.</summary>
     public double EstimatedTotalCost { get; init; }
 
+    /// <summary>Flattened list of operators in the plan tree.</summary>
     public List<PlanNode> Nodes { get; init; } = new();
 
     /// <summary>
@@ -39,8 +41,11 @@ public sealed class ExecutionPlan
 /// </summary>
 public sealed class PlanNode
 {
+    /// <summary>Operator type (e.g., Index Scan, Hash Join).</summary>
     public string Operator { get; init; } = string.Empty;
+    /// <summary>Name of the table the operator reads from, if any.</summary>
     public string? TableName { get; init; }
+    /// <summary>Name of the index the operator uses, if any.</summary>
     public string? IndexName { get; init; }
 
     /// <summary>Estimated rows the optimizer expects this node to emit.</summary>
@@ -58,6 +63,7 @@ public sealed class PlanNode
     /// <summary>Columns the node ultimately outputs (candidates for INCLUDE).</summary>
     public List<string> OutputColumns { get; init; } = new();
 
+    /// <summary>Parent node in the plan tree (null for the root).</summary>
     public PlanNode? Parent { get; set; }
 
     public bool IsScan =>
