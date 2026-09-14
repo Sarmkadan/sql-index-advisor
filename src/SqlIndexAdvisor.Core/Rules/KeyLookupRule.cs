@@ -1,4 +1,5 @@
 using SqlIndexAdvisor.Core.Model;
+using System;
 
 namespace SqlIndexAdvisor.Core.Rules;
 
@@ -21,6 +22,7 @@ public sealed class KeyLookupRule : PlanNodeVisitorBase
     /// <returns>True if the node represents a key lookup or RID lookup with sufficient cost; otherwise, false.</returns>
     protected override bool ShouldVisit(PlanNode node)
     {
+        ArgumentNullException.ThrowIfNull(node);
         // Look for a key‑lookup (or RID‑lookup) operator.
         return IsKeyLookup(node)
         && !string.IsNullOrEmpty(node.TableName)
@@ -34,8 +36,11 @@ public sealed class KeyLookupRule : PlanNodeVisitorBase
     /// <param name="node">The plan node to visit.</param>
     /// <returns>An empty enumerable; this method always throws NotSupportedException.</returns>
     /// <exception cref="NotSupportedException">Key lookup analysis needs the whole plan; the plan-aware overload is used.</exception>
-    protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node) =>
+    protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node)
+    {
+        ArgumentNullException.ThrowIfNull(node);
         throw new NotSupportedException("Key lookup analysis needs the whole plan; the plan-aware overload is used.");
+    }
 
     /// <summary>
     /// Visits the specified plan node within the context of an execution plan to generate index recommendations for key lookup operations.
@@ -45,6 +50,8 @@ public sealed class KeyLookupRule : PlanNodeVisitorBase
     /// <returns>An enumerable of index recommendations for the key lookup operation.</returns>
     protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node, ExecutionPlan plan)
     {
+        ArgumentNullException.ThrowIfNull(node);
+        ArgumentNullException.ThrowIfNull(plan);
         // In showplan the lookup hangs off a join (usually Nested Loops) whose
         // other input is the index seek that supplies the equality predicates.
         // Prefer that sibling seek; fall back to the join node's own predicate.
