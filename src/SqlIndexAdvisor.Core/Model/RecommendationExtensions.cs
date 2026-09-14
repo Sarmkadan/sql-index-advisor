@@ -10,9 +10,12 @@ namespace SqlIndexAdvisor.Core.Model
     {
         /// <summary>
         /// Returns a concise, one‑line summary of the recommendation.
+        /// </summary>
+        /// <remarks>
         /// The implementation uses the suggested index name and the CREATE statement
         /// (defaulting to the SQL Server dialect). Adjust as needed for other dialects.
-        /// </summary>
+        /// </remarks>
+        /// <returns>A one-line summary string.</returns>
         public static string ToOneLineSummary(this IndexRecommendation recommendation)
         {
             if (recommendation == null) throw new ArgumentNullException(nameof(recommendation));
