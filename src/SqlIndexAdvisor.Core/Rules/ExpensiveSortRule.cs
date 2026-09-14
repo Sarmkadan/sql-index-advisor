@@ -100,6 +100,7 @@ public sealed class ExpensiveSortRule : PlanNodeVisitorBase
     /// <returns>True if the node is a sort operation; otherwise, false.</returns>
     private static bool IsSortOperation(PlanNode node)
     {
+        ArgumentNullException.ThrowIfNull(node);
         return node.Operator.StartsWith("Sort", StringComparison.OrdinalIgnoreCase) ||
                node.Operator.StartsWith("TopSort", StringComparison.OrdinalIgnoreCase) ||
                node.Operator.Equals("TopN Sort", StringComparison.OrdinalIgnoreCase) ||
@@ -114,6 +115,7 @@ public sealed class ExpensiveSortRule : PlanNodeVisitorBase
     /// <returns>A list of column names that are being sorted.</returns>
     private static List<string> ExtractSortColumns(PlanNode node)
     {
+        ArgumentNullException.ThrowIfNull(node);
         var columns = new List<string>();
 
         // For Sort operations, the columns are typically in OutputColumns
@@ -146,6 +148,9 @@ public sealed class ExpensiveSortRule : PlanNodeVisitorBase
     /// <returns>The name of the table being sorted, or null if the sort spans multiple tables or cannot be determined.</returns>
     private static string? DetermineTableForSort(PlanNode node, ExecutionPlan plan)
     {
+        ArgumentNullException.ThrowIfNull(node);
+        ArgumentNullException.ThrowIfNull(plan);
+
         // Try to find the table this sort is operating on
         // Look at the node's table if available
         if (!string.IsNullOrEmpty(node.TableName))
@@ -171,6 +176,9 @@ public sealed class ExpensiveSortRule : PlanNodeVisitorBase
     /// <returns>A list of column names to include in the index to cover the query.</returns>
     private static List<string> BuildIncludeColumns(PlanNode node, List<string> keyColumns)
     {
+        ArgumentNullException.ThrowIfNull(node);
+        ArgumentNullException.ThrowIfNull(keyColumns);
+
         // Include columns are output columns that aren't already in the key
         var include = node.OutputColumns
             .Where(c => !keyColumns.Contains(c, StringComparer.OrdinalIgnoreCase))
@@ -188,6 +196,7 @@ public sealed class ExpensiveSortRule : PlanNodeVisitorBase
     /// <returns>An estimated impact percentage for adding an index to eliminate this sort.</returns>
     private static double EstimateImpact(PlanNode node)
     {
+        ArgumentNullException.ThrowIfNull(node);
         var baseline = node.RelativeCost * 100.0;
         var rowFactor = Math.Clamp(node.EstimatedRowsRead / Math.Max(node.EstimatedRows, 1), 1.0, 10.0);
         // Blend: even a small sort can be worth eliminating
