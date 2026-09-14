@@ -43,6 +43,12 @@ public static partial class PredicateColumnScanner
                || expression.Contains("\"Plan\"", StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// Extracts column names from the given predicate expression.
+    /// </summary>
+    /// <param name="expression">The predicate expression to scan.</param>
+    /// <returns>An enumerable of column names found in the expression.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="expression"/> is null.</exception>
     public static IEnumerable<string> Scan(string expression)
     {
         ArgumentNullException.ThrowIfNull(expression);
@@ -50,6 +56,13 @@ public static partial class PredicateColumnScanner
         return Scan(expression, isPostgres);
     }
 
+    /// <summary>
+    /// Extracts column names from the given predicate expression, specifying whether the expression is in Postgres format.
+    /// </summary>
+    /// <param name="expression">The predicate expression to scan.</param>
+    /// <param name="isPostgres">True if the expression is in Postgres format; otherwise, false.</param>
+    /// <returns>An enumerable of column names found in the expression.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="expression"/> is null.</exception>
     public static IEnumerable<string> Scan(string expression, bool isPostgres)
     {
         ArgumentNullException.ThrowIfNull(expression);
