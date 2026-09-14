@@ -27,6 +27,7 @@ public sealed class PlanParserFactory : IPlanParserFactory
     /// <param name="parsers">The parsers to try, in order, when resolving plan content.</param>
     public PlanParserFactory(IEnumerable<IPlanParser> parsers)
     {
+        ArgumentNullException.ThrowIfNull(parsers);
         _parsers = parsers.ToList();
     }
 
@@ -40,6 +41,7 @@ public sealed class PlanParserFactory : IPlanParserFactory
     /// </exception>
     public IPlanParser Resolve(string content)
     {
+        ArgumentNullException.ThrowIfNull(content);
         var parser = _parsers.FirstOrDefault(p => p.CanParse(content));
         if (parser is null)
         {
