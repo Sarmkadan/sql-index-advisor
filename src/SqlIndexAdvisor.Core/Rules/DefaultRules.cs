@@ -10,6 +10,7 @@ public static class DefaultRules
     /// <summary>
     /// Returns the default set of rules.
     /// </summary>
+    /// <returns>The default set of rules.</returns>
     public static IReadOnlyList<IIndexRule> All()
     {
         return new List<IIndexRule>
