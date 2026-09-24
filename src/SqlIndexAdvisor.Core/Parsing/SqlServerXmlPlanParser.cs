@@ -21,6 +21,9 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
     /// </summary>
     /// <param name="content">The plan content to inspect.</param>
     /// <returns><see langword="true"/> if the content appears to contain a SQL Server execution plan; otherwise, <see langword="false"/>.</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="content"/> is <see langword="null"/> or empty.
+    /// </exception>
     public bool CanParse(string content)
     {
         ArgumentException.ThrowIfNullOrEmpty(content);
@@ -37,6 +40,15 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
     /// <param name="content">The SQL Server showplan XML content to parse.</param>
     /// <param name="cancellationToken">A token that can be used to cancel parsing.</param>
     /// <returns>The execution plan represented by the supplied XML.</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="content"/> is <see langword="null"/> or empty.
+    /// </exception>
+    /// <exception cref="PlanParseException">
+    /// The input is not well-formed XML, exceeds size limits, or does not contain a valid SQL Server execution plan.
+    /// </exception>
+    /// <exception cref="OperationCanceledException">
+    /// <paramref name="cancellationToken"/> is canceled while parsing.
+    /// </exception>
     public ExecutionPlan Parse(string content, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrEmpty(content);
