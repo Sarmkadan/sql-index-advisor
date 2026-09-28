@@ -13,6 +13,10 @@ namespace SqlIndexAdvisor.Core.Reporting;
 /// </summary>
 public static class CsvReportRenderer
 {
+    private const string CsvHeader = "Confidence,ImpactPercent,CreateStatement,Reasons";
+    private const char CsvDelimiter = ',';
+    private const string ReasonsSeparator = "; ";
+
     /// <summary>
     /// Renders the supplied plan and recommendations as CSV.
     /// </summary>
@@ -27,17 +31,17 @@ public static class CsvReportRenderer
         var sb = new StringBuilder();
 
         // Header
-        sb.AppendLine("Confidence,ImpactPercent,CreateStatement,Reasons");
+        sb.AppendLine(CsvHeader);
 
         foreach (var r in recs)
         {
             var confidence = r.Confidence.ToString();
             var impact = r.EstimatedImpactPercent.ToString("0.#", CultureInfo.InvariantCulture);
             var createStmt = r.ToCreateStatement(plan.Dialect);
-            var reasons = string.Join("; ", r.Reasons);
+            var reasons = string.Join(ReasonsSeparator, r.Reasons);
 
             sb.AppendLine(
-                $"{Quote(confidence)},{Quote(impact)},{Quote(createStmt)},{Quote(reasons)}");
+                $"{Quote(confidence)}{CsvDelimiter}{Quote(impact)}{CsvDelimiter}{Quote(createStmt)}{CsvDelimiter}{Quote(reasons)}");
         }
 
         return sb.ToString();
@@ -51,7 +55,7 @@ public static class CsvReportRenderer
             return string.Empty;
 
         bool mustQuote = field.Contains('"') ||
-                         field.Contains(',') ||
+                         field.Contains(CsvDelimiter) ||
                          field.Contains('\r') ||
                          field.Contains('\n');
 
