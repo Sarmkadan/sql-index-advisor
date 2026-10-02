@@ -65,5 +65,27 @@ public sealed class PlanParserFactory : IPlanParserFactory
     /// </exception>
     public ExecutionPlan Parse(string content) => Resolve(content).Parse(content);
 
+    /// <summary>
+    /// Attempts to find a parser that can handle the supplied content.
+    /// </summary>
+    /// <param name="content">The raw plan content to sniff.</param>
+    /// <param name="parser">The resolved parser, or null if no parser can handle the content.</param>
+    /// <returns>True if a parser was found; otherwise, false.</returns>
+    /// <summary>
+    /// Attempts to find a parser that can handle the supplied content.
+    /// </summary>
+    public bool TryResolve(string content, out IPlanParser? parser)
+    {
+        ArgumentNullException.ThrowIfNull(content);
+        parser = _parsers.FirstOrDefault(p => p.CanParse(content));
+        return parser is not null;
+    }
+
+    /// <summary>
+    /// Gets the names of all registered parsers.
+    /// </summary>
+    public IReadOnlyList<string> RegisteredParserNames =>
+        _parsers.Select(p => p.GetType().Name).ToList();
+
     internal IReadOnlyList<IPlanParser> GetRegisteredParsersInternal() => _parsers;
 }

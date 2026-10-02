@@ -47,9 +47,16 @@ public static class PlanParserFactoryExtensions
         ArgumentNullException.ThrowIfNull(factory);
         ArgumentNullException.ThrowIfNull(contents);
 
+        return ParseManyCore(factory, contents);
+    }
+
+    private static IEnumerable<(string SourceId, ExecutionPlan Plan)> ParseManyCore(
+        PlanParserFactory factory,
+        IEnumerable<(string SourceId, string Content)> contents)
+    {
         foreach (var (sourceId, content) in contents)
         {
-            if (factory.TryParse(content, out var plan))
+            if (TryParse(factory, content, out var plan))
             {
                 yield return (sourceId, plan);
             }
@@ -68,7 +75,15 @@ public static class PlanParserFactoryExtensions
         ArgumentNullException.ThrowIfNull(factory);
         ArgumentNullException.ThrowIfNull(content);
 
-        return factory.Resolve(content) is not null;
+        try
+        {
+            factory.Resolve(content);
+            return true;
+        }
+        catch (PlanParseException)
+        {
+            return false;
+        }
     }
 
     /// <summary>

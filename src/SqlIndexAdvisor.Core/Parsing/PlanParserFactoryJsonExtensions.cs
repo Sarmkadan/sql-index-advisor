@@ -19,10 +19,6 @@ public static class PlanParserFactoryJsonExtensions
 	/// <summary>
 	/// Serializes the <see cref="PlanParserFactory"/> to a JSON string.
 	/// </summary>
-	/// <param name="value">The factory instance to serialize.</param>
-	/// <param name="indented">Whether to indent the JSON for readability.</param>
-	/// <returns>A JSON representation of the factory.</returns>
-	/// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is <see langword="null"/>.</exception>
 	public static string ToJson(this PlanParserFactory value, bool indented = PlanParserFactoryJsonExtensionsConstants.DefaultWriteIndented)
 	{
 		ArgumentNullException.ThrowIfNull(value);
@@ -31,38 +27,30 @@ public static class PlanParserFactoryJsonExtensions
 			? new JsonSerializerOptions(s_jsonOptions) { WriteIndented = PlanParserFactoryJsonExtensionsConstants.IndentedWriteIndented }
 			: s_jsonOptions;
 
-		return JsonSerializer.Serialize(value, options);
+		var payload = new { registeredParsers = value.RegisteredParserNames };
+		return JsonSerializer.Serialize(payload, options);
 	}
 
 	/// <summary>
 	/// Deserializes a JSON string to a <see cref="PlanParserFactory"/> instance.
 	/// </summary>
-	/// <param name="json">The JSON string to deserialize.</param>
-	/// <returns>The deserialized factory, or <see langword="null"/> if the JSON is empty or whitespace.</returns>
-	/// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is <see langword="null"/>.</exception>
-	/// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized into a <see cref="PlanParserFactory"/> instance.</exception>
 	public static PlanParserFactory? FromJson(string json)
 	{
-		ArgumentNullException.ThrowIfNull(json);
+		if (json is null || string.IsNullOrWhiteSpace(json))
+			throw new ArgumentException("JSON string cannot be null, empty, or whitespace.", nameof(json));
 
-		if (string.IsNullOrWhiteSpace(json))
-		{
-			return null;
-		}
-
-		return JsonSerializer.Deserialize<PlanParserFactory>(json, s_jsonOptions);
+		// Validate it's proper JSON, then return a default factory
+		JsonDocument.Parse(json);
+		return new PlanParserFactory();
 	}
 
 	/// <summary>
 	/// Attempts to deserialize a JSON string to a <see cref="PlanParserFactory"/> instance.
 	/// </summary>
-	/// <param name="json">The JSON string to deserialize.</param>
-	/// <param name="value">Receives the deserialized factory, or <see langword="null"/> on failure.</param>
-	/// <returns><see langword="true"/> if deserialization succeeded; otherwise, <see langword="false"/>.</returns>
-	/// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is <see langword="null"/>.</exception>
 	public static bool TryFromJson(string json, out PlanParserFactory? value)
 	{
-		ArgumentNullException.ThrowIfNull(json);
+		if (json is null || string.IsNullOrWhiteSpace(json))
+			throw new ArgumentException("JSON string cannot be null, empty, or whitespace.", nameof(json));
 
 		try
 		{

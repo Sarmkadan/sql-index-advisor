@@ -25,7 +25,7 @@ namespace SqlIndexAdvisor.Tests
             // Minimal SQL Server XML plan that contains the ShowPlanXML root element.
             var xml = @"<ShowPlanXML xmlns=""http://schemas.microsoft.com/sqlserver/2004/07/showplan""><Batch></Batch></ShowPlanXML>";
 
-            bool result = _factory.TryParse(xml, out var parser);
+            bool result = _factory.TryResolve(xml, out var parser);
 
             Assert.True(result);
             Assert.NotNull(parser);
@@ -42,7 +42,7 @@ namespace SqlIndexAdvisor.Tests
             // Minimal PostgreSQL JSON plan – the parser only needs to detect the JSON format.
             var json = @"{""Plan"":{}}";
 
-            bool result = _factory.TryParse(json, out var parser);
+            bool result = _factory.TryResolve(json, out var parser);
 
             Assert.True(result);
             Assert.NotNull(parser);
@@ -59,7 +59,7 @@ namespace SqlIndexAdvisor.Tests
             // Leading whitespace should not affect detection.
             var xml = @"   <ShowPlanXML xmlns=""http://schemas.microsoft.com/sqlserver/2004/07/showplan""><Batch></Batch></ShowPlanXML>";
 
-            bool result = _factory.TryParse(xml, out var parser);
+            bool result = _factory.TryResolve(xml, out var parser);
 
             Assert.True(result);
             Assert.NotNull(parser);

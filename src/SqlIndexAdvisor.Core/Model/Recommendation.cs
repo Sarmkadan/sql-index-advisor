@@ -119,7 +119,16 @@ public sealed class IndexRecommendation : IIndexRecommendation
     /// <exception cref="ArgumentOutOfRangeException">Thrown when an unsupported dialect is provided.</exception>
     public string ToCreateStatement(PlanDialect dialect)
     {
-        return DdlRenderer.RenderCreateIndex(this, dialect);
+        var name = SuggestedName();
+        var keys = string.Join(", ", KeyColumns);
+        var sb = new StringBuilder();
+        sb.Append($"CREATE INDEX {name} ON {Table} ({keys})");
+        if (IncludeColumns.Count > 0)
+        {
+            sb.Append($" INCLUDE ({string.Join(", ", IncludeColumns)})");
+        }
+        sb.Append(';');
+        return sb.ToString();
     }
 
     /// <summary>

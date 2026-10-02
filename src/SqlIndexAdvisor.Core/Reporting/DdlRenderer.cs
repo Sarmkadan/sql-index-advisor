@@ -147,8 +147,8 @@ public static class DdlRenderer
             return name;
         }
 
-        // Truncate to max length minus hash suffix length (8 chars for "_XXXXXX")
-        var availableLength = maxLength - 8;
+        // Truncate to max length minus hash suffix length (7 chars for "_XXXXXX")
+        var availableLength = maxLength - 7;
         if (availableLength <= 0)
         {
             availableLength = maxLength - 1;

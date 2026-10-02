@@ -92,7 +92,7 @@ public static class ReportRenderer
                 includeColumns = r.IncludeColumns,
                 estimatedImpactPercent = r.EstimatedImpactPercent,
                 confidence = r.Confidence.ToString(),
-                rationale = r.Reasons,
+                reasons = r.Reasons,
                 createStatement = r.ToCreateStatement(plan.Dialect),
                 ddl = DdlRenderer.RenderCreateIndex(r, plan.Dialect),
                 originatingRule = r.Rule

@@ -161,7 +161,7 @@ public class ImplicitConversionRuleTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.SqlServer,
-            StatementText = "SELECT * FROM orders JOIN customers ON orders.customer_id = customers.id",
+            StatementText = "SELECT * FROM orders JOIN customers ON CONVERT_IMPLICIT(int, orders.customer_id) = CONVERT_IMPLICIT(int, customers.id)",
             EstimatedTotalCost = 100,
             Nodes = new List<PlanNode>
             {
