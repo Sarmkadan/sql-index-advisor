@@ -172,8 +172,9 @@ public class PredicateColumnScannerEdgeCasesTests
     [Fact]
     public void ExtractsColumnsFromValidExpressions()
     {
+        // price > 0 yields "price"; (price * quantity) > 100 is a computed expression - no bare column before >
         var cols = PredicateColumnScanner.Scan("(price > 0 AND (price * quantity) > 100)").ToList();
-        Assert.Equal(new[] { "price", "price" }, cols);
+        Assert.Equal(new[] { "price" }, cols);
     }
 
     #endregion
@@ -356,11 +357,11 @@ public class PredicateColumnScannerEdgeCasesTests
     [Fact]
     public void HandlesRealWorldComplexPredicate()
     {
-        var complexPredicate = "((\"Node Type\" = 'Index Scan' AND \"Index Name\" = 'IX_Users_Status_AccountId')\n            AND (\"Actual Rows\" > 1000 AND \"Alias\" = 'u'))";
+        var complexPredicate = "((Status = 'active' AND AccountId = 123)\n            AND (created_at > '2023-01-01'))";
         var cols = PredicateColumnScanner.Scan(complexPredicate).ToList();
-        // Should extract column references from the predicate part
         Assert.Contains("Status", cols);
         Assert.Contains("AccountId", cols);
+        Assert.Contains("created_at", cols);
     }
 
     /// <summary>

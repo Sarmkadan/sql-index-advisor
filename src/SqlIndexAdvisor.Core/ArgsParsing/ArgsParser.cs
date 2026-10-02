@@ -112,14 +112,14 @@ public static class ArgsParser
         // No arguments – show help (usage) immediately.
         if (args.Length == 0)
         {
-            var result = ParseResult.Help(Usage);
+            var helpR = ParseResult.Help(Usage);
             if (activity is not null)
             {
                 AddEvent(activity, DefaultAppliedEventId, "FormatDefaulted", "Information",
-                    Tag("format", result.Format));
-                AddParseResultEvent(activity, result);
+                    Tag("format", helpR.Format));
+                AddParseResultEvent(activity, helpR);
             }
-            return result;
+            return helpR;
         }
 
         var useStdin = false;
@@ -133,124 +133,113 @@ public static class ArgsParser
         var sqlServerFlag = false;
         var postgresFlag = false;
 
-        try
+        for (var i = 0; i < args.Length; i++)
         {
-            for (var i = 0; i < args.Length; i++)
+            var a = args[i];
+            switch (a)
             {
-                var a = args[i];
-                switch (a)
-                {
-                    case "--stdin":
-                        useStdin = true;
-                        if (activity is not null)
-                            AddOptionEvent(activity, "--stdin", useStdin);
-                        break;
+                case "--stdin":
+                    useStdin = true;
+                    if (activity is not null)
+                        AddOptionEvent(activity, "--stdin", useStdin);
+                    break;
 
-                    case "--plan":
-                        // Explicit plan flag – expects a value.
-                        var planPath = RequireValue(args, ref i, "--plan");
-                        if (path is not null)
-                            throw new ArgumentException("multiple plan sources specified (positional argument and --plan).");
-                        path = ValidateAndResolvePath(planPath);
-                        if (activity is not null)
-                            AddOptionEvent(activity, "--plan", path);
-                        break;
+                case "--plan":
+                    // Explicit plan flag – expects a value.
+                    var planPath = RequireValue(args, ref i, "--plan");
+                    if (path is not null)
+                        throw new ArgumentException("multiple plan sources specified (positional argument and --plan).");
+                    path = ValidateAndResolvePath(planPath);
+                    if (activity is not null)
+                        AddOptionEvent(activity, "--plan", path);
+                    break;
 
-                    case "--format":
-                        format = RequireValue(args, ref i, "--format").ToLowerInvariant();
-                        formatSpecified = true;
-                        if (activity is not null)
-                            AddOptionEvent(activity, "--format", format);
-                        break;
+                case "--format":
+                    format = RequireValue(args, ref i, "--format").ToLowerInvariant();
+                    formatSpecified = true;
+                    if (activity is not null)
+                        AddOptionEvent(activity, "--format", format);
+                    break;
 
-                    case "--min-impact":
-                        var raw = RequireValue(args, ref i, "--min-impact");
-                        if (!double.TryParse(raw, System.Globalization.CultureInfo.InvariantCulture, out minImpact))
-                            throw new ArgumentException($"--min-impact expects a number, got '{raw}'.");
-                        if (activity is not null)
-                            AddOptionEvent(activity, "--min-impact", minImpact);
-                        break;
+                case "--min-impact":
+                    var raw = RequireValue(args, ref i, "--min-impact");
+                    if (!double.TryParse(raw, System.Globalization.CultureInfo.InvariantCulture, out minImpact))
+                        throw new ArgumentException($"--min-impact expects a number, got '{raw}'.");
+                    if (activity is not null)
+                        AddOptionEvent(activity, "--min-impact", minImpact);
+                    break;
 
-                    case "--fail-on-findings":
-                        failOnFindings = true;
-                        if (activity is not null)
-                            AddOptionEvent(activity, "--fail-on-findings", failOnFindings);
-                        break;
+                case "--fail-on-findings":
+                    failOnFindings = true;
+                    if (activity is not null)
+                        AddOptionEvent(activity, "--fail-on-findings", failOnFindings);
+                    break;
 
-                    case "--sqlserver":
-                        sqlServerFlag = true;
-                        if (activity is not null)
-                            AddOptionEvent(activity, "--sqlserver", sqlServerFlag);
-                        break;
+                case "--sqlserver":
+                    sqlServerFlag = true;
+                    if (activity is not null)
+                        AddOptionEvent(activity, "--sqlserver", sqlServerFlag);
+                    break;
 
-                    case "--postgres":
-                        postgresFlag = true;
-                        if (activity is not null)
-                            AddOptionEvent(activity, "--postgres", postgresFlag);
-                        break;
+                case "--postgres":
+                    postgresFlag = true;
+                    if (activity is not null)
+                        AddOptionEvent(activity, "--postgres", postgresFlag);
+                    break;
 
-                    case "--version":
-                        // Version is treated as a help screen that only shows version info.
-                        if (activity is not null)
-                            AddOptionEvent(activity, "--version", Version);
-                        var versionResult = ParseResult.Help($"sql-index-advisor version {Version}");
-                        if (activity is not null)
-                            AddParseResultEvent(activity, versionResult);
-                        return versionResult;
+                case "--version":
+                    // Version is treated as a help screen that only shows version info.
+                    if (activity is not null)
+                        AddOptionEvent(activity, "--version", Version);
+                    var versionResult = ParseResult.Help($"sql-index-advisor version {Version}");
+                    if (activity is not null)
+                        AddParseResultEvent(activity, versionResult);
+                    return versionResult;
 
-                    case "-h":
-                    case "--help":
-                        if (activity is not null)
-                            AddOptionEvent(activity, a, true);
-                        var helpResult = ParseResult.Help(Usage);
-                        if (activity is not null)
-                            AddParseResultEvent(activity, helpResult);
-                        return helpResult;
+                case "-h":
+                case "--help":
+                    if (activity is not null)
+                        AddOptionEvent(activity, a, true);
+                    var helpResult = ParseResult.Help(Usage);
+                    if (activity is not null)
+                        AddParseResultEvent(activity, helpResult);
+                    return helpResult;
 
-                    default:
-                        // Positional argument – treat as plan file unless it looks like an unknown option.
-                        if (a.StartsWith('-') && a != "-")
-                            throw new ArgumentException($"unknown option '{a}'.");
-                        if (path is not null)
-                            throw new ArgumentException("multiple plan sources specified.");
-                        path = ValidateAndResolvePath(a);
-                        if (activity is not null)
-                            AddOptionEvent(activity, "plan-path", path);
-                        break;
-                }
+                default:
+                    // Positional argument – treat as plan file unless it looks like an unknown option.
+                    if (a.StartsWith('-') && a != "-")
+                        throw new ArgumentException($"unknown option '{a}'.");
+                    if (path is not null)
+                        throw new ArgumentException("multiple plan sources specified.");
+                    path = ValidateAndResolvePath(a);
+                    if (activity is not null)
+                        AddOptionEvent(activity, "plan-path", path);
+                    break;
             }
-
-            // Validate mutually exclusive database flags.
-            if (sqlServerFlag && postgresFlag)
-                throw new ArgumentException("cannot specify both --sqlserver and --postgres.");
-
-            // Validate format.
-            if (format is not ("text" or "json" or "html" or "csv"))
-                throw new ArgumentException($"--format must be 'text', 'json', 'html', or 'csv', got '{format}'.");
-
-            // Validate stdin vs file path conflict.
-            if (useStdin && path is not null)
-                throw new ArgumentException("cannot specify both --stdin and a file path.");
-
-            if (!formatSpecified && activity is not null)
-            {
-                AddEvent(activity, DefaultAppliedEventId, "FormatDefaulted", "Information",
-                    Tag("format", format));
-            }
-
-            var result = new ParseResult(path, useStdin, format, failOnFindings, minImpact);
-            if (activity is not null)
-                AddParseResultEvent(activity, result);
-            return result;
         }
-        catch (ArgumentException ex)
+
+        // Validate mutually exclusive database flags.
+        if (sqlServerFlag && postgresFlag)
+            throw new ArgumentException("cannot specify both --sqlserver and --postgres.");
+
+        // Validate format.
+        if (format is not ("text" or "json" or "html" or "csv"))
+            throw new ArgumentException($"--format must be 'text', 'json', 'html', or 'csv', got '{format}'.");
+
+        // Validate stdin vs file path conflict.
+        if (useStdin && path is not null)
+            throw new ArgumentException("cannot specify both --stdin and a file path.");
+
+        if (!formatSpecified && activity is not null)
         {
-            return TraceErrorResult(activity, ex.Message);
+            AddEvent(activity, DefaultAppliedEventId, "FormatDefaulted", "Information",
+                Tag("format", format));
         }
-        catch (SecurityException ex)
-        {
-            return TraceErrorResult(activity, ex.Message);
-        }
+
+        var result = new ParseResult(path, useStdin, format, failOnFindings, minImpact);
+        if (activity is not null)
+            AddParseResultEvent(activity, result);
+        return result;
     }
 
     private static ParseResult TraceErrorResult(System.Diagnostics.Activity? activity, string message)
@@ -372,8 +361,7 @@ public static class ArgsParser
 
         if (path == "-")
         {
-            using var stdinReader = new StreamReader(Console.OpenStandardInput(), Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 4096, leaveOpen: false);
-            return stdinReader.ReadToEnd();
+            return Console.In.ReadToEnd();
         }
 
         if (!File.Exists(path))

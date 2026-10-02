@@ -12,6 +12,12 @@ public sealed class RecommendationEngine : IRecommendationEngine
     private readonly IReadOnlyList<IIndexRule> _rules;
 
     /// <summary>
+    /// Gets the names of all registered rules.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public IReadOnlyList<string> RegisteredRules => _rules.Select(r => r.Name).ToList();
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="RecommendationEngine"/> class
     /// using the default set of index rules.
     /// </summary>

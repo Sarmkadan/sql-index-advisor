@@ -17,19 +17,15 @@ public sealed class ImplicitConversionRule : PlanNodeVisitorBase
     /// <summary>
     /// Determines whether to visit a plan node. This rule does not visit nodes directly.
     /// </summary>
-    /// <param name="node">The plan node to evaluate.</param>
-    /// <returns>False, indicating nodes should not be visited directly.</returns>
     protected override bool ShouldVisit(PlanNode node)
     {
         ArgumentNullException.ThrowIfNull(node);
-        return false; // Doesn't visit nodes directly
+        return false;
     }
 
     /// <summary>
-    /// Visits a plan node and returns index recommendations. This rule does not generate recommendations during node visitation.
+    /// Visits a plan node. This rule does not generate recommendations during node visitation.
     /// </summary>
-    /// <param name="node">The plan node to visit.</param>
-    /// <returns>An empty enumeration of index recommendations.</returns>
     protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node)
     {
         ArgumentNullException.ThrowIfNull(node);
@@ -39,8 +35,6 @@ public sealed class ImplicitConversionRule : PlanNodeVisitorBase
     /// <summary>
     /// Evaluates an execution plan for implicit conversions and returns index recommendations.
     /// </summary>
-    /// <param name="plan">The execution plan to evaluate.</param>
-    /// <returns>An enumeration of index recommendations for addressing implicit conversions.</returns>
     public override IEnumerable<IndexRecommendation> Evaluate(ExecutionPlan plan)
     {
         ArgumentNullException.ThrowIfNull(plan);
@@ -49,23 +43,35 @@ public sealed class ImplicitConversionRule : PlanNodeVisitorBase
         if (conversionColumns.Count == 0)
             return Array.Empty<IndexRecommendation>();
 
-        // Find all tables involved in the plan
-        var tablesInPlan = plan.Nodes
+        // Find all tables involved in the plan with their nodes
+        var tableNodes = plan.Nodes
             .Where(n => !string.IsNullOrEmpty(n.TableName))
-            .Select(n => n.TableName!)
-            .Distinct()
+            .GroupBy(n => n.TableName!)
             .ToList();
 
-        // If we have tables in the plan, associate the conversions with them
-        if (tablesInPlan.Count == 0)
+        if (tableNodes.Count == 0)
             return Array.Empty<IndexRecommendation>();
 
         var recommendations = new List<IndexRecommendation>();
 
-        foreach (var table in tablesInPlan)
+        foreach (var tableGroup in tableNodes)
         {
-            var confidence = plan.Nodes
-                .Where(n => n.TableName == table)
+            var table = tableGroup.Key;
+            // Get predicate columns for this table
+            var predicateColumns = tableGroup
+                .SelectMany(n => n.PredicateColumns)
+                .Distinct()
+                .ToList();
+
+            // Only include conversion columns that are also predicate columns
+            var matchingColumns = conversionColumns
+                .Where(c => predicateColumns.Contains(c, StringComparer.OrdinalIgnoreCase))
+                .ToList();
+
+            if (matchingColumns.Count == 0)
+                continue;
+
+            var confidence = tableGroup
                 .Select(n => n.RelativeCost)
                 .DefaultIfEmpty(0)
                 .Max() switch
@@ -78,15 +84,15 @@ public sealed class ImplicitConversionRule : PlanNodeVisitorBase
             recommendations.Add(new IndexRecommendation
             {
                 Table = table,
-                KeyColumns = conversionColumns,
+                KeyColumns = matchingColumns,
                 IncludeColumns = new List<string>(),
-                EstimatedImpactPercent = EstimateImpact(plan.Nodes.FirstOrDefault()),
-                SourceNodeCost = EstimateImpact(plan.Nodes.FirstOrDefault()) / 100.0,
+                EstimatedImpactPercent = EstimateImpact(tableGroup.FirstOrDefault()),
+                SourceNodeCost = EstimateImpact(tableGroup.FirstOrDefault()) / 100.0,
                 Confidence = confidence,
                 Kind = RecommendationKind.SchemaFix,
                 Reasons = new List<string>
                 {
-                    $"Query contains implicit conversion(s) on column(s): {string.Join(", ", conversionColumns)}"
+                    $"Query contains implicit conversion(s) on column(s): {string.Join(", ", matchingColumns)}"
                 }
             });
         }
@@ -98,20 +104,17 @@ public sealed class ImplicitConversionRule : PlanNodeVisitorBase
     {
         var columns = new List<string>();
 
+        if (string.IsNullOrEmpty(plan.StatementText))
+            return columns;
+
         // SQL Server: CONVERT_IMPLICIT function in statement
-        if (!string.IsNullOrEmpty(plan.StatementText))
+        if (plan.StatementText.Contains("CONVERT_IMPLICIT", StringComparison.OrdinalIgnoreCase))
         {
-            // Look for CONVERT_IMPLICIT pattern
-            if (plan.StatementText.Contains("CONVERT_IMPLICIT", StringComparison.OrdinalIgnoreCase))
-            {
-                // Extract column names involved in the conversion
-                columns.AddRange(ExtractColumnsFromConversion(plan.StatementText));
-            }
+            columns.AddRange(ExtractColumnsFromConversion(plan.StatementText));
         }
 
         // Postgres: type mismatch casts (:: operator with different types)
-        // Look for patterns like "column::different_type" or "CAST(column AS different_type)"
-        if (!string.IsNullOrEmpty(plan.StatementText) && plan.StatementText.Contains("::", StringComparison.Ordinal))
+        if (plan.StatementText.Contains("::", StringComparison.Ordinal))
         {
             columns.AddRange(ExtractPostgresConversionColumns(plan.StatementText));
         }
@@ -121,12 +124,13 @@ public sealed class ImplicitConversionRule : PlanNodeVisitorBase
 
     private static IEnumerable<string> ExtractColumnsFromConversion(string statementText)
     {
-        // Simple extraction: look for column references in CONVERT_IMPLICIT expressions
-        // Pattern: CONVERT_IMPLICIT(type, expression)
-        var start = statementText.IndexOf("CONVERT_IMPLICIT", StringComparison.OrdinalIgnoreCase);
-        if (start >= 0)
+        var index = 0;
+        while (index < statementText.Length)
         {
-            // Extract the expression part (second parameter)
+            var start = statementText.IndexOf("CONVERT_IMPLICIT", index, StringComparison.OrdinalIgnoreCase);
+            if (start < 0)
+                break;
+
             var parenStart = statementText.IndexOf('(', start);
             if (parenStart >= 0)
             {
@@ -134,24 +138,36 @@ public sealed class ImplicitConversionRule : PlanNodeVisitorBase
                 if (parenEnd > parenStart)
                 {
                     var expression = statementText.Substring(parenStart + 1, parenEnd - parenStart - 1);
-                    // Extract column references from the expression
-                    // Simple approach: look for identifiers that look like column names
-                    var parts = expression.Split(new[] { ',', ' ', '(', ')' }, StringSplitOptions.RemoveEmptyEntries);
-                    foreach (var part in parts)
+                    // The second parameter after the comma is the column reference
+                    var commaIndex = expression.IndexOf(',');
+                    if (commaIndex >= 0)
                     {
-                        if (IsLikelyColumnName(part) && !part.StartsWith('@') && !part.StartsWith('[') && !part.EndsWith(']'))
+                        var secondParam = expression.Substring(commaIndex + 1).Trim();
+                        // Remove trailing parentheses content
+                        var parenIdx = secondParam.IndexOf('(');
+                        if (parenIdx >= 0)
+                            secondParam = secondParam.Substring(0, parenIdx).Trim();
+                        // Remove trailing closing parens
+                        secondParam = secondParam.TrimEnd(')', ' ');
+                        // Strip table/alias prefix (e.g., "orders.customer_id" -> "customer_id")
+                        var dotIdx = secondParam.LastIndexOf('.');
+                        if (dotIdx >= 0)
+                            secondParam = secondParam.Substring(dotIdx + 1);
+                        if (IsLikelyColumnName(secondParam))
                         {
-                            yield return part.Trim('[', ']');
+                            yield return secondParam;
                         }
                     }
+                    index = parenEnd + 1;
+                    continue;
                 }
             }
+            index = start + "CONVERT_IMPLICIT".Length;
         }
     }
 
     private static IEnumerable<string> ExtractPostgresConversionColumns(string statementText)
     {
-        // Look for :: casts with type mismatches
         var index = 0;
         while (index < statementText.Length)
         {
@@ -174,34 +190,6 @@ public sealed class ImplicitConversionRule : PlanNodeVisitorBase
 
             index = castIndex + 2;
         }
-
-        // Also check for CAST expressions
-        index = 0;
-        while (index < statementText.Length)
-        {
-            var castIndex = statementText.IndexOf("CAST(", index, StringComparison.OrdinalIgnoreCase);
-            if (castIndex < 0)
-                break;
-
-            var parenStart = castIndex + 4;
-            var parenEnd = FindMatchingParen(statementText, parenStart - 1);
-            if (parenEnd > parenStart)
-            {
-                var castContent = statementText.Substring(parenStart, parenEnd - parenStart);
-                // Extract column reference from CAST(expression AS type)
-                var asIndex = castContent.IndexOf(" AS ", StringComparison.OrdinalIgnoreCase);
-                if (asIndex > 0)
-                {
-                    var columnRef = castContent.Substring(0, asIndex).Trim();
-                    if (IsLikelyColumnName(columnRef))
-                    {
-                        yield return columnRef.Trim('[', ']');
-                    }
-                }
-            }
-
-            index = parenEnd + 1;
-        }
     }
 
     private static bool IsLikelyColumnName(string identifier)
@@ -209,12 +197,9 @@ public sealed class ImplicitConversionRule : PlanNodeVisitorBase
         if (string.IsNullOrEmpty(identifier))
             return false;
 
-        // Column names typically contain letters, numbers, underscores
-        // and don't start with @ (parameter) or contain spaces
         if (identifier.StartsWith('@') || identifier.Contains(' '))
             return false;
 
-        // Check if it looks like a column name (not a keyword, not a number)
         return identifier.All(c => char.IsLetterOrDigit(c) || c == '_');
     }
 
@@ -223,30 +208,18 @@ public sealed class ImplicitConversionRule : PlanNodeVisitorBase
         var depth = 0;
         for (var i = startPos; i < text.Length; i++)
         {
-            if (text[i] == '(')
-            {
-                depth++;
-            }
+            if (text[i] == '(') depth++;
             else if (text[i] == ')')
             {
                 depth--;
-                if (depth == 0)
-                {
-                    return i;
-                }
+                if (depth == 0) return i;
             }
         }
         return text.Length - 1;
     }
 
-    /// <summary>
-    /// Estimates impact: implicit conversions can prevent index usage entirely,
-    /// forcing scans. Impact scales with the cost of the node.
-    /// </summary>
     private static double EstimateImpact(PlanNode? node)
     {
-        // Implicit conversions are often performance killers - high impact
-        // Use a default if node is null
         var cost = node?.RelativeCost ?? 0.5;
         return Math.Round(cost * 100.0, 1);
     }

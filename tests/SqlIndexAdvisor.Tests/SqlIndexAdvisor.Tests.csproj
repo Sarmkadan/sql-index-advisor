@@ -22,4 +22,8 @@
     <ProjectReference Include="..\..\src\SqlIndexAdvisor.Core\SqlIndexAdvisor.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="..\..\samples\**\*" CopyToOutputDirectory="PreserveNewest" Link="samples\%(RecursiveDir)%(FileName)%(Extension)" />
+  </ItemGroup>
+
 </Project>

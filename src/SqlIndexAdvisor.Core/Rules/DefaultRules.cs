@@ -16,6 +16,7 @@ public static class DefaultRules
         return new List<IIndexRule>
         {
             new EngineHintRule(),
+            new FullScanWithFilterRule(),
             new ImplicitConversionRule(),
         };
     }
