@@ -50,6 +50,13 @@ public static class PlanParserFactoryExtensions
         return ParseManyCore(factory, contents);
     }
 
+    /// <summary>
+    /// Core iterator for <see cref="ParseMany"/> that yields successfully parsed plans,
+    /// silently skipping entries that fail to parse.
+    /// </summary>
+    /// <param name="factory">The plan parser factory instance.</param>
+    /// <param name="contents">A collection of plan content entries to parse.</param>
+    /// <returns>An enumerable of tuples containing the source identifier and successfully parsed execution plan.</returns>
     private static IEnumerable<(string SourceId, ExecutionPlan Plan)> ParseManyCore(
         PlanParserFactory factory,
         IEnumerable<(string SourceId, string Content)> contents)
