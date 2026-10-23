@@ -1,0 +1,27 @@
+[
+  {
+    "Plan": {
+      "Node Type": "Seq Scan",
+      "Relation Name": "customers",
+      "Alias": "c",
+      "Startup Cost": 0.00,
+      "Total Cost": 22.345,
+      "Plan Rows": 5000,
+      "Plan Width": 80,
+      "Actual Startup Time": 0.015,
+      "Actual Total Time": 0.567,
+      "Actual Rows": 5000,
+      "Actual Loops": 1,
+      "Output": [
+        "customer_id",
+        "name",
+        "email",
+        "country",
+        "is_active",
+        "last_login_date"
+      ],
+      "Filter": "((country = 'US'::text) AND (is_active = true) AND (last_login_date > '2026-01-01'::timestamp without time zone))",
+      "Rows Removed by Filter": 45000
+    }
+  }
+]

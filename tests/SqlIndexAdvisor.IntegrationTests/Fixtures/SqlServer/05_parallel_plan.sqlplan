@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-16"?>
+<ShowPlanXML xmlns="http://schemas.microsoft.com/sqlserver/2004/07/showplan" Version="1.539" Build="16.0.1000.6">
+<BatchSequence>
+<Batch>
+<Statements>
+<StmtSimple StatementText="SELECT * FROM dbo.Orders WHERE CreatedAt > '2026-01-01' AND Status = 'shipped'"
+StatementId="1" StatementCompId="1" StatementType="SELECT"
+StatementSubTreeCost="25.891" StatementEstRows="10000">
+<QueryPlan CachedPlanSize="36" CompileTime="8" CompileCPU="8" CompileMemory="400">
+<RelOp NodeId="0" PhysicalOp="Gather Streams" LogicalOp="Gather Streams" EstimateRows="10000" EstimatedTotalSubtreeCost="25.891">
+<OutputList>
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="OrderId" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="CustomerId" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="Total" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="Status" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="CreatedAt" />
+</OutputList>
+<RelOp NodeId="1" PhysicalOp="Parallelism" LogicalOp="Repartition Streams" EstimateRows="10000" EstimatedTotalSubtreeCost="0.003">
+<OutputList>
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="OrderId" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="CustomerId" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="Total" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="Status" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="CreatedAt" />
+</OutputList>
+<RelOp NodeId="2" PhysicalOp="Clustered Index Scan" LogicalOp="Clustered Index Scan" EstimateRows="10000" EstimatedTotalSubtreeCost="25.888">
+<OutputList>
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="OrderId" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="CustomerId" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="Total" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="Status" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="CreatedAt" />
+</OutputList>
+<IndexScan Ordered="false">
+<Object Database="[Shop]" Schema="[dbo]" Table="[Orders]" Index="[PK_Orders]" IndexKind="Clustered" />
+<Predicate>
+<ScalarOperator>
+<And>
+<ScalarOperator>
+<Compare CompareOp="GT">
+<ScalarOperator>
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="CreatedAt" />
+</ScalarOperator>
+<Const Value="'2026-01-01'" />
+</Compare>
+</ScalarOperator>
+<ScalarOperator>
+<Compare CompareOp="EQ">
+<ScalarOperator>
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="Status" />
+</ScalarOperator>
+<Const Value="'shipped'" />
+</Compare>
+</ScalarOperator>
+</And>
+</ScalarOperator>
+</Predicate>
+</IndexScan>
+</RelOp>
+</RelOp>
+</RelOp>
+</QueryPlan>
+</StmtSimple>
+</Statements>
+</Batch>
+</BatchSequence>
+</ShowPlanXML>

@@ -1,0 +1,27 @@
+[
+  {
+    "Plan": {
+      "Node Type": "Seq Scan",
+      "Relation Name": "customers",
+      "Alias": "c",
+      "Startup Cost": 0.00,
+      "Total Cost": 8.567,
+      "Plan Rows": 45000,
+      "Plan Width": 280,
+      "Actual Startup Time": 0.012,
+      "Actual Total Time": 0.456,
+      "Actual Rows": 45000,
+      "Actual Loops": 1,
+      "Output": [
+        "customer_id",
+        "name",
+        "email",
+        "country",
+        "is_active",
+        "last_login_date"
+      ],
+      "Filter": "(is_active = true)",
+      "Rows Removed by Filter": 0
+    }
+  }
+]

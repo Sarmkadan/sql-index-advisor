@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-16"?>
+<ShowPlanXML xmlns="http://schemas.microsoft.com/sqlserver/2004/07/showplan" Version="1.539" Build="16.0.1000.6">
+<BatchSequence>
+<Batch>
+<Statements>
+<StmtSimple StatementText="SELECT o.OrderId, o.OrderDate, o.TotalAmount, oi.ProductId, oi.Quantity, oi.UnitPrice FROM dbo.Orders o INNER JOIN dbo.OrderItems oi ON o.OrderId = oi.OrderId WHERE o.CustomerId = 12345 AND o.OrderDate >= '2026-01-01'" StatementId="1" StatementCompId="1" StatementType="SELECT" StatementSubTreeCost="38.789" StatementEstRows="800">
+<QueryPlan CachedPlanSize="56" CompileTime="10" CompileCPU="10" CompileMemory="450">
+<RelOp NodeId="0" PhysicalOp="Hash Match" LogicalOp="Inner Join" EstimateRows="800" EstimatedTotalSubtreeCost="38.789">
+<OutputList>
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="OrderId" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="OrderDate" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="TotalAmount" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[OrderItems]" Column="ProductId" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[OrderItems]" Column="Quantity" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[OrderItems]" Column="UnitPrice" />
+</OutputList>
+<Hash>
+<BuildResidual>
+<ScalarOperator>
+<Compare CompareOp="EQ">
+<ScalarOperator>
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[OrderItems]" Column="OrderId" />
+</ScalarOperator>
+<ScalarOperator>
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="OrderId" />
+</ScalarOperator>
+</Compare>
+</ScalarOperator>
+</BuildResidual>
+<RelOp NodeId="1" PhysicalOp="Clustered Index Scan" LogicalOp="Clustered Index Scan" EstimateRows="1500" EstimatedTotalSubtreeCost="12.345">
+<OutputList>
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="OrderId" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="OrderDate" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="TotalAmount" />
+</OutputList>
+<IndexScan Ordered="false">
+<Object Database="[Shop]" Schema="[dbo]" Table="[Orders]" Index="[PK_Orders]" IndexKind="Clustered" />
+<Predicate>
+<ScalarOperator>
+<And>
+<ScalarOperator>
+<Compare CompareOp="EQ">
+<ScalarOperator>
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="CustomerId" />
+</ScalarOperator>
+<Const Value="12345" />
+</Compare>
+</ScalarOperator>
+<ScalarOperator>
+<Compare CompareOp="GE">
+<ScalarOperator>
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="OrderDate" />
+</ScalarOperator>
+<Const Value="'2026-01-01'" />
+</Compare>
+</ScalarOperator>
+</And>
+</ScalarOperator>
+</Predicate>
+</IndexScan>
+</RelOp>
+<RelOp NodeId="2" PhysicalOp="Clustered Index Scan" LogicalOp="Clustered Index Scan" EstimateRows="50000" EstimatedTotalSubtreeCost="25.456">
+<OutputList>
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[OrderItems]" Column="OrderId" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[OrderItems]" Column="ProductId" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[OrderItems]" Column="Quantity" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[OrderItems]" Column="UnitPrice" />
+</OutputList>
+<IndexScan Ordered="false">
+<Object Database="[Shop]" Schema="[dbo]" Table="[OrderItems]" Index="[PK_OrderItems]" IndexKind="Clustered" />
+</IndexScan>
+</RelOp>
+</Hash>
+</RelOp>
+</QueryPlan>
+</StmtSimple>
+</Statements>
+</Batch>
+</BatchSequence>
+</ShowPlanXML>

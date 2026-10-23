@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-16"?>
+<ShowPlanXML xmlns="http://schemas.microsoft.com/sqlserver/2004/07/showplan" Version="1.539" Build="16.0.1000.6">
+<BatchSequence>
+<Batch>
+<Statements>
+<StmtSimple StatementText="SELECT * FROM dbo.Orders WHERE CustomerId = 12345 ORDER BY TotalAmount DESC" StatementId="1" StatementCompId="1" StatementType="SELECT" StatementSubTreeCost="18.234" StatementEstRows="1500">
+<QueryPlan CachedPlanSize="40" CompileTime="7" CompileCPU="7" CompileMemory="350">
+<RelOp NodeId="0" PhysicalOp="Sort" LogicalOp="Sort" EstimateRows="1500" EstimatedTotalSubtreeCost="18.234">
+<OutputList>
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="OrderId" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="CustomerId" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="OrderDate" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="Status" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="TotalAmount" />
+</OutputList>
+<OrderBy>
+<OrderByColumn Ascending="false">
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="TotalAmount" />
+</OrderByColumn>
+</OrderBy>
+<RelOp NodeId="1" PhysicalOp="Clustered Index Scan" LogicalOp="Clustered Index Scan" EstimateRows="1500" EstimatedTotalSubtreeCost="12.345">
+<OutputList>
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="OrderId" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="CustomerId" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="OrderDate" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="Status" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="TotalAmount" />
+</OutputList>
+<IndexScan Ordered="false">
+<Object Database="[Shop]" Schema="[dbo]" Table="[Orders]" Index="[PK_Orders]" IndexKind="Clustered" />
+<Predicate>
+<ScalarOperator>
+<Compare CompareOp="EQ">
+<ScalarOperator>
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="CustomerId" />
+</ScalarOperator>
+<Const Value="12345" />
+</Compare>
+</ScalarOperator>
+</Predicate>
+</IndexScan>
+</RelOp>
+</RelOp>
+</QueryPlan>
+</StmtSimple>
+</Statements>
+</Batch>
+</BatchSequence>
+</ShowPlanXML>
