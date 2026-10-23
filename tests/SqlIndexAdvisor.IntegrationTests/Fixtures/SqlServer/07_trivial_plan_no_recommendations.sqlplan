@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-16"?>
+<ShowPlanXML xmlns="http://schemas.microsoft.com/sqlserver/2004/07/showplan" Version="1.539" Build="16.0.1000.6">
+<BatchSequence>
+<Batch>
+<Statements>
+<StmtSimple StatementText="SELECT TOP 10 * FROM dbo.Users WHERE UserId = 12345"
+StatementId="1" StatementCompId="1" StatementType="SELECT"
+StatementSubTreeCost="0.003" StatementEstRows="1">
+<QueryPlan CachedPlanSize="16" CompileTime="2" CompileCPU="2" CompileMemory="100">
+<RelOp NodeId="0" PhysicalOp="Clustered Index Seek" LogicalOp="Clustered Index Seek" EstimateRows="1" EstimatedTotalSubtreeCost="0.003">
+<OutputList>
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Users]" Column="UserId" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Users]" Column="Username" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Users]" Column="Email" />
+</OutputList>
+<IndexScan Ordered="true" ScanDirection="FORWARD" SeekPredicates="[Shop].[dbo].[Users].[UserId]=[@1]">
+<Object Database="[Shop]" Schema="[dbo]" Table="[Users]" Index="[PK_Users]" IndexKind="Clustered" />
+</IndexScan>
+</RelOp>
+</QueryPlan>
+</StmtSimple>
+</Statements>
+</Batch>
+</BatchSequence>
+</ShowPlanXML>

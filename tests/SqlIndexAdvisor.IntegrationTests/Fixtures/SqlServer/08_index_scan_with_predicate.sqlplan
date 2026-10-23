@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-16"?>
+<ShowPlanXML xmlns="http://schemas.microsoft.com/sqlserver/2004/07/showplan" Version="1.539" Build="16.0.1000.6">
+<BatchSequence>
+<Batch>
+<Statements>
+<StmtSimple StatementText="SELECT OrderId, Total FROM dbo.Orders WHERE Status = 'pending' AND CreatedAt BETWEEN '2026-01-01' AND '2026-01-31'"
+StatementId="1" StatementCompId="1" StatementType="SELECT"
+StatementSubTreeCost="3.215" StatementEstRows="800">
+<QueryPlan CachedPlanSize="20" CompileTime="3" CompileCPU="3" CompileMemory="150">
+<MissingIndexes>
+<MissingIndexGroup Impact="72.5">
+<MissingIndex Database="[Shop]" Schema="[dbo]" Table="[Orders]">
+<ColumnGroup Usage="EQUALITY">
+<Column Name="[Status]" ColumnId="4" />
+<Column Name="[CreatedAt]" ColumnId="5" />
+</ColumnGroup>
+<ColumnGroup Usage="INCLUDE">
+<Column Name="[Total]" ColumnId="3" />
+<Column Name="[OrderId]" ColumnId="1" />
+</ColumnGroup>
+</MissingIndex>
+</MissingIndexGroup>
+</MissingIndexes>
+<RelOp NodeId="0" PhysicalOp="Index Scan" LogicalOp="Index Scan" EstimateRows="800" EstimatedTotalSubtreeCost="3.215">
+<OutputList>
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="OrderId" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="Total" />
+</OutputList>
+<IndexScan Ordered="false">
+<Object Database="[Shop]" Schema="[dbo]" Table="[Orders]" Index="[IX_Orders_Status_CreatedAt]" IndexKind="NonClustered" />
+<Predicate>
+<ScalarOperator>
+<And>
+<ScalarOperator>
+<Compare CompareOp="EQ">
+<ScalarOperator>
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="Status" />
+</ScalarOperator>
+<Const Value="'pending'" />
+</Compare>
+</ScalarOperator>
+<ScalarOperator>
+<Compare CompareOp="BETWEEN">
+<ScalarOperator>
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Orders]" Column="CreatedAt" />
+</ScalarOperator>
+<Const Value="'2026-01-01'" />
+<Const Value="'2026-01-31'" />
+</Compare>
+</ScalarOperator>
+</And>
+</ScalarOperator>
+</Predicate>
+</IndexScan>
+</RelOp>
+</QueryPlan>
+</StmtSimple>
+</Statements>
+</Batch>
+</BatchSequence>
+</ShowPlanXML>

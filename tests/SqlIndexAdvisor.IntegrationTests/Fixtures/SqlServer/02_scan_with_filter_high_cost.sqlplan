@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-16"?>
+<ShowPlanXML xmlns="http://schemas.microsoft.com/sqlserver/2004/07/showplan" Version="1.539" Build="16.0.1000.6">
+<BatchSequence>
+<Batch>
+<Statements>
+<StmtSimple StatementText="SELECT * FROM dbo.Customers WHERE Country = 'US' AND IsActive = 1 AND LastLoginDate > '2026-01-01'"
+StatementId="1" StatementCompId="1" StatementType="SELECT"
+StatementSubTreeCost="15.789" StatementEstRows="5000">
+<QueryPlan CachedPlanSize="32" CompileTime="5" CompileCPU="5" CompileMemory="300">
+<RelOp NodeId="0" PhysicalOp="Clustered Index Scan" LogicalOp="Clustered Index Scan" EstimateRows="5000" EstimatedTotalSubtreeCost="15.789">
+<OutputList>
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Customers]" Column="CustomerId" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Customers]" Column="Name" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Customers]" Column="Email" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Customers]" Column="Country" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Customers]" Column="IsActive" />
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Customers]" Column="LastLoginDate" />
+</OutputList>
+<IndexScan Ordered="false">
+<Object Database="[Shop]" Schema="[dbo]" Table="[Customers]" Index="[PK_Customers]" IndexKind="Clustered" />
+<Predicate>
+<ScalarOperator>
+<And>
+<ScalarOperator>
+<Compare CompareOp="EQ">
+<ScalarOperator>
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Customers]" Column="Country" />
+</ScalarOperator>
+<Const Value="'US'" />
+</Compare>
+</ScalarOperator>
+<ScalarOperator>
+<Compare CompareOp="EQ">
+<ScalarOperator>
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Customers]" Column="IsActive" />
+</ScalarOperator>
+<Const Value="1" />
+</Compare>
+</ScalarOperator>
+<ScalarOperator>
+<Compare CompareOp="GT">
+<ScalarOperator>
+<ColumnReference Database="[Shop]" Schema="[dbo]" Table="[Customers]" Column="LastLoginDate" />
+</ScalarOperator>
+<Const Value="'2026-01-01'" />
+</Compare>
+</ScalarOperator>
+</And>
+</ScalarOperator>
+</Predicate>
+</IndexScan>
+</RelOp>
+</QueryPlan>
+</StmtSimple>
+</Statements>
+</Batch>
+</BatchSequence>
+</ShowPlanXML>
