@@ -135,7 +135,8 @@ public sealed class PostgresJsonPlanParser : IPlanParser
             TableName = ReadString(el, PostgresJsonPlanParserConstants.RelationNamePropertyName),
             IndexName = ReadString(el, PostgresJsonPlanParserConstants.IndexNamePropertyName),
             EstimatedRows = ReadDouble(el, PostgresJsonPlanParserConstants.PlanRowsPropertyName),
-            EstimatedRowsRead = ReadDouble(el, PostgresJsonPlanParserConstants.PlanRowsPropertyName),
+            ActualRows = ReadActualRows(el),
+            ActualRowsRead = ReadActualRowsRead(el),
             RelativeCost = totalCost > 0 ? nodeCost / totalCost : 0,
             PredicateColumns = ExtractFilterColumns(el),
             OutputColumns = ReadStringArray(el, PostgresJsonPlanParserConstants.OutputPropertyName),
@@ -167,6 +168,43 @@ public sealed class PostgresJsonPlanParser : IPlanParser
         }
         return cols;
     }
+
+    /// <summary>
+    /// Reads the node's total emitted rows. Postgres reports <c>Actual Rows</c> per loop, so it is scaled by
+    /// <c>Actual Loops</c>. Returns zero when the plan was not run with <c>ANALYZE</c>.
+    /// </summary>
+    /// <param name="el">The JSON object describing one plan node.</param>
+    /// <returns>Total rows emitted across all loops, or zero when unavailable.</returns>
+    private static double ReadActualRows(JsonElement el)
+    {
+        if (!el.TryGetProperty(PostgresJsonPlanParserConstants.ActualRowsPropertyName, out _))
+            return 0;
+        return ReadDouble(el, PostgresJsonPlanParserConstants.ActualRowsPropertyName) * ReadLoops(el);
+    }
+
+    /// <summary>
+    /// Reads the node's total rows read, including rows discarded by its filter or index recheck, across all loops.
+    /// Returns zero when the plan was not run with <c>ANALYZE</c>.
+    /// </summary>
+    /// <param name="el">The JSON object describing one plan node.</param>
+    /// <returns>Total rows read across all loops, or zero when unavailable.</returns>
+    private static double ReadActualRowsRead(JsonElement el)
+    {
+        if (!el.TryGetProperty(PostgresJsonPlanParserConstants.ActualRowsPropertyName, out _))
+            return 0;
+        var perLoop = ReadDouble(el, PostgresJsonPlanParserConstants.ActualRowsPropertyName)
+            + ReadDouble(el, PostgresJsonPlanParserConstants.RowsRemovedByFilterPropertyName)
+            + ReadDouble(el, PostgresJsonPlanParserConstants.RowsRemovedByIndexRecheckPropertyName);
+        return perLoop * ReadLoops(el);
+    }
+
+    /// <summary>
+    /// Reads <c>Actual Loops</c>, defaulting to one loop when the property is missing or malformed.
+    /// </summary>
+    /// <param name="el">The JSON object describing one plan node.</param>
+    /// <returns>The loop count, always at least one.</returns>
+    private static double ReadLoops(JsonElement el) =>
+        Math.Max(ReadDouble(el, PostgresJsonPlanParserConstants.ActualLoopsPropertyName), 1);
 
     private static string? ReadString(JsonElement el, string prop) =>
         el.TryGetProperty(prop, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;

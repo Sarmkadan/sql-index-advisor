@@ -51,8 +51,30 @@ public sealed class PlanNode
     /// <summary>Estimated rows the optimizer expects this node to emit.</summary>
     public double EstimatedRows { get; init; }
 
-    /// <summary>Estimated rows read by this node (Postgres "Plan Rows" on the child scan).</summary>
+    /// <summary>
+    /// Estimated rows the node reads from its source before filtering. Zero when the plan does not
+    /// expose it (Postgres estimates only report rows after the filter).
+    /// </summary>
     public double EstimatedRowsRead { get; init; }
+
+    /// <summary>
+    /// Estimated number of rows stored in the scanned table (SQL Server <c>TableCardinality</c>).
+    /// Zero when the plan does not expose it.
+    /// </summary>
+    public double TableCardinality { get; init; }
+
+    /// <summary>
+    /// Actual rows emitted by the node across all of its executions (Postgres <c>Actual Rows</c> times
+    /// <c>Actual Loops</c>, SQL Server runtime <c>ActualRows</c>). Zero when the plan has no runtime statistics.
+    /// </summary>
+    public double ActualRows { get; init; }
+
+    /// <summary>
+    /// Actual rows the node read across all of its executions, including rows discarded by its filter
+    /// (SQL Server runtime <c>ActualRowsRead</c>, Postgres emitted plus removed-by-filter rows). Zero when
+    /// the plan has no runtime statistics.
+    /// </summary>
+    public double ActualRowsRead { get; init; }
 
     /// <summary>Fraction of the whole statement cost attributed to this node (0..1).</summary>
     public double RelativeCost { get; init; }

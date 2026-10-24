@@ -56,7 +56,7 @@ public class SqlServerParserIntegrationTests
         var node = plan.Nodes[0];
         Assert.Equal("Clustered Index Scan", node.Operator);
         Assert.Equal(1000, node.EstimatedRows);
-        Assert.Equal(1000, node.EstimatedRowsRead);
+        Assert.Equal(0, node.EstimatedRowsRead); // The plan has no EstimatedRowsRead attribute, so rows read is unknown.
         Assert.Equal(1.0, node.RelativeCost, 0.001);
         Assert.Equal("dbo.Orders", node.TableName);
         Assert.Contains("Status", node.PredicateColumns);

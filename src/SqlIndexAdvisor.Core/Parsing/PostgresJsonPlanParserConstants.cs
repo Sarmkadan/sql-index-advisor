@@ -8,6 +8,10 @@ internal static class PostgresJsonPlanParserConstants
     public const string RelationNamePropertyName = "Relation Name";
     public const string IndexNamePropertyName = "Index Name";
     public const string PlanRowsPropertyName = "Plan Rows";
+    public const string ActualRowsPropertyName = "Actual Rows";
+    public const string ActualLoopsPropertyName = "Actual Loops";
+    public const string RowsRemovedByFilterPropertyName = "Rows Removed by Filter";
+    public const string RowsRemovedByIndexRecheckPropertyName = "Rows Removed by Index Recheck";
     public const string OutputPropertyName = "Output";
     public const string PlansPropertyName = "Plans";
     public const string FilterPropertyName = "Filter";

@@ -1,3 +1,4 @@
+using SqlIndexAdvisor.Core.Engine;
 using SqlIndexAdvisor.Core.Model;
 
 namespace SqlIndexAdvisor.Core.Rules;
@@ -7,18 +8,34 @@ namespace SqlIndexAdvisor.Core.Rules;
 /// Index Scan", Postgres "Seq Scan") that carries a filter predicate and is
 /// responsible for a meaningful chunk of the statement cost. The filtered
 /// columns become the index key; the scan's output columns become INCLUDE
-/// candidates so the index can cover the query.
+/// candidates so the index can cover the query. Scans on small tables, or whose
+/// filter keeps most of the rows, are suppressed or downgraded using
+/// <see cref="RecommendationOptions"/>.
 /// </summary>
 public sealed class FullScanWithFilterRule : PlanNodeVisitorBase
 {
     // A scan cheaper than this share of the statement isn't worth an index.
     private const double MinRelativeCost = 0.10;
 
+    private readonly RecommendationOptions _options;
+
     /// <summary>
-    /// Initializes a new instance of the <see cref="FullScanWithFilterRule"/> class.
+    /// Initializes a new instance of the <see cref="FullScanWithFilterRule"/> class with default thresholds.
     /// </summary>
     public FullScanWithFilterRule()
+        : this(new RecommendationOptions())
     {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FullScanWithFilterRule"/> class with the given thresholds.
+    /// </summary>
+    /// <param name="options">The table-size and selectivity thresholds to apply.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="options"/> is <see langword="null"/>.</exception>
+    public FullScanWithFilterRule(RecommendationOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        _options = options;
     }
 
     /// <summary>
@@ -26,7 +43,8 @@ public sealed class FullScanWithFilterRule : PlanNodeVisitorBase
     /// </summary>
     /// <param name="node">The plan node to evaluate.</param>
     /// <returns>
-    ///   <c>true</c> if the node represents a full scan with a filter predicate and sufficient relative cost; otherwise, <c>false</c>.
+    ///   <c>true</c> if the node represents a full scan with a filter predicate, sufficient relative cost,
+    ///   and row counts that clear the table-size and selectivity thresholds; otherwise, <c>false</c>.
     /// </returns>
     protected override bool ShouldVisit(PlanNode node)
     {
@@ -34,7 +52,8 @@ public sealed class FullScanWithFilterRule : PlanNodeVisitorBase
         return LooksLikeFullScan(node)
             && !string.IsNullOrEmpty(node.TableName)
             && node.PredicateColumns.Count > 0
-            && node.RelativeCost >= MinRelativeCost;
+            && node.RelativeCost >= MinRelativeCost
+            && ScanRowStats.From(node).IsWorthIndexing(_options);
     }
 
     /// <summary>
@@ -49,7 +68,8 @@ protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node)
             .Where(c => !node.PredicateColumns.Contains(c))
             .ToList();
 
-        var confidence = node.RelativeCost switch
+        var rows = ScanRowStats.From(node);
+        var baseline = node.RelativeCost switch
         {
             >= 0.60 => Confidence.High,
             >= 0.30 => Confidence.Medium,
@@ -61,14 +81,15 @@ protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node)
             Table = node.TableName!,
             KeyColumns = node.PredicateColumns.ToList(),
             IncludeColumns = include,
-            EstimatedImpactPercent = EstimateImpact(node),
+            EstimatedImpactPercent = EstimateImpact(node, rows),
             SourceNodeCost = node.RelativeCost,
-            Confidence = confidence,
+            Confidence = rows.AdjustConfidence(baseline, _options),
             Rule = Name,
-            Reasons = {
+            Reasons = [
                 $"{node.Operator} on {node.TableName} carries a filter on " +
-                $"({string.Join(", ", node.PredicateColumns)}) and is ~{node.RelativeCost * 100:0}% of statement cost."
-            }
+                $"({string.Join(", ", node.PredicateColumns)}) and is ~{node.RelativeCost * 100:0}% of statement cost.",
+                .. rows.Describe(_options)
+            ]
         };
     }
 
@@ -92,17 +113,17 @@ private static bool LooksLikeFullScan(PlanNode node)
     /// Rough impact: most of a scan's cost is the rows it churns through, so we
     /// scale the node's cost share by how selective the filter looks. A very
     /// selective filter (few output rows relative to read rows) recovers more.
+    /// When the plan has no row counts, a neutral 50% match is assumed.
     /// </summary>
     /// <param name="node">The plan node representing the scan operation.</param>
+    /// <param name="rows">The resolved row counts for <paramref name="node"/>.</param>
     /// <returns>An estimated impact percentage for adding an index based on the scan's cost and filter selectivity.</returns>
-    private static double EstimateImpact(PlanNode node)
+    private static double EstimateImpact(PlanNode node, ScanRowStats rows)
     {
         var baseline = node.RelativeCost * 100.0;
-        var selectivity = node.EstimatedRowsRead > 0
-            ? Math.Clamp(1.0 - node.EstimatedRows / node.EstimatedRowsRead, 0.0, 1.0)
-            : 0.5;
+        var eliminated = 1.0 - (rows.MatchFraction ?? 0.5);
         // Blend: even a non-selective filter still saves something by seeking.
-        var factor = 0.4 + 0.6 * selectivity;
+        var factor = 0.4 + 0.6 * eliminated;
         return Math.Round(baseline * factor, 1);
     }
 }
