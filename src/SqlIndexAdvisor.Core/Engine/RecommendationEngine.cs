@@ -27,6 +27,17 @@ public sealed class RecommendationEngine : IRecommendationEngine
     }
 
     /// <summary>
+    /// Initializes a new instance of the <see cref="RecommendationEngine"/> class using the default set of
+    /// index rules, with the row-count thresholds of the given options applied to the scan rules.
+    /// </summary>
+    /// <param name="options">The table-size and selectivity thresholds to apply.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="options"/> is <see langword="null"/>.</exception>
+    public RecommendationEngine(RecommendationOptions options)
+        : this(DefaultRules.All(options))
+    {
+    }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="RecommendationEngine"/> class
     /// with a custom set of index rules.
     /// </summary>

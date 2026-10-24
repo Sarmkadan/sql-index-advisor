@@ -8,6 +8,11 @@ internal static class SqlServerXmlPlanParserConstants
     public const string StatementSubTreeCostAttribute = "StatementSubTreeCost";
     public const string RelOpElement = "RelOp";
     public const string EstimateRowsAttribute = "EstimateRows";
+    public const string EstimatedRowsReadAttribute = "EstimatedRowsRead";
+    public const string TableCardinalityAttribute = "TableCardinality";
+    public const string RunTimeCountersPerThreadElement = "RunTimeCountersPerThread";
+    public const string ActualRowsAttribute = "ActualRows";
+    public const string ActualRowsReadAttribute = "ActualRowsRead";
     public const string PhysicalOpAttribute = "PhysicalOp";
     public const string LogicalOpAttribute = "LogicalOp";
     public const string UnknownOperator = "Unknown";

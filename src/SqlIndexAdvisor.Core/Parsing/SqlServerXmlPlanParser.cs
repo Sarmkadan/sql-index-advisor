@@ -96,7 +96,10 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
             {
                 Operator = relOp.Attribute(SqlServerXmlPlanParserConstants.PhysicalOpAttribute)?.Value ?? relOp.Attribute(SqlServerXmlPlanParserConstants.LogicalOpAttribute)?.Value ?? SqlServerXmlPlanParserConstants.UnknownOperator,
                 EstimatedRows = estRows,
-                EstimatedRowsRead = estRows,
+                EstimatedRowsRead = ParseDouble(relOp.Attribute(SqlServerXmlPlanParserConstants.EstimatedRowsReadAttribute)?.Value),
+                TableCardinality = ParseDouble(relOp.Attribute(SqlServerXmlPlanParserConstants.TableCardinalityAttribute)?.Value),
+                ActualRows = SumRunTimeCounter(relOp, SqlServerXmlPlanParserConstants.ActualRowsAttribute),
+                ActualRowsRead = SumRunTimeCounter(relOp, SqlServerXmlPlanParserConstants.ActualRowsReadAttribute),
                 RelativeCost = totalCost > 0
                     ? ParseDouble(relOp.Attribute(SqlServerXmlPlanParserConstants.EstimatedTotalSubtreeCostAttribute)?.Value) / totalCost
                     : 0,
@@ -246,6 +249,22 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
             foreach (var nested in DirectDescendantsBeforeNestedRelOp(el, localName))
                 yield return nested;
         }
+    }
+
+    /// <summary>
+    /// Sums a runtime counter attribute over the per-thread counters of one operator. Parallel plans
+    /// report one counter element per thread, and their sum is the operator's total.
+    /// </summary>
+    /// <param name="relOp">The operator whose runtime counters are read.</param>
+    /// <param name="attributeName">The counter attribute to sum, such as <c>ActualRows</c>.</param>
+    /// <returns>The summed counter, or zero when the plan carries no runtime statistics.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="relOp"/> is <see langword="null"/>.</exception>
+    private static double SumRunTimeCounter(XElement relOp, string attributeName)
+    {
+        ArgumentNullException.ThrowIfNull(relOp);
+
+        return DirectDescendantsBeforeNestedRelOp(relOp, SqlServerXmlPlanParserConstants.RunTimeCountersPerThreadElement)
+            .Sum(counter => ParseDouble(counter.Attribute(attributeName)?.Value));
     }
 
     private static double ParseDouble(string? raw) =>
