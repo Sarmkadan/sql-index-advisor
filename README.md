@@ -73,6 +73,221 @@ Operators     : 1
 Impact figures are rough heuristics, not measured gains. Validate before applying.
 ```
 
+## Configuration and typical scenarios
+
+There is no configuration file. Behaviour is controlled by CLI options (parsed
+by `ArgsParser` in `SqlIndexAdvisor.Core.ArgsParsing`) and, when you use the
+library, by the rule set and the filters you apply to the returned list.
+
+### Options reference
+
+| Option | Type / default | Effect |
+| --- | --- | --- |
+| `<plan-file>` or `--plan <path>` | path, required unless `--stdin` | Plan to analyze. Mutually exclusive with `--stdin`. |
+| `--stdin` (or `-`) | flag | Read the plan from standard input. |
+| `--format text\|json\|html\|csv` | default `text` | Output format. The CLI does not accept `markdown` (see Limitations). |
+| `--min-impact <n>` | number, default `0` (no filter) | Hide recommendations whose `EstimatedImpactPercent` is below `n`. |
+| `--fail-on-findings` | flag | Exit `1` when at least one recommendation is printed. |
+| `--sqlserver` / `--postgres` | flags | Accepted, mutually exclusive, currently ignored - the dialect is auto-detected. |
+| `--version`, `-h` / `--help` | flags | Print version or usage. |
+
+Exit codes: `0` success, `1` usage/IO error **or** findings present with
+`--fail-on-findings` (so `1` is not always an error there - check the output),
+`2` the input could not be parsed.
+
+There is no option for a maximum number of suggestions, for excluding existing
+indexes, or for analyzing a directory. The scenarios below show how to get
+each of those from code or from the shell.
+
+### Scenario: analyze a directory of plans
+
+The CLI takes one plan per invocation. For a directory, loop in the shell and
+write one report per plan. Plan paths must be relative to (or inside) the
+current directory and must not contain `..`.
+
+```bash
+mkdir -p reports
+for f in plans/*.sqlplan plans/*.json; do
+  dotnet run --project src/SqlIndexAdvisor.Cli -- "$f" --format csv > "reports/$(basename "$f").csv" \
+    || echo "failed: $f"
+done
+```
+
+From code, `PlanParserFactory` and `RecommendationEngine` can be reused across
+files. Plans that fail to parse throw `PlanParseException`, so catch it per file:
+
+```csharp
+using System;
+using System.IO;
+using System.Linq;
+using SqlIndexAdvisor.Core.Engine;
+using SqlIndexAdvisor.Core.Model;
+using SqlIndexAdvisor.Core.Parsing;
+
+var factory = new PlanParserFactory();
+var engine = new RecommendationEngine();
+
+foreach (string path in Directory.EnumerateFiles(args[0], "*.*")
+    .Where(f => f.EndsWith(".sqlplan", StringComparison.OrdinalIgnoreCase) || f.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+    .OrderBy(f => f))
+{
+    try
+    {
+        ExecutionPlan plan = factory.Parse(File.ReadAllText(path));
+        var recs = engine.Analyze(plan);
+        Console.WriteLine($"{Path.GetFileName(path)}: {recs.Count} recommendation(s)");
+    }
+    catch (PlanParseException ex)
+    {
+        Console.Error.WriteLine($"skipped {Path.GetFileName(path)}: {ex.Message}");
+    }
+}
+```
+
+### Scenario: exclude indexes that already exist
+
+The engine only sees the plan, so it can suggest an index that is already in
+place. There is no flag for this; filter the results yourself. A suggestion is
+dropped when an existing index on the same table starts with the same key
+columns. Quoting such as `"country"` or `[Status]` is stripped before comparing.
+
+```csharp
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using SqlIndexAdvisor.Core.Engine;
+using SqlIndexAdvisor.Core.Model;
+using SqlIndexAdvisor.Core.Parsing;
+
+// Indexes that already exist in the target database, one entry per index.
+var existing = new List<(string Table, string[] Keys)>
+{
+    ("dbo.Orders", new[] { "Status", "CreatedAt", "Total" }),
+    ("users", new[] { "country" }),
+};
+
+static string Normalize(string column) => column.Trim('"', '[', ']');
+
+static bool AlreadyIndexed(IndexRecommendation rec, IEnumerable<(string Table, string[] Keys)> indexes) =>
+    indexes.Any(ix =>
+        string.Equals(ix.Table, rec.Table, StringComparison.OrdinalIgnoreCase) &&
+        ix.Keys.Length >= rec.KeyColumns.Count &&
+        rec.KeyColumns.Select(Normalize).SequenceEqual(ix.Keys.Take(rec.KeyColumns.Count), StringComparer.OrdinalIgnoreCase));
+
+var plan = new PlanParserFactory().Parse(File.ReadAllText(args[0]));
+var recs = new RecommendationEngine().Analyze(plan)
+    .Where(rec => !AlreadyIndexed(rec, existing))
+    .ToList();
+
+Console.WriteLine($"{recs.Count} new index suggestion(s) after excluding existing indexes");
+```
+
+Fill `existing` from your catalog (`sys.indexes` / `sys.index_columns` on SQL
+Server, `pg_indexes` on Postgres). The list is hand-maintained; the tool does not
+read it for you. Only leading key columns are compared, so an existing index on
+`(Status, CreatedAt, Total)` covers a suggestion on `(Status, CreatedAt)`.
+
+### Scenario: set a benefit threshold and a maximum suggestion count
+
+From the CLI, `--min-impact` sets the threshold and there is no cap - use `jq`
+to cap the JSON output:
+
+```bash
+dotnet run --project src/SqlIndexAdvisor.Cli -- plan.sqlplan --min-impact 25 --format json \
+  | jq '.recommendations[:3]'
+```
+
+From code, the same two values are available as `ArgsParser.ParseResult`
+properties (`MinImpact`) and as `IndexRecommendation.EstimatedImpactPercent`:
+
+```csharp
+using System;
+using System.IO;
+using System.Linq;
+using SqlIndexAdvisor.Core.ArgsParsing;
+using SqlIndexAdvisor.Core.Engine;
+using SqlIndexAdvisor.Core.Parsing;
+
+ArgsParser.ParseResult options = ArgsParser.Parse(new[] { "plan.sqlplan", "--min-impact", "25" });
+if (!options.IsSuccess)
+{
+    Console.Error.WriteLine(options.ErrorMessage ?? options.HelpMessage);
+    return 1;
+}
+
+const int maxSuggestions = 3;
+var plan = new PlanParserFactory().Parse(File.ReadAllText(args[0]));
+
+// Recommendations arrive ranked by confidence, then impact. Filter, then cap.
+var top = new RecommendationEngine().Analyze(plan)
+    .Where(rec => rec.EstimatedImpactPercent >= options.MinImpact)
+    .Take(maxSuggestions)
+    .ToList();
+
+Console.WriteLine($"{top.Count} suggestion(s) at or above {options.MinImpact}% impact");
+return 0;
+```
+
+Note that `Take` after the default ranking keeps the most confident suggestions,
+not necessarily the highest-impact ones. To cap by impact, add
+`.OrderByDescending(rec => rec.EstimatedImpactPercent)` before `Take`.
+
+### Scenario: read the output columns
+
+The Markdown report renders one table row per recommendation. Its columns map to:
+
+| Column | Meaning |
+| --- | --- |
+| Table | Table the index would be created on. |
+| Key columns | Index key, in order. Filter columns from the plan, in the order the rule produced them. |
+| Includes | `INCLUDE` columns - non-key columns the query reads so the index can cover it. |
+| Confidence | `High`, `Medium` or `Low`. Optimizer missing-index hints are always `High`. Scan-based rules grade by share of statement cost: `High` at 60% or more, `Medium` at 30% or more, otherwise `Low`. |
+| Estimated impact % | Estimated share of statement cost the index could remove. Not a measured reduction. |
+| Reason | Why the rule fired, joined with `; `. |
+
+The CSV report uses the same data with the headers `Confidence,ImpactPercent,CreateStatement,Reasons`.
+The text report shows the same numbers, with the `CREATE INDEX` statement and reasons indented under each entry.
+
+```csharp
+using System;
+using System.IO;
+using SqlIndexAdvisor.Core.Engine;
+using SqlIndexAdvisor.Core.Parsing;
+using SqlIndexAdvisor.Core.Reporting;
+
+var plan = new PlanParserFactory().Parse(File.ReadAllText(args[0]));
+var recs = new RecommendationEngine().Analyze(plan);
+
+// Markdown table: | Table | Key columns | Includes | Confidence | Estimated impact % | Reason |
+Console.WriteLine(MarkdownReportRenderer.RenderMarkdown(plan, recs));
+
+// CSV: Confidence,ImpactPercent,CreateStatement,Reasons
+Console.WriteLine(CsvReportRenderer.RenderCsv(plan, recs));
+```
+
+### Limitations
+
+- **Input dialects.** Only SQL Server showplan XML and PostgreSQL
+  `EXPLAIN (FORMAT JSON)` are supported. Other engines are rejected with exit `2`.
+- **Encoding.** A UTF-16 `.sqlplan` without a byte-order mark is not detected.
+  `samples/sqlserver_orders_scan_utf16le.sqlplan` fails for this reason; save the
+  plan as UTF-8 or UTF-16 with a BOM.
+- **Estimates, not measurements.** Impact is a heuristic share of the plan's
+  estimated cost. Nothing is executed, timed, or checked against real data
+  distributions, so an 80% estimate can be a 5% real gain (or no gain at all).
+- **No view of existing indexes.** Each plan is analyzed alone. Use the exclusion
+  scenario above, or validate against `sys.indexes` / `pg_indexes` yourself.
+- **No write-side or storage cost.** Suggestions do not account for insert/update
+  overhead, index size, or other queries that will slow down.
+- **No workload aggregation.** Plans are not merged or weighted by frequency across
+  a batch; ten plans with the same missing index produce ten independent results.
+- **Postgres predicates are parsed as text.** See the notes in
+  [Limits / not done yet](#limits--not-done-yet).
+- **CLI format gap.** `--format markdown` is rejected by the CLI, although
+  `MarkdownReportRenderer` exists and is used from code.
+- **`--sqlserver` / `--postgres` do nothing** beyond the mutual-exclusion check.
+
 ## Getting started
 
 To use the library from your own code instead of the CLI, reference
