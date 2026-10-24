@@ -13,6 +13,8 @@ namespace SqlIndexAdvisor.Core.Engine
             IEnumerable<string> columns)
         {
             ArgumentNullException.ThrowIfNull(columns);
+            ThrowIfNotFinite(relativeCost, nameof(relativeCost));
+            ThrowIfNotFinite(selectivity, nameof(selectivity));
             ArgumentOutOfRangeException.ThrowIfNegative(relativeCost);
             ArgumentOutOfRangeException.ThrowIfNegative(rowCount);
             ArgumentOutOfRangeException.ThrowIfLessThan(selectivity, 0);
@@ -32,6 +34,8 @@ namespace SqlIndexAdvisor.Core.Engine
             long rowCount,
             double selectivity)
         {
+            ThrowIfNotFinite(relativeCost, nameof(relativeCost));
+            ThrowIfNotFinite(selectivity, nameof(selectivity));
             ArgumentOutOfRangeException.ThrowIfNegative(relativeCost);
             ArgumentOutOfRangeException.ThrowIfNegative(rowCount);
             ArgumentOutOfRangeException.ThrowIfLessThan(selectivity, 0);
@@ -39,6 +43,16 @@ namespace SqlIndexAdvisor.Core.Engine
 
             // Cost estimation logic
             return relativeCost * rowCount * selectivity;
+        }
+
+        // NaN and +/-Infinity pass the range checks above (every comparison with NaN is false),
+        // so they are rejected explicitly.
+        private static void ThrowIfNotFinite(double value, string paramName)
+        {
+            if (!double.IsFinite(value))
+            {
+                throw new ArgumentOutOfRangeException(paramName, value, "Value must be a finite number.");
+            }
         }
     }
 }

@@ -163,5 +163,28 @@ namespace SqlIndexAdvisor.Tests
             // Act & Assert
             Assert.Throws<ArgumentOutOfRangeException>(() => CostEstimator.EstimateCost(relativeCost, rowCount, selectivity));
         }
+        [Theory]
+        [InlineData(double.NaN)]
+        [InlineData(double.PositiveInfinity)]
+        [InlineData(double.NegativeInfinity)]
+        public void EstimateCost_WithNonFiniteRelativeCost_ThrowsArgumentOutOfRangeException(double relativeCost)
+        {
+            var columns = new List<string> { "Column1" };
+
+            Assert.Throws<ArgumentOutOfRangeException>("relativeCost", () => CostEstimator.EstimateCost(relativeCost, 1000, 0.1, columns));
+            Assert.Throws<ArgumentOutOfRangeException>("relativeCost", () => CostEstimator.EstimateCost(relativeCost, 1000, 0.1));
+        }
+
+        [Theory]
+        [InlineData(double.NaN)]
+        [InlineData(double.PositiveInfinity)]
+        [InlineData(double.NegativeInfinity)]
+        public void EstimateCost_WithNonFiniteSelectivity_ThrowsArgumentOutOfRangeException(double selectivity)
+        {
+            var columns = new List<string> { "Column1" };
+
+            Assert.Throws<ArgumentOutOfRangeException>("selectivity", () => CostEstimator.EstimateCost(0.5, 1000, selectivity, columns));
+            Assert.Throws<ArgumentOutOfRangeException>("selectivity", () => CostEstimator.EstimateCost(0.5, 1000, selectivity));
+        }
     }
 }
