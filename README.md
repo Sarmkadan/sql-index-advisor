@@ -73,6 +73,100 @@ Operators     : 1
 Impact figures are rough heuristics, not measured gains. Validate before applying.
 ```
 
+## Getting started
+
+To use the library from your own code instead of the CLI, reference
+`SqlIndexAdvisor.Core` and follow the same three steps the CLI runs:
+
+| Step | Type | Namespace |
+| --- | --- | --- |
+| Parse the plan into an `ExecutionPlan` | `PlanParserFactory` | `SqlIndexAdvisor.Core.Parsing` |
+| Run the rules, merge and rank suggestions | `RecommendationEngine` | `SqlIndexAdvisor.Core.Engine` |
+| Render `CREATE INDEX` DDL for a suggestion | `DdlRenderer` | `SqlIndexAdvisor.Core.Model` |
+
+The impact number printed below is `IndexRecommendation.EstimatedImpactPercent`,
+the same heuristic share of statement cost the CLI reports. It is not a
+measured gain.
+
+Create a console app outside this repository and reference the core project by
+its path (replace `/path/to/sql-index-advisor` with your checkout):
+
+```bash
+dotnet new console -o GettingStarted
+cd GettingStarted
+dotnet add reference /path/to/sql-index-advisor/src/SqlIndexAdvisor.Core/SqlIndexAdvisor.Core.csproj
+```
+
+Replace the generated `Program.cs` with this:
+
+```csharp
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using SqlIndexAdvisor.Core.Engine;
+using SqlIndexAdvisor.Core.Model;
+using SqlIndexAdvisor.Core.Parsing;
+
+if (args.Length != 1)
+{
+    Console.Error.WriteLine("usage: GettingStarted <plan-file>");
+    return 1;
+}
+
+// 1. Read a SQL Server showplan XML or PostgreSQL EXPLAIN (FORMAT JSON) file.
+string planPath = args[0];
+string planText = File.ReadAllText(planPath);
+
+// 2. Parse it into the normalized ExecutionPlan. The dialect is auto-detected.
+var parserFactory = new PlanParserFactory();
+ExecutionPlan plan = parserFactory.Parse(planText);
+
+// 3. Run the default rules, merge duplicates, and rank the suggestions.
+var engine = new RecommendationEngine();
+IReadOnlyList<IndexRecommendation> recommendations = engine.Analyze(plan);
+
+// 4. Print CREATE INDEX DDL for each new-index suggestion. Schema fixes and
+//    suggestions that widen an existing index (ExistingIndexName) are skipped,
+//    because DdlRenderer would emit a CREATE with the existing index name.
+var creates = recommendations
+    .Where(r => r.Kind == RecommendationKind.CreateIndex && r.ExistingIndexName is null)
+    .ToList();
+
+Console.WriteLine($"{creates.Count} index recommendation(s) for {planPath} ({plan.Dialect}):");
+foreach (var rec in creates)
+{
+    Console.WriteLine();
+    Console.WriteLine(DdlRenderer.RenderCreateIndex(rec, plan.Dialect));
+    Console.WriteLine($"-- estimated benefit: ~{rec.EstimatedImpactPercent:F1}% of statement cost ({rec.Confidence} confidence)");
+}
+
+return 0;
+```
+
+Run it against one of the sample plans:
+
+```bash
+dotnet run -- /path/to/sql-index-advisor/samples/sqlserver_orders_scan.sqlplan
+dotnet run -- /path/to/sql-index-advisor/samples/postgres_users_seqscan.json
+```
+
+The SQL Server sample prints:
+
+```
+1 index recommendation(s) for /path/to/sql-index-advisor/samples/sqlserver_orders_scan.sqlplan (SqlServer):
+
+CREATE NONCLUSTERED INDEX IX_Orders_Status_CreatedAt ON dbo.Orders (Status, CreatedAt) INCLUDE (OrderId, CustomerId, Total) WITH (ONLINE = ON);
+-- estimated benefit: ~82.5% of statement cost (High confidence)
+```
+
+Notes on the generated DDL:
+
+- SQL Server output uses `WITH (ONLINE = ON)`, which needs an edition that
+  supports online index operations.
+- Postgres output uses `CREATE INDEX CONCURRENTLY`, which cannot run inside a
+  transaction block. Run it outside `BEGIN ... COMMIT`.
+
 ## How it works
 
 ```
