@@ -165,6 +165,8 @@ public static class ArgsParser
                     var raw = RequireValue(args, ref i, "--min-impact");
                     if (!double.TryParse(raw, System.Globalization.CultureInfo.InvariantCulture, out minImpact))
                         throw new ArgumentException($"--min-impact expects a number, got '{raw}'.");
+                    if (!double.IsFinite(minImpact) || minImpact < 0 || minImpact > 100)
+                        throw new ArgumentException($"--min-impact must be between 0 and 100, got '{raw}'.");
                     if (activity is not null)
                         AddOptionEvent(activity, "--min-impact", minImpact);
                     break;

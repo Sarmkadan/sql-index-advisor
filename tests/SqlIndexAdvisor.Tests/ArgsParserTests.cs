@@ -193,6 +193,49 @@ public class ArgsParserTests
     }
 
     /// <summary>
+    /// Tests that --min-impact values outside the 0..100 percent range are rejected.
+    /// </summary>
+    [Theory]
+    [InlineData("-1")]
+    [InlineData("100.01")]
+    [InlineData("1000")]
+    public void Parse_MinImpactOutOfRange_ThrowsArgumentException(string value)
+    {
+        // Act & Assert
+        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { "--min-impact", value }));
+        Assert.Contains("--min-impact must be between 0 and 100", ex.Message);
+    }
+
+    /// <summary>
+    /// Tests that non-finite --min-impact values are rejected even though double.TryParse accepts them.
+    /// </summary>
+    [Theory]
+    [InlineData("NaN")]
+    [InlineData("Infinity")]
+    [InlineData("-Infinity")]
+    public void Parse_MinImpactNonFinite_ThrowsArgumentException(string value)
+    {
+        // Act & Assert
+        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { "--min-impact", value }));
+        Assert.Contains("--min-impact must be between 0 and 100", ex.Message);
+    }
+
+    /// <summary>
+    /// Tests that the --min-impact range bounds 0 and 100 are accepted.
+    /// </summary>
+    [Theory]
+    [InlineData("0", 0)]
+    [InlineData("100", 100)]
+    public void Parse_MinImpactAtBounds_ReturnsValue(string value, double expected)
+    {
+        // Act
+        var result = ArgsParser.Parse(new[] { "--min-impact", value });
+
+        // Assert
+        Assert.Equal(expected, result.MinImpact);
+    }
+
+    /// <summary>
     /// Tests that parsing --min-impact with a valid number returns the correct min impact.
     /// </summary>
     [Fact]
