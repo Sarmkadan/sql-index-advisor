@@ -13,7 +13,7 @@ public sealed class KeyLookupRule : PlanNodeVisitorBase
     /// <summary>
     /// A lookup cheaper than this share of the statement isn't worth an index.
     /// </summary>
-    private const double MinRelativeCost = 0.10;
+    private const double MinRelativeCost = KeyLookupRuleConstants.MinRelativeCost;
 
     /// <summary>
     /// Determines whether the specified plan node should be visited by this rule.
@@ -58,7 +58,7 @@ public sealed class KeyLookupRule : PlanNodeVisitorBase
         var seek = plan.Nodes.FirstOrDefault(n =>
         !ReferenceEquals(n, node)
         && ReferenceEquals(n.Parent, node.Parent)
-        && n.Operator.Contains("Seek", StringComparison.OrdinalIgnoreCase)
+        && n.Operator.Contains(KeyLookupRuleConstants.SeekOperatorMarker, StringComparison.OrdinalIgnoreCase)
         && n.PredicateColumns.Count > 0);
 
         if (seek == null)
@@ -77,8 +77,8 @@ public sealed class KeyLookupRule : PlanNodeVisitorBase
 
         var confidence = node.RelativeCost switch
         {
-            >= 0.60 => Confidence.High,
-            >= 0.30 => Confidence.Medium,
+            >= KeyLookupRuleConstants.HighConfidenceRelativeCost => Confidence.High,
+            >= KeyLookupRuleConstants.MediumConfidenceRelativeCost => Confidence.Medium,
             _ => Confidence.Low
         };
 
@@ -92,12 +92,11 @@ public sealed class KeyLookupRule : PlanNodeVisitorBase
             KeyColumns = equalityColumns.ToList(),
             IncludeColumns = include,
             ExistingIndexName = existingIndexName,
-            EstimatedImpactPercent = Math.Round(node.RelativeCost * 100.0, 1),
+            EstimatedImpactPercent = Math.Round(node.RelativeCost * KeyLookupRuleConstants.PercentScale, KeyLookupRuleConstants.ImpactDecimals),
             SourceNodeCost = node.RelativeCost,
             Confidence = confidence,
             Reasons = {
-                $"{node.Operator} on {node.TableName} follows an index seek with equality on " +
-                $"({string.Join(", ", equalityColumns)}) and then performs a lookup; a covering index could avoid the extra lookup."
+                string.Format(KeyLookupRuleConstants.ReasonFormat, node.Operator, node.TableName, string.Join(", ", equalityColumns))
             }
         };
     }
@@ -110,7 +109,7 @@ public sealed class KeyLookupRule : PlanNodeVisitorBase
     private static bool IsKeyLookup(PlanNode node)
     {
         var op = node.Operator;
-        return op.Contains("Key Lookup", StringComparison.OrdinalIgnoreCase) ||
-        op.Contains("RID Lookup", StringComparison.OrdinalIgnoreCase);
+        return op.Contains(KeyLookupRuleConstants.KeyLookupOperator, StringComparison.OrdinalIgnoreCase) ||
+        op.Contains(KeyLookupRuleConstants.RidLookupOperator, StringComparison.OrdinalIgnoreCase);
     }
 }
