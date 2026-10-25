@@ -1,13 +1,13 @@
-using System.Text;
-using System.Linq;
-using System.Collections.Generic;
-using SqlIndexAdvisor.Core.Model;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using SqlIndexAdvisor.Core.Model;
 
 namespace SqlIndexAdvisor.Core.Reporting;
 
 /// <summary>
-/// Provides rendering capabilities for execution plans and index recommendations into a self‑contained HTML report.
+/// Provides rendering capabilities for execution plans and index recommendations into a self-contained HTML report.
 /// The report includes an inline CSS stylesheet and a table of recommendations where rows are coloured
 /// according to the recommendation confidence (severity).
 /// </summary>
@@ -63,7 +63,7 @@ public static class HtmlReportRenderer
         sb.AppendLine("  </style>");
         sb.AppendLine("</head>");
         sb.AppendLine("<body>");
-        sb.AppendLine($"<h1>SQL Index Advisor Report</h1>");
+        sb.AppendLine("<h1>SQL Index Advisor Report</h1>");
 
         foreach (var report in reports)
         {
@@ -121,7 +121,7 @@ public static class HtmlReportRenderer
         int i = 1;
         foreach (var r in recs)
         {
-            // Confidence is an enum (non‑nullable), so we just call ToString().
+            // Confidence is an enum (non-nullable), so we just call ToString().
             var confidenceStr = r.Confidence.ToString();
             var cssClass = ConfidenceToCssClass(confidenceStr);
             sb.AppendLine($"<tr class=\"{cssClass}\">");
