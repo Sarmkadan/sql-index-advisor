@@ -53,12 +53,17 @@ static int Run(string[] args)
     }
 
     if (string.IsNullOrWhiteSpace(content))
+    {
         throw new PlanParseException("plan content is empty.");
+    }
 
     var plans = new PlanParserFactory().Parse(content);
     var engine = new RecommendationEngine();
     var reports = plans
-        .Select((plan, index) => new StatementReport(index + 1, plan, FilterByImpact(engine.Analyze(plan), parseResult.MinImpact)))
+        .Select((plan, index) => new StatementReport(
+            index + 1,
+            plan,
+            FilterByImpact(engine.Analyze(plan), parseResult.MinImpact)))
         .ToList();
 
     Console.WriteLine(StatementReportRenderer.Render(reports, parseResult.Format, parseResult.SchemaVersion));
