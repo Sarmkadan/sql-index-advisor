@@ -14,9 +14,6 @@ namespace SqlIndexAdvisor.Core.Rules;
 /// </summary>
 public sealed class FullScanWithFilterRule : PlanNodeVisitorBase
 {
-    // A scan cheaper than this share of the statement isn't worth an index.
-    private const double MinRelativeCost = 0.10;
-
     private readonly RecommendationOptions _options;
 
     /// <summary>
@@ -52,7 +49,7 @@ public sealed class FullScanWithFilterRule : PlanNodeVisitorBase
         return LooksLikeFullScan(node)
             && !string.IsNullOrEmpty(node.TableName)
             && node.PredicateColumns.Count > 0
-            && node.RelativeCost >= MinRelativeCost
+            && node.RelativeCost >= FullScanWithFilterRuleConstants.MinRelativeCost
             && ScanRowStats.From(node).IsWorthIndexing(_options);
     }
 
@@ -71,8 +68,8 @@ protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node)
         var rows = ScanRowStats.From(node);
         var baseline = node.RelativeCost switch
         {
-            >= 0.60 => Confidence.High,
-            >= 0.30 => Confidence.Medium,
+            >= FullScanWithFilterRuleConstants.HighConfidenceRelativeCost => Confidence.High,
+            >= FullScanWithFilterRuleConstants.MediumConfidenceRelativeCost => Confidence.Medium,
             _ => Confidence.Low
         };
 
@@ -87,7 +84,7 @@ protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node)
             Rule = Name,
             Reasons = [
                 $"{node.Operator} on {node.TableName} carries a filter on " +
-                $"({string.Join(", ", node.PredicateColumns)}) and is ~{node.RelativeCost * 100:0}% of statement cost.",
+                $"({string.Join(", ", node.PredicateColumns)}) and is ~{node.RelativeCost * FullScanWithFilterRuleConstants.PercentScale:0}% of statement cost.",
                 .. rows.Describe(_options)
             ]
         };
@@ -103,10 +100,10 @@ protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node)
 private static bool LooksLikeFullScan(PlanNode node)
 {
     var op = node.Operator;
-    return op.Equals("Seq Scan", StringComparison.OrdinalIgnoreCase)
-        || op.Equals("Table Scan", StringComparison.OrdinalIgnoreCase)
-        || op.Equals("Clustered Index Scan", StringComparison.OrdinalIgnoreCase)
-        || op.Equals("Index Scan", StringComparison.OrdinalIgnoreCase) && node.PredicateColumns.Count > 0;
+    return op.Equals(FullScanWithFilterRuleConstants.SeqScanOperator, StringComparison.OrdinalIgnoreCase)
+        || op.Equals(FullScanWithFilterRuleConstants.TableScanOperator, StringComparison.OrdinalIgnoreCase)
+        || op.Equals(FullScanWithFilterRuleConstants.ClusteredIndexScanOperator, StringComparison.OrdinalIgnoreCase)
+        || op.Equals(FullScanWithFilterRuleConstants.IndexScanOperator, StringComparison.OrdinalIgnoreCase) && node.PredicateColumns.Count > 0;
 }
 
     /// <summary>
@@ -120,10 +117,11 @@ private static bool LooksLikeFullScan(PlanNode node)
     /// <returns>An estimated impact percentage for adding an index based on the scan's cost and filter selectivity.</returns>
     private static double EstimateImpact(PlanNode node, ScanRowStats rows)
     {
-        var baseline = node.RelativeCost * 100.0;
-        var eliminated = 1.0 - (rows.MatchFraction ?? 0.5);
+        var baseline = node.RelativeCost * FullScanWithFilterRuleConstants.PercentScale;
+        var eliminated = 1.0 - (rows.MatchFraction ?? FullScanWithFilterRuleConstants.NeutralMatchFraction);
         // Blend: even a non-selective filter still saves something by seeking.
-        var factor = 0.4 + 0.6 * eliminated;
-        return Math.Round(baseline * factor, 1);
+        var factor = FullScanWithFilterRuleConstants.SeekBaseFactor
+            + FullScanWithFilterRuleConstants.SeekEliminationWeight * eliminated;
+        return Math.Round(baseline * factor, FullScanWithFilterRuleConstants.ImpactDecimals);
     }
 }
