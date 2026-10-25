@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using SqlIndexAdvisor.Core.Model;
 using SqlIndexAdvisor.Core.Rules;
 
@@ -14,7 +15,7 @@ public sealed class RecommendationEngine : IRecommendationEngine
     /// <summary>
     /// Gets the names of all registered rules.
     /// </summary>
-    [System.Text.Json.Serialization.JsonIgnore]
+    [JsonIgnore]
     public IReadOnlyList<string> RegisteredRules => _rules.Select(r => r.Name).ToList();
 
     /// <summary>
