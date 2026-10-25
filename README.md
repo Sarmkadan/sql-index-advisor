@@ -335,9 +335,10 @@ if (args.Length != 1)
 string planPath = args[0];
 string planText = File.ReadAllText(planPath);
 
-// 2. Parse it into the normalized ExecutionPlan. The dialect is auto-detected.
+// 2. Parse it into normalized ExecutionPlans, one per statement. The dialect is auto-detected.
 var parserFactory = new PlanParserFactory();
-ExecutionPlan plan = parserFactory.Parse(planText);
+IReadOnlyList<ExecutionPlan> plans = parserFactory.Parse(planText);
+ExecutionPlan plan = plans[0]; // this sample analyzes the first statement only
 
 // 3. Run the default rules, merge duplicates, and rank the suggestions.
 var engine = new RecommendationEngine();
@@ -415,6 +416,116 @@ plan file ──► PlanParserFactory ──► ExecutionPlan (normalized) ─�
    suggestions (same table, same leading key columns - the wider one wins and
    absorbs the other's includes and reasons), then orders by confidence and
    estimated impact.
+
+## RecommendationEngine
+
+`RecommendationEngine` is the stage between parsing and reporting. It takes one
+normalized `ExecutionPlan` (produced by `PlanParserFactory`), runs every
+configured `IIndexRule` over it, merges the raw suggestions, and returns them
+ranked. It does not read files, does not connect to a database, and does not
+render output - the CLI and the report renderers consume its result.
+
+```
+ExecutionPlan ──► RecommendationEngine.Analyze ──► IReadOnlyList<IndexRecommendation> ──► DdlRenderer / ReportRenderer
+                          │
+                          ├─ run each IIndexRule           raw suggestions
+                          ├─ RecommendationMerger.Merge    de-dup, prefix merge, implicit-conversion filter
+                          └─ rank                          Confidence (desc), then EstimatedImpactPercent (desc)
+```
+
+### IRecommendationEngine
+
+Code that consumes the engine should depend on `IRecommendationEngine`
+(namespace `SqlIndexAdvisor.Core.Engine`), which has a single member:
+
+```csharp
+IReadOnlyList<IndexRecommendation> Analyze(ExecutionPlan plan);
+```
+
+- `plan` must not be `null`; otherwise `ArgumentNullException` is thrown.
+- The result is empty when no rule applies. Treat every recommendation as
+  advisory and check it against your workload before changing a schema.
+
+Depend on the interface for dependency injection or for test fakes.
+`RecommendationEngine` is the only implementation in this repository.
+
+### Constructors and rule sets
+
+| Constructor | Rules that run |
+| --- | --- |
+| `new RecommendationEngine()` | `DefaultRules.All()`: `EngineHintRule`, `FullScanWithFilterRule`, `ImplicitConversionRule`, with default `RecommendationOptions`. |
+| `new RecommendationEngine(RecommendationOptions options)` | The same default rules, with `MinTableRows` and `MaxSelectivity` applied to the scan rules. |
+| `new RecommendationEngine(IEnumerable<IIndexRule> rules)` | Exactly the rules you pass. Null entries are ignored. |
+
+Rules are independent and must not have side effects. Overlap between their
+output is resolved by `RecommendationMerger`, not by the rules.
+
+### Example usage
+
+Parse a plan, analyze it with the default rules through the interface, and keep
+only medium-or-higher confidence suggestions. `Parse` returns one plan per
+statement, so this sample analyzes the first one:
+
+```csharp
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using SqlIndexAdvisor.Core.Engine;
+using SqlIndexAdvisor.Core.Model;
+using SqlIndexAdvisor.Core.Parsing;
+
+IReadOnlyList<ExecutionPlan> plans = new PlanParserFactory().Parse(File.ReadAllText("plan.sqlplan"));
+
+IRecommendationEngine engine = new RecommendationEngine(new RecommendationOptions { MinTableRows = 10_000 });
+IReadOnlyList<IndexRecommendation> recommendations = engine.Analyze(plans[0]);
+
+foreach (var rec in recommendations.Where(r => r.Confidence >= Confidence.Medium))
+{
+    Console.WriteLine($"{rec.Table} ({string.Join(", ", rec.KeyColumns)}): ~{rec.EstimatedImpactPercent:F1}%");
+}
+```
+
+To run only your own rules, pass them to the constructor. This rule flags every
+scan that carries a filter, with low confidence and no impact estimate:
+
+```csharp
+using System.Collections.Generic;
+using System.Linq;
+using SqlIndexAdvisor.Core.Engine;
+using SqlIndexAdvisor.Core.Model;
+using SqlIndexAdvisor.Core.Rules;
+
+sealed class FilteredScanRule : IIndexRule
+{
+    public string Name => "filtered-scan";
+
+    public IEnumerable<IndexRecommendation> Evaluate(ExecutionPlan plan)
+    {
+        foreach (var node in plan.Nodes.Where(n => n.IsScan && n.TableName is not null && n.PredicateColumns.Count > 0))
+        {
+            yield return new IndexRecommendation
+            {
+                Table = node.TableName!,
+                KeyColumns = node.PredicateColumns.ToList(),
+                Confidence = Confidence.Low,
+                Reasons = { $"{node.Operator} on {node.TableName} filters on {string.Join(", ", node.PredicateColumns)}." },
+            };
+        }
+    }
+}
+
+IRecommendationEngine engine = new RecommendationEngine(new IIndexRule[] { new FilteredScanRule() });
+```
+
+Notes:
+
+- The engine analyzes one plan at a time. For a file with several statements,
+  call `Analyze` once per plan, as shown in the directory scenario above.
+- The engine does not know which indexes already exist, so it can suggest an
+  index that is already there. See the limitations below.
+- Ordering is stable for equal keys, so the output is deterministic for the same
+  plan and rule set.
 
 ## PlanParserFactoryExtensions
 
