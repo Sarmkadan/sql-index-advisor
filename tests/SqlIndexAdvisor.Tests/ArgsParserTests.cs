@@ -22,7 +22,7 @@ public class ArgsParserTests
         // Assert
         Assert.True(result.ShouldShowHelp);
         Assert.NotNull(result.HelpMessage);
-        Assert.Contains("sql-index-advisor", result.HelpMessage);
+        Assert.Contains(ArgsParserTestsConstants.ToolName, result.HelpMessage);
     }
 
     /// <summary>
@@ -32,12 +32,12 @@ public class ArgsParserTests
     public void Parse_HelpFlag_ReturnsHelpRequest()
     {
         // Act
-        var result = ArgsParser.Parse(new[] { "--help" });
+        var result = ArgsParser.Parse(new[] { ArgsParserTestsConstants.HelpFlag });
 
         // Assert
         Assert.True(result.ShouldShowHelp);
         Assert.NotNull(result.HelpMessage);
-        Assert.Contains("sql-index-advisor", result.HelpMessage);
+        Assert.Contains(ArgsParserTestsConstants.ToolName, result.HelpMessage);
     }
 
     /// <summary>
@@ -47,12 +47,12 @@ public class ArgsParserTests
     public void Parse_HelpShortFlag_ReturnsHelpRequest()
     {
         // Act
-        var result = ArgsParser.Parse(new[] { "-h" });
+        var result = ArgsParser.Parse(new[] { ArgsParserTestsConstants.HelpShortFlag });
 
         // Assert
         Assert.True(result.ShouldShowHelp);
         Assert.NotNull(result.HelpMessage);
-        Assert.Contains("sql-index-advisor", result.HelpMessage);
+        Assert.Contains(ArgsParserTestsConstants.ToolName, result.HelpMessage);
     }
 
     /// <summary>
@@ -62,8 +62,8 @@ public class ArgsParserTests
     public void Parse_UnknownOption_ThrowsArgumentException()
     {
         // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { "--unknown" }));
-        Assert.Contains("unknown option", ex.Message);
+        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { ArgsParserTestsConstants.UnknownOptionFlag }));
+        Assert.Contains(ArgsParserTestsConstants.UnknownOptionMessage, ex.Message);
     }
 
     /// <summary>
@@ -73,8 +73,8 @@ public class ArgsParserTests
     public void Parse_UnknownShortOption_ThrowsArgumentException()
     {
         // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { "-x" }));
-        Assert.Contains("unknown option", ex.Message);
+        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { ArgsParserTestsConstants.UnknownShortOptionFlag }));
+        Assert.Contains(ArgsParserTestsConstants.UnknownOptionMessage, ex.Message);
     }
 
     /// <summary>
@@ -84,8 +84,8 @@ public class ArgsParserTests
     public void Parse_MissingFormatValue_ThrowsArgumentException()
     {
         // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { "--format" }));
-        Assert.Contains("--format requires a value", ex.Message);
+        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { ArgsParserTestsConstants.FormatFlag }));
+        Assert.Contains(ArgsParserTestsConstants.MissingFormatValueMessage, ex.Message);
     }
 
     /// <summary>
@@ -95,8 +95,8 @@ public class ArgsParserTests
     public void Parse_InvalidFormatValue_ThrowsArgumentException()
     {
         // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { "--format", "invalid" }));
-        Assert.Contains("--format must be", ex.Message);
+        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { ArgsParserTestsConstants.FormatFlag, ArgsParserTestsConstants.InvalidFormat }));
+        Assert.Contains(ArgsParserTestsConstants.InvalidFormatMessage, ex.Message);
     }
 
     /// <summary>
@@ -106,14 +106,14 @@ public class ArgsParserTests
     public void Parse_ValidTextFormat_ReturnsCorrectFormat()
     {
         // Act
-        var result = ArgsParser.Parse(new[] { "--format", "text" });
+        var result = ArgsParser.Parse(new[] { ArgsParserTestsConstants.FormatFlag, ArgsParserTestsConstants.TextFormat });
 
         // Assert
         Assert.False(result.ShouldShowHelp);
-        Assert.Equal("text", result.Format);
+        Assert.Equal(ArgsParserTestsConstants.TextFormat, result.Format);
         Assert.Null(result.Path);
         Assert.False(result.UseStdin);
-        Assert.Equal(0, result.MinImpact);
+        Assert.Equal(ArgsParserTestsConstants.DefaultMinImpact, result.MinImpact);
     }
 
     /// <summary>
@@ -123,11 +123,11 @@ public class ArgsParserTests
     public void Parse_ValidJsonFormat_ReturnsCorrectFormat()
     {
         // Act
-        var result = ArgsParser.Parse(new[] { "--format", "json" });
+        var result = ArgsParser.Parse(new[] { ArgsParserTestsConstants.FormatFlag, ArgsParserTestsConstants.JsonFormat });
 
         // Assert
         Assert.False(result.ShouldShowHelp);
-        Assert.Equal("json", result.Format);
+        Assert.Equal(ArgsParserTestsConstants.JsonFormat, result.Format);
     }
 
     /// <summary>
@@ -137,11 +137,11 @@ public class ArgsParserTests
     public void Parse_ValidHtmlFormat_ReturnsCorrectFormat()
     {
         // Act
-        var result = ArgsParser.Parse(new[] { "--format", "html" });
+        var result = ArgsParser.Parse(new[] { ArgsParserTestsConstants.FormatFlag, ArgsParserTestsConstants.HtmlFormat });
 
         // Assert
         Assert.False(result.ShouldShowHelp);
-        Assert.Equal("html", result.Format);
+        Assert.Equal(ArgsParserTestsConstants.HtmlFormat, result.Format);
     }
 
     /// <summary>
@@ -151,11 +151,11 @@ public class ArgsParserTests
     public void Parse_ValidCsvFormat_ReturnsCorrectFormat()
     {
         // Act
-        var result = ArgsParser.Parse(new[] { "--format", "csv" });
+        var result = ArgsParser.Parse(new[] { ArgsParserTestsConstants.FormatFlag, ArgsParserTestsConstants.CsvFormat });
 
         // Assert
         Assert.False(result.ShouldShowHelp);
-        Assert.Equal("csv", result.Format);
+        Assert.Equal(ArgsParserTestsConstants.CsvFormat, result.Format);
     }
 
     /// <summary>
@@ -165,10 +165,10 @@ public class ArgsParserTests
     public void Parse_FormatIsCaseInsensitive_ReturnsLowercasedFormat()
     {
         // Act
-        var result = ArgsParser.Parse(new[] { "--format", "JSON" });
+        var result = ArgsParser.Parse(new[] { ArgsParserTestsConstants.FormatFlag, ArgsParserTestsConstants.UpperCaseJsonFormat });
 
         // Assert
-        Assert.Equal("json", result.Format);
+        Assert.Equal(ArgsParserTestsConstants.JsonFormat, result.Format);
     }
 
     /// <summary>
@@ -178,8 +178,8 @@ public class ArgsParserTests
     public void Parse_MissingMinImpactValue_ThrowsArgumentException()
     {
         // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { "--min-impact" }));
-        Assert.Contains("--min-impact requires a value", ex.Message);
+        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { ArgsParserTestsConstants.MinImpactFlag }));
+        Assert.Contains(ArgsParserTestsConstants.MissingMinImpactValueMessage, ex.Message);
     }
 
     /// <summary>
@@ -189,8 +189,8 @@ public class ArgsParserTests
     public void Parse_InvalidMinImpactValue_ThrowsArgumentException()
     {
         // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { "--min-impact", "not-a-number" }));
-        Assert.Contains("--min-impact expects a number", ex.Message);
+        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { ArgsParserTestsConstants.MinImpactFlag, ArgsParserTestsConstants.NonNumericMinImpact }));
+        Assert.Contains(ArgsParserTestsConstants.InvalidMinImpactMessage, ex.Message);
     }
 
     /// <summary>
@@ -203,8 +203,8 @@ public class ArgsParserTests
     public void Parse_MinImpactOutOfRange_ThrowsArgumentException(string value)
     {
         // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { "--min-impact", value }));
-        Assert.Contains("--min-impact must be between 0 and 100", ex.Message);
+        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { ArgsParserTestsConstants.MinImpactFlag, value }));
+        Assert.Contains(ArgsParserTestsConstants.MinImpactRangeMessage, ex.Message);
     }
 
     /// <summary>
@@ -217,8 +217,8 @@ public class ArgsParserTests
     public void Parse_MinImpactNonFinite_ThrowsArgumentException(string value)
     {
         // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { "--min-impact", value }));
-        Assert.Contains("--min-impact must be between 0 and 100", ex.Message);
+        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { ArgsParserTestsConstants.MinImpactFlag, value }));
+        Assert.Contains(ArgsParserTestsConstants.MinImpactRangeMessage, ex.Message);
     }
 
     /// <summary>
@@ -230,7 +230,7 @@ public class ArgsParserTests
     public void Parse_MinImpactAtBounds_ReturnsValue(string value, double expected)
     {
         // Act
-        var result = ArgsParser.Parse(new[] { "--min-impact", value });
+        var result = ArgsParser.Parse(new[] { ArgsParserTestsConstants.MinImpactFlag, value });
 
         // Assert
         Assert.Equal(expected, result.MinImpact);
@@ -243,10 +243,10 @@ public class ArgsParserTests
     public void Parse_ValidMinImpactValue_ReturnsCorrectMinImpact()
     {
         // Act
-        var result = ArgsParser.Parse(new[] { "--min-impact", "50.5" });
+        var result = ArgsParser.Parse(new[] { ArgsParserTestsConstants.MinImpactFlag, ArgsParserTestsConstants.ValidMinImpactArg });
 
         // Assert
-        Assert.Equal(50.5, result.MinImpact);
+        Assert.Equal(ArgsParserTestsConstants.ValidMinImpact, result.MinImpact);
     }
 
     /// <summary>
@@ -256,7 +256,7 @@ public class ArgsParserTests
     public void Parse_StdinFlag_ReturnsUseStdinTrue()
     {
         // Act
-        var result = ArgsParser.Parse(new[] { "--stdin" });
+        var result = ArgsParser.Parse(new[] { ArgsParserTestsConstants.StdinFlag });
 
         // Assert
         Assert.True(result.UseStdin);
@@ -270,11 +270,11 @@ public class ArgsParserTests
     public void Parse_StdinWithFormat_ReturnsUseStdinTrueAndFormat()
     {
         // Act
-        var result = ArgsParser.Parse(new[] { "--stdin", "--format", "json" });
+        var result = ArgsParser.Parse(new[] { ArgsParserTestsConstants.StdinFlag, ArgsParserTestsConstants.FormatFlag, ArgsParserTestsConstants.JsonFormat });
 
         // Assert
         Assert.True(result.UseStdin);
-        Assert.Equal("json", result.Format);
+        Assert.Equal(ArgsParserTestsConstants.JsonFormat, result.Format);
     }
 
     /// <summary>
@@ -284,14 +284,14 @@ public class ArgsParserTests
     public void Parse_FilePath_ReturnsNormalizedPath()
     {
         // Act
-        var result = ArgsParser.Parse(new[] { "test.xml" });
+        var result = ArgsParser.Parse(new[] { ArgsParserTestsConstants.TestFileName });
 
         // Assert - path should be normalized to absolute path
         Assert.NotNull(result.Path);
-        Assert.EndsWith("test.xml", result.Path);
+        Assert.EndsWith(ArgsParserTestsConstants.TestFileName, result.Path);
         Assert.False(result.UseStdin);
-        Assert.Equal("text", result.Format);
-        Assert.Equal(0, result.MinImpact);
+        Assert.Equal(ArgsParserTestsConstants.TextFormat, result.Format);
+        Assert.Equal(ArgsParserTestsConstants.DefaultMinImpact, result.MinImpact);
     }
 
     /// <summary>
@@ -301,13 +301,13 @@ public class ArgsParserTests
     public void Parse_FilePathWithDash_ReturnsPath()
     {
         // Act
-        var result = ArgsParser.Parse(new[] { "-" });
+        var result = ArgsParser.Parse(new[] { ArgsParserTestsConstants.DashPath });
 
         // Assert
-        Assert.Equal("-", result.Path);
+        Assert.Equal(ArgsParserTestsConstants.DashPath, result.Path);
         Assert.False(result.UseStdin);
-        Assert.Equal("text", result.Format);
-        Assert.Equal(0, result.MinImpact);
+        Assert.Equal(ArgsParserTestsConstants.TextFormat, result.Format);
+        Assert.Equal(ArgsParserTestsConstants.DefaultMinImpact, result.MinImpact);
     }
 
     /// <summary>
@@ -317,12 +317,12 @@ public class ArgsParserTests
     public void Parse_FilePathWithFormat_ReturnsNormalizedPathAndFormat()
     {
         // Act
-        var result = ArgsParser.Parse(new[] { "test.xml", "--format", "json" });
+        var result = ArgsParser.Parse(new[] { ArgsParserTestsConstants.TestFileName, ArgsParserTestsConstants.FormatFlag, ArgsParserTestsConstants.JsonFormat });
 
         // Assert - path should be normalized to absolute path
         Assert.NotNull(result.Path);
-        Assert.EndsWith("test.xml", result.Path);
-        Assert.Equal("json", result.Format);
+        Assert.EndsWith(ArgsParserTestsConstants.TestFileName, result.Path);
+        Assert.Equal(ArgsParserTestsConstants.JsonFormat, result.Format);
     }
 
     /// <summary>
@@ -332,12 +332,12 @@ public class ArgsParserTests
     public void Parse_FilePathWithMinImpact_ReturnsNormalizedPathAndMinImpact()
     {
         // Act
-        var result = ArgsParser.Parse(new[] { "test.xml", "--min-impact", "25" });
+        var result = ArgsParser.Parse(new[] { ArgsParserTestsConstants.TestFileName, ArgsParserTestsConstants.MinImpactFlag, ArgsParserTestsConstants.FilePathMinImpactArg });
 
         // Assert - path should be normalized to absolute path
         Assert.NotNull(result.Path);
-        Assert.EndsWith("test.xml", result.Path);
-        Assert.Equal(25, result.MinImpact);
+        Assert.EndsWith(ArgsParserTestsConstants.TestFileName, result.Path);
+        Assert.Equal(ArgsParserTestsConstants.FilePathMinImpact, result.MinImpact);
     }
 
     /// <summary>
@@ -347,8 +347,8 @@ public class ArgsParserTests
     public void Parse_StdinAndFilePath_ThrowsArgumentException()
     {
         // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { "--stdin", "test.xml" }));
-        Assert.Contains("cannot specify both --stdin and a file path", ex.Message);
+        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { ArgsParserTestsConstants.StdinFlag, ArgsParserTestsConstants.TestFileName }));
+        Assert.Contains(ArgsParserTestsConstants.StdinAndFilePathMessage, ex.Message);
     }
 
     /// <summary>
@@ -358,8 +358,8 @@ public class ArgsParserTests
     public void Parse_StdinAndDash_ThrowsArgumentException()
     {
         // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { "--stdin", "-" }));
-        Assert.Contains("cannot specify both --stdin and a file path", ex.Message);
+        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { ArgsParserTestsConstants.StdinFlag, ArgsParserTestsConstants.DashPath }));
+        Assert.Contains(ArgsParserTestsConstants.StdinAndFilePathMessage, ex.Message);
     }
 
     /// <summary>
@@ -369,13 +369,13 @@ public class ArgsParserTests
     public void Parse_AllOptionsCombined_ReturnsAllValues()
     {
         // Act
-        var result = ArgsParser.Parse(new[] { "test.xml", "--format", "csv", "--min-impact", "10.5" });
+        var result = ArgsParser.Parse(new[] { ArgsParserTestsConstants.TestFileName, ArgsParserTestsConstants.FormatFlag, ArgsParserTestsConstants.CsvFormat, ArgsParserTestsConstants.MinImpactFlag, ArgsParserTestsConstants.CombinedMinImpactArg });
 
         // Assert - path should be normalized to absolute path
         Assert.NotNull(result.Path);
-        Assert.EndsWith("test.xml", result.Path);
-        Assert.Equal("csv", result.Format);
-        Assert.Equal(10.5, result.MinImpact);
+        Assert.EndsWith(ArgsParserTestsConstants.TestFileName, result.Path);
+        Assert.Equal(ArgsParserTestsConstants.CsvFormat, result.Format);
+        Assert.Equal(ArgsParserTestsConstants.CombinedMinImpact, result.MinImpact);
         Assert.False(result.UseStdin);
     }
 
@@ -386,8 +386,8 @@ public class ArgsParserTests
     public void Parse_PathWithParentDirectoryTraversal_ThrowsArgumentException()
     {
         // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { "../test.xml" }));
-        Assert.Contains("Path traversal sequences (..) are not allowed", ex.Message);
+        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { ArgsParserTestsConstants.ParentTraversalPath }));
+        Assert.Contains(ArgsParserTestsConstants.PathTraversalMessage, ex.Message);
     }
 
     /// <summary>
@@ -397,8 +397,8 @@ public class ArgsParserTests
     public void Parse_PathWithNestedParentDirectoryTraversal_ThrowsArgumentException()
     {
         // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { "../../test.xml" }));
-        Assert.Contains("Path traversal sequences (..) are not allowed", ex.Message);
+        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { ArgsParserTestsConstants.NestedParentTraversalPath }));
+        Assert.Contains(ArgsParserTestsConstants.PathTraversalMessage, ex.Message);
     }
 
     /// <summary>
@@ -409,8 +409,8 @@ public class ArgsParserTests
     {
         // Act & Assert
         // Note: Path.GetFullPath resolves ".." in the middle, so we need to check before normalization
-        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { "subdir\\..\\test.xml" }));
-        Assert.Contains("Path traversal sequences (..) are not allowed", ex.Message);
+        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { ArgsParserTestsConstants.ParentInMiddlePath }));
+        Assert.Contains(ArgsParserTestsConstants.PathTraversalMessage, ex.Message);
     }
 
     /// <summary>
@@ -420,8 +420,8 @@ public class ArgsParserTests
     public void Parse_AbsolutePathOutsideCurrentDirectory_ThrowsArgumentException()
     {
         // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { "/etc/passwd" }));
-        Assert.Contains("Paths outside the current directory are not allowed", ex.Message);
+        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { ArgsParserTestsConstants.AbsoluteOutsidePath }));
+        Assert.Contains(ArgsParserTestsConstants.OutsideCurrentDirectoryMessage, ex.Message);
     }
 
     /// <summary>
@@ -431,8 +431,8 @@ public class ArgsParserTests
     public void Parse_UncPath_ThrowsArgumentException()
     {
         // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { "\\\\server\\share\\file.txt" }));
-        Assert.Contains("UNC paths are not allowed", ex.Message);
+        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { ArgsParserTestsConstants.BackslashUncPath }));
+        Assert.Contains(ArgsParserTestsConstants.UncPathMessage, ex.Message);
     }
 
     /// <summary>
@@ -442,8 +442,8 @@ public class ArgsParserTests
     public void Parse_PathWithForwardSlashUnc_ThrowsArgumentException()
     {
         // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { "//server/share/file.txt" }));
-        Assert.Contains("UNC paths are not allowed", ex.Message);
+        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { ArgsParserTestsConstants.ForwardSlashUncPath }));
+        Assert.Contains(ArgsParserTestsConstants.UncPathMessage, ex.Message);
     }
 
     /// <summary>
@@ -453,12 +453,12 @@ public class ArgsParserTests
     public void Parse_ValidRelativePath_ReturnsNormalizedPath()
     {
         // Act
-        var result = ArgsParser.Parse(new[] { "./test.xml" });
+        var result = ArgsParser.Parse(new[] { ArgsParserTestsConstants.DotSlashTestFilePath });
 
         // Assert - path should be normalized to absolute path starting with current directory
         Assert.NotNull(result.Path);
         Assert.StartsWith(Path.GetFullPath("."), result.Path);
-        Assert.EndsWith("test.xml", result.Path);
+        Assert.EndsWith(ArgsParserTestsConstants.TestFileName, result.Path);
     }
 
     /// <summary>
@@ -468,10 +468,10 @@ public class ArgsParserTests
     public void Parse_ValidSimplePath_ReturnsPath()
     {
         // Act
-        var result = ArgsParser.Parse(new[] { "test.xml" });
+        var result = ArgsParser.Parse(new[] { ArgsParserTestsConstants.TestFileName });
 
         // Assert
-        Assert.Equal(Path.GetFullPath("test.xml"), result.Path);
+        Assert.Equal(Path.GetFullPath(ArgsParserTestsConstants.TestFileName), result.Path);
     }
 
     /// <summary>
@@ -481,13 +481,13 @@ public class ArgsParserTests
     public void Parse_StdinWithAllOptions_ReturnsAllValues()
     {
         // Act
-        var result = ArgsParser.Parse(new[] { "--stdin", "--format", "html", "--min-impact", "75" });
+        var result = ArgsParser.Parse(new[] { ArgsParserTestsConstants.StdinFlag, ArgsParserTestsConstants.FormatFlag, ArgsParserTestsConstants.HtmlFormat, ArgsParserTestsConstants.MinImpactFlag, ArgsParserTestsConstants.StdinAllOptionsMinImpactArg });
 
         // Assert
         Assert.Null(result.Path);
         Assert.True(result.UseStdin);
-        Assert.Equal("html", result.Format);
-        Assert.Equal(75, result.MinImpact);
+        Assert.Equal(ArgsParserTestsConstants.HtmlFormat, result.Format);
+        Assert.Equal(ArgsParserTestsConstants.StdinAllOptionsMinImpact, result.MinImpact);
     }
 
     /// <summary>
@@ -497,7 +497,7 @@ public class ArgsParserTests
     public void ReadFileWithEncoding_Stdin_ReturnsContent()
     {
         // Arrange
-        var testContent = "test content";
+        var testContent = ArgsParserTestsConstants.TestContent;
         var stdinBackup = Console.OpenStandardInput();
         try
         {
@@ -505,7 +505,7 @@ public class ArgsParserTests
             Console.SetIn(new StreamReader(inputStream));
 
             // Act
-            var result = ArgsParser.ReadFileWithEncoding("-");
+            var result = ArgsParser.ReadFileWithEncoding(ArgsParserTestsConstants.DashPath);
 
             // Assert
             Assert.Equal(testContent, result);
@@ -527,13 +527,13 @@ public class ArgsParserTests
         try
         {
             // Write UTF-8 with BOM
-            File.WriteAllText(tempFile, "test content", Encoding.UTF8);
+            File.WriteAllText(tempFile, ArgsParserTestsConstants.TestContent, Encoding.UTF8);
 
             // Act
             var result = ArgsParser.ReadFileWithEncoding(tempFile);
 
             // Assert
-            Assert.Equal("test content", result);
+            Assert.Equal(ArgsParserTestsConstants.TestContent, result);
         }
         finally
         {
@@ -553,13 +553,13 @@ public class ArgsParserTests
         try
         {
             // Write UTF-16 LE with BOM
-            File.WriteAllText(tempFile, "test content", Encoding.Unicode);
+            File.WriteAllText(tempFile, ArgsParserTestsConstants.TestContent, Encoding.Unicode);
 
             // Act
             var result = ArgsParser.ReadFileWithEncoding(tempFile);
 
             // Assert
-            Assert.Equal("test content", result);
+            Assert.Equal(ArgsParserTestsConstants.TestContent, result);
         }
         finally
         {
@@ -579,13 +579,13 @@ public class ArgsParserTests
         try
         {
             // Write UTF-16 BE with BOM
-            File.WriteAllText(tempFile, "test content", Encoding.BigEndianUnicode);
+            File.WriteAllText(tempFile, ArgsParserTestsConstants.TestContent, Encoding.BigEndianUnicode);
 
             // Act
             var result = ArgsParser.ReadFileWithEncoding(tempFile);
 
             // Assert
-            Assert.Equal("test content", result);
+            Assert.Equal(ArgsParserTestsConstants.TestContent, result);
         }
         finally
         {
@@ -601,7 +601,7 @@ public class ArgsParserTests
     public void ReadFileWithEncoding_NonExistentFile_ThrowsFileNotFoundException()
     {
         // Act & Assert
-        Assert.Throws<FileNotFoundException>(() => ArgsParser.ReadFileWithEncoding("non-existent-file.txt"));
+        Assert.Throws<FileNotFoundException>(() => ArgsParser.ReadFileWithEncoding(ArgsParserTestsConstants.NonExistentFileName));
     }
 
     /// <summary>
@@ -611,15 +611,15 @@ public class ArgsParserTests
     public void ReadFileWithEncoding_Utf16LeSqlplan_ReturnsCorrectContent()
     {
         // Arrange
-        var testFile = "samples/sqlserver_orders_scan_utf16le.sqlplan";
+        var testFile = ArgsParserTestsConstants.Utf16LeSqlPlanSamplePath;
 
         // Act
         var result = ArgsParser.ReadFileWithEncoding(testFile);
 
         // Assert
         Assert.NotEmpty(result);
-        Assert.Contains("ShowPlanXML", result);
-        Assert.Contains("MissingIndexes", result);
+        Assert.Contains(ArgsParserTestsConstants.ShowPlanXmlMarker, result);
+        Assert.Contains(ArgsParserTestsConstants.MissingIndexesMarker, result);
     }
 
     /// <summary>
@@ -629,7 +629,7 @@ public class ArgsParserTests
     public void Parse_FailOnMedium_SetsFailOnThreshold()
     {
         // Act
-        var result = ArgsParser.Parse(new[] { "--stdin", "--fail-on", "Medium" });
+        var result = ArgsParser.Parse(new[] { ArgsParserTestsConstants.StdinFlag, ArgsParserTestsConstants.FailOnFlag, ArgsParserTestsConstants.MixedCaseMediumSeverity });
 
         // Assert
         Assert.Equal(Confidence.Medium, result.FailOn);
@@ -642,8 +642,8 @@ public class ArgsParserTests
     public void Parse_FailOnUnknownSeverity_ThrowsArgumentException()
     {
         // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { "--stdin", "--fail-on", "critical" }));
-        Assert.Contains("low, medium or high", ex.Message);
+        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { ArgsParserTestsConstants.StdinFlag, ArgsParserTestsConstants.FailOnFlag, ArgsParserTestsConstants.UnknownSeverity }));
+        Assert.Contains(ArgsParserTestsConstants.FailOnSeverityMessage, ex.Message);
     }
 
     /// <summary>
@@ -653,6 +653,6 @@ public class ArgsParserTests
     public void Parse_FailOnWithoutValue_ThrowsArgumentException()
     {
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { "--stdin", "--fail-on" }));
+        Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { ArgsParserTestsConstants.StdinFlag, ArgsParserTestsConstants.FailOnFlag }));
     }
 }
