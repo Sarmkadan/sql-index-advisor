@@ -1,6 +1,6 @@
+using System;
 using SqlIndexAdvisor.Core.Engine;
 using SqlIndexAdvisor.Core.Model;
-using System;
 
 namespace SqlIndexAdvisor.Core.Rules;
 
