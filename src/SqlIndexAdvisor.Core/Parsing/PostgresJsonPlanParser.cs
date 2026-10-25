@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using SqlIndexAdvisor.Core.Model;
@@ -71,7 +72,7 @@ public sealed class PostgresJsonPlanParser : IPlanParser
         if (content.Length == 0)
             throw new ArgumentException("The string cannot be empty.", nameof(content));
 
-        var contentSizeBytes = System.Text.Encoding.UTF8.GetByteCount(content);
+        var contentSizeBytes = Encoding.UTF8.GetByteCount(content);
         if (contentSizeBytes > MaxFileSizeBytes)
             throw new PlanParseException(
                 $"Plan file size of {contentSizeBytes} bytes exceeds the allowed limit of {MaxFileSizeBytes} bytes.");
@@ -177,7 +178,8 @@ public sealed class PostgresJsonPlanParser : IPlanParser
         };
         sink.Add(node);
 
-        if (el.TryGetProperty(PostgresJsonPlanParserConstants.PlansPropertyName, out var children) && children.ValueKind == JsonValueKind.Array)
+        if (el.TryGetProperty(PostgresJsonPlanParserConstants.PlansPropertyName, out var children)
+            && children.ValueKind == JsonValueKind.Array)
         {
             foreach (var child in children.EnumerateArray())
                 Walk(child, node, totalCost, sink, currentDepth + 1, cancellationToken);
@@ -192,12 +194,21 @@ public sealed class PostgresJsonPlanParser : IPlanParser
     private static List<string> ExtractFilterColumns(JsonElement el)
     {
         var cols = new List<string>();
-        foreach (var key in new[] { PostgresJsonPlanParserConstants.FilterPropertyName, PostgresJsonPlanParserConstants.IndexCondPropertyName, PostgresJsonPlanParserConstants.RecheckCondPropertyName, PostgresJsonPlanParserConstants.HashCondPropertyName })
+        string[] keys =
+        [
+            PostgresJsonPlanParserConstants.FilterPropertyName,
+            PostgresJsonPlanParserConstants.IndexCondPropertyName,
+            PostgresJsonPlanParserConstants.RecheckCondPropertyName,
+            PostgresJsonPlanParserConstants.HashCondPropertyName
+        ];
+        foreach (var key in keys)
         {
             var expr = ReadString(el, key);
             if (string.IsNullOrEmpty(expr)) continue;
             foreach (var c in PredicateColumnScanner.Scan(expr, true))
+            {
                 if (!cols.Contains(c)) cols.Add(c);
+            }
         }
         return cols;
     }
@@ -249,9 +260,15 @@ public sealed class PostgresJsonPlanParser : IPlanParser
     {
         var list = new List<string>();
         if (el.TryGetProperty(prop, out var v) && v.ValueKind == JsonValueKind.Array)
+        {
             foreach (var item in v.EnumerateArray())
+            {
                 if (item.ValueKind == JsonValueKind.String)
+                {
                     list.Add(item.GetString()!);
+                }
+            }
+        }
         return list;
     }
 }
