@@ -392,9 +392,7 @@ public static class ArgsParser
             throw new ArgumentException("Path cannot be empty.", nameof(path));
 
         if (path == ArgsParserConstants.StdinPath)
-        {
             return Console.In.ReadToEnd();
-        }
 
         if (!File.Exists(path))
             throw new FileNotFoundException($"plan file not found: {path}");
