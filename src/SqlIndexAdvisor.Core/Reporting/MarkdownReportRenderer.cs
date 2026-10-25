@@ -23,38 +23,38 @@ public static class MarkdownReportRenderer
 
         var sb = new StringBuilder();
 
-        sb.AppendLine("# SQL Index Advisor Report");
+        sb.AppendLine(MarkdownReportRendererConstants.ReportTitle);
         sb.AppendLine();
-        sb.AppendLine($"- **Dialect:** {EscapeCell(plan.Dialect.ToString())}");
-        sb.AppendLine($"- **Estimated total cost:** {plan.EstimatedTotalCost.ToString("0.###", CultureInfo.InvariantCulture)}");
+        sb.AppendLine($"{MarkdownReportRendererConstants.DialectLabel}{EscapeCell(plan.Dialect.ToString())}");
+        sb.AppendLine($"{MarkdownReportRendererConstants.EstimatedTotalCostLabel}{plan.EstimatedTotalCost.ToString("0.###", CultureInfo.InvariantCulture)}");
         sb.AppendLine();
-        sb.AppendLine("## Recommendations");
+        sb.AppendLine(MarkdownReportRendererConstants.RecommendationsHeading);
         sb.AppendLine();
-        sb.AppendLine("| Table | Key columns | Includes | Confidence | Estimated impact % | Reason |");
-        sb.AppendLine("| --- | --- | --- | --- | ---: | --- |");
+        sb.AppendLine(MarkdownReportRendererConstants.TableHeader);
+        sb.AppendLine(MarkdownReportRendererConstants.TableAlignmentRow);
 
         foreach (var recommendation in recs)
         {
-            var keyColumns = string.Join(", ", recommendation.KeyColumns);
-            var includeColumns = string.Join(", ", recommendation.IncludeColumns);
-            var reasons = string.Join("; ", recommendation.Reasons);
+            var keyColumns = string.Join(MarkdownReportRendererConstants.ColumnSeparator, recommendation.KeyColumns);
+            var includeColumns = string.Join(MarkdownReportRendererConstants.ColumnSeparator, recommendation.IncludeColumns);
+            var reasons = string.Join(MarkdownReportRendererConstants.ReasonSeparator, recommendation.Reasons);
             var impact = recommendation.EstimatedImpactPercent.ToString("0.#", CultureInfo.InvariantCulture);
 
-            sb.AppendLine($"| {EscapeCell(recommendation.Table)} | {EscapeCell(keyColumns)} | {EscapeCell(includeColumns)} | {EscapeCell(recommendation.Confidence.ToString())} | {impact} | {EscapeCell(reasons)} |");
+            sb.AppendLine($"{MarkdownReportRendererConstants.TableRowStart}{EscapeCell(recommendation.Table)}{MarkdownReportRendererConstants.TableCellSeparator}{EscapeCell(keyColumns)}{MarkdownReportRendererConstants.TableCellSeparator}{EscapeCell(includeColumns)}{MarkdownReportRendererConstants.TableCellSeparator}{EscapeCell(recommendation.Confidence.ToString())}{MarkdownReportRendererConstants.TableCellSeparator}{impact}{MarkdownReportRendererConstants.TableCellSeparator}{EscapeCell(reasons)}{MarkdownReportRendererConstants.TableRowEnd}");
         }
 
         foreach (var recommendation in recs)
         {
             sb.AppendLine();
-            sb.AppendLine($"### {EscapeCell(recommendation.Table)}");
+            sb.AppendLine($"{MarkdownReportRendererConstants.TableHeadingPrefix}{EscapeCell(recommendation.Table)}");
             sb.AppendLine();
-            sb.AppendLine("```sql");
+            sb.AppendLine(MarkdownReportRendererConstants.SqlCodeFenceOpen);
             sb.AppendLine(DdlRenderer.RenderCreateIndex(recommendation, plan.Dialect));
-            sb.AppendLine("```");
+            sb.AppendLine(MarkdownReportRendererConstants.CodeFenceClose);
         }
 
         return sb.ToString();
     }
 
-    private static string EscapeCell(string value) => value.Replace("|", "\\|");
+    private static string EscapeCell(string value) => value.Replace(MarkdownReportRendererConstants.TableCellPipe, MarkdownReportRendererConstants.EscapedTableCellPipe);
 }
