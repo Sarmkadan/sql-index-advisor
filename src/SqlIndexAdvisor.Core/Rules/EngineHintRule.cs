@@ -13,7 +13,7 @@ public sealed class EngineHintRule : PlanNodeVisitorBase
     /// <summary>
     /// Gets the name of the rule.
     /// </summary>
-    public override string Name => "engine-hint";
+    public override string Name => EngineHintRuleConstants.RuleName;
 
     /// <summary>
     /// Determines whether the rule should visit the specified plan node.
@@ -55,11 +55,11 @@ public sealed class EngineHintRule : PlanNodeVisitorBase
                 KeyColumns = keys,
                 IncludeColumns = hint.IncludeColumns.Where(c => !keys.Contains(c)).ToList(),
                 EstimatedImpactPercent = hint.ImpactPercent,
-                SourceNodeCost = hint.ImpactPercent / 100.0,
+                SourceNodeCost = hint.ImpactPercent / EngineHintRuleConstants.PercentScale,
                 Confidence = Confidence.High,
                 Rule = Name,
                 Reasons = {
-                    $"Optimizer reported a missing index with {hint.ImpactPercent:0.#}% estimated impact."
+                    string.Format(EngineHintRuleConstants.ImpactReasonFormat, hint.ImpactPercent)
                 }
             });
         }
