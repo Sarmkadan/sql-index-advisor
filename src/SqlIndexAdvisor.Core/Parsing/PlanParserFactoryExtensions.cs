@@ -9,36 +9,37 @@ namespace SqlIndexAdvisor.Core.Parsing;
 public static class PlanParserFactoryExtensions
 {
     /// <summary>
-    /// Attempts to parse the execution plan content, returning a boolean indicating success and the parsed plan if successful.
+    /// Attempts to parse the execution plan content, returning a boolean indicating success and the parsed plans if successful.
     /// </summary>
     /// <param name="factory">The plan parser factory instance.</param>
     /// <param name="content">The execution plan content to parse.</param>
-    /// <param name="plan">When this method returns true, contains the parsed execution plan; otherwise, null.</param>
+    /// <param name="plans">When this method returns true, contains one parsed execution plan per statement; otherwise, null.</param>
     /// <returns>True if parsing succeeded; otherwise, false.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="factory"/> or <paramref name="content"/> is null.</exception>
-    public static bool TryParse(this PlanParserFactory factory, string content, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out ExecutionPlan? plan)
+    public static bool TryParse(this PlanParserFactory factory, string content, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out IReadOnlyList<ExecutionPlan>? plans)
     {
         ArgumentNullException.ThrowIfNull(factory);
         ArgumentNullException.ThrowIfNull(content);
 
         try
         {
-            plan = factory.Parse(content);
+            plans = factory.Parse(content);
             return true;
         }
         catch (PlanParseException)
         {
-            plan = null;
+            plans = null;
             return false;
         }
     }
 
     /// <summary>
     /// Parses multiple execution plan contents and returns the successfully parsed plans with their source identifiers.
+    /// Every statement of a multi-statement input is yielded separately, all carrying the same source identifier.
     /// </summary>
     /// <param name="factory">The plan parser factory instance.</param>
     /// <param name="contents">A collection of plan content entries to parse.</param>
-    /// <returns>An enumerable of tuples containing the source identifier and successfully parsed execution plan.</returns>
+    /// <returns>An enumerable of tuples containing the source identifier and one successfully parsed execution plan per statement.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="factory"/> or <paramref name="contents"/> is null.</exception>
     public static IEnumerable<(string SourceId, ExecutionPlan Plan)> ParseMany(
         this PlanParserFactory factory,
@@ -51,21 +52,24 @@ public static class PlanParserFactoryExtensions
     }
 
     /// <summary>
-    /// Core iterator for <see cref="ParseMany"/> that yields successfully parsed plans,
+    /// Core iterator for <see cref="ParseMany"/> that yields every statement plan of each successfully parsed entry,
     /// silently skipping entries that fail to parse.
     /// </summary>
     /// <param name="factory">The plan parser factory instance.</param>
     /// <param name="contents">A collection of plan content entries to parse.</param>
-    /// <returns>An enumerable of tuples containing the source identifier and successfully parsed execution plan.</returns>
+    /// <returns>An enumerable of tuples containing the source identifier and one execution plan per statement.</returns>
     private static IEnumerable<(string SourceId, ExecutionPlan Plan)> ParseManyCore(
         PlanParserFactory factory,
         IEnumerable<(string SourceId, string Content)> contents)
     {
         foreach (var (sourceId, content) in contents)
         {
-            if (TryParse(factory, content, out var plan))
+            if (TryParse(factory, content, out var plans))
             {
-                yield return (sourceId, plan);
+                foreach (var plan in plans)
+                {
+                    yield return (sourceId, plan);
+                }
             }
         }
     }
@@ -128,12 +132,12 @@ public static class PlanParserFactoryExtensions
     /// <param name="factory">The plan parser factory instance.</param>
     /// <param name="content">The execution plan content to parse.</param>
     /// <param name="parserSelector">A function that selects a parser from the available parsers.</param>
-    /// <returns>The parsed execution plan.</returns>
+    /// <returns>One parsed execution plan per statement, in input order.</returns>
     /// <exception cref="ArgumentNullException">
     /// Thrown when <paramref name="factory"/>, <paramref name="content"/>, or <paramref name="parserSelector"/> is null.
     /// </exception>
     /// <exception cref="PlanParseException">Thrown when no parser is selected or parsing fails.</exception>
-    public static ExecutionPlan ParseWith(
+    public static IReadOnlyList<ExecutionPlan> ParseWith(
         this PlanParserFactory factory,
         string content,
         Func<IReadOnlyList<IPlanParser>, IPlanParser?> parserSelector)

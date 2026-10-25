@@ -47,7 +47,7 @@ public class SqlServerParserIntegrationTests
             "</ShowPlanXML>";
 
         // Act
-        var plan = new SqlServerXmlPlanParser().Parse(planXml);
+        var plan = new SqlServerXmlPlanParser().Parse(planXml).Single();
 
         // Assert
         Assert.Equal(PlanDialect.SqlServer, plan.Dialect);
@@ -130,7 +130,7 @@ public class SqlServerParserIntegrationTests
             "</ShowPlanXML>";
 
         // Act
-        var plan = new SqlServerXmlPlanParser().Parse(planXml);
+        var plan = new SqlServerXmlPlanParser().Parse(planXml).Single();
 
         // Assert
         Assert.Equal(PlanDialect.SqlServer, plan.Dialect);
@@ -218,7 +218,7 @@ public class SqlServerParserIntegrationTests
             "</ShowPlanXML>";
 
         // Act
-        var plan = new SqlServerXmlPlanParser().Parse(planXml);
+        var plan = new SqlServerXmlPlanParser().Parse(planXml).Single();
 
         // Assert
         Assert.Equal(PlanDialect.SqlServer, plan.Dialect);
@@ -298,7 +298,7 @@ public class SqlServerParserIntegrationTests
             "</ShowPlanXML>";
 
         // Act
-        var plan = new SqlServerXmlPlanParser().Parse(planXml);
+        var plan = new SqlServerXmlPlanParser().Parse(planXml).Single();
 
         // Assert
         Assert.Equal(PlanDialect.SqlServer, plan.Dialect);

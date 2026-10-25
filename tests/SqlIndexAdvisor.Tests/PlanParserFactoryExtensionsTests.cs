@@ -29,11 +29,11 @@ namespace SqlIndexAdvisor.Tests
         {
             var xml = PlanParserFactoryExtensionsTestsConstants.ValidXml;
 
-            var result = _factory.TryParse(xml, out var plan);
+            var result = _factory.TryParse(xml, out var plans);
 
             Assert.True(result);
-            Assert.NotNull(plan);
-            Assert.IsType<ExecutionPlan>(plan);
+            Assert.NotNull(plans);
+            Assert.IsType<ExecutionPlan>(Assert.Single(plans));
         }
 
         /// <summary>
@@ -45,11 +45,11 @@ namespace SqlIndexAdvisor.Tests
         {
             var json = PlanParserFactoryExtensionsTestsConstants.ValidJson;
 
-            var result = _factory.TryParse(json, out var plan);
+            var result = _factory.TryParse(json, out var plans);
 
             Assert.True(result);
-            Assert.NotNull(plan);
-            Assert.IsType<ExecutionPlan>(plan);
+            Assert.NotNull(plans);
+            Assert.IsType<ExecutionPlan>(Assert.Single(plans));
         }
 
         /// <summary>
@@ -233,9 +233,9 @@ namespace SqlIndexAdvisor.Tests
         {
             var json = @"{""Plan"":{}}";
 
-            ExecutionPlan plan = _factory.ParseWith(
+            ExecutionPlan plan = Assert.Single(_factory.ParseWith(
                 json,
-                parsers => parsers.FirstOrDefault(p => p.GetType().Name == "PostgresJsonPlanParser"));
+                parsers => parsers.FirstOrDefault(p => p.GetType().Name == "PostgresJsonPlanParser")));
 
             Assert.NotNull(plan);
         }

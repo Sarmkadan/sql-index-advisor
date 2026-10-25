@@ -52,7 +52,7 @@ public class SqlServerParserTests : ISqlServerParserTests
     [Fact]
     public void ParsesDialectAndCost()
     {
-        var plan = new SqlServerXmlPlanParser().Parse(Plan);
+        var plan = new SqlServerXmlPlanParser().Parse(Plan).Single();
         Assert.Equal(PlanDialect.SqlServer, plan.Dialect);
         Assert.Equal(4.0, plan.EstimatedTotalCost, 3);
         Assert.Single(plan.Nodes);
@@ -64,7 +64,7 @@ public class SqlServerParserTests : ISqlServerParserTests
     [Fact]
     public void ExtractsEngineMissingIndex()
     {
-        var plan = new SqlServerXmlPlanParser().Parse(Plan);
+        var plan = new SqlServerXmlPlanParser().Parse(Plan).Single();
         var hint = Assert.Single(plan.EngineMissingIndexes);
         Assert.Equal("dbo.Orders", hint.Table); // schema-qualified so it merges with the scan node
         Assert.Equal(new[] { "Status" }, hint.EqualityColumns);
@@ -78,7 +78,7 @@ public class SqlServerParserTests : ISqlServerParserTests
     [Fact]
     public void ExtractsScanPredicateColumns()
     {
-        var plan = new SqlServerXmlPlanParser().Parse(Plan);
+        var plan = new SqlServerXmlPlanParser().Parse(Plan).Single();
         var node = plan.Nodes[0];
         Assert.Equal("dbo.Orders", node.TableName);
         Assert.Contains("Status", node.PredicateColumns);

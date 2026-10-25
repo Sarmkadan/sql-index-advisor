@@ -5,7 +5,7 @@ using SqlIndexAdvisor.Core.Model;
 namespace SqlIndexAdvisor.Core.Parsing;
 
 /// <summary>
-/// Parses raw execution plan content into an <see cref="ExecutionPlan"/>.
+/// Parses raw execution plan content into one <see cref="ExecutionPlan"/> per statement.
 /// Implementations typically handle a single vendor format (e.g. SQL Server showplan XML or PostgreSQL JSON).
 /// </summary>
 public interface IPlanParser
@@ -14,10 +14,15 @@ public interface IPlanParser
     bool CanParse(string content);
 
     /// <summary>
-    /// Parses the supplied raw content into an <see cref="ExecutionPlan"/>.
+    /// Parses the supplied raw content into one <see cref="ExecutionPlan"/> per statement, in the order
+    /// the statements appear in the input. A single-statement input yields a list with one plan.
     /// An optional <see cref="CancellationToken"/> can be supplied to abort the operation.
     /// </summary>
-    ExecutionPlan Parse(string content, CancellationToken cancellationToken = default);
+    /// <param name="content">The raw plan content to parse.</param>
+    /// <param name="cancellationToken">A token that can be used to cancel parsing.</param>
+    /// <returns>A read-only list holding one execution plan per statement, never empty.</returns>
+    /// <exception cref="PlanParseException">The content is malformed or holds no executable plan.</exception>
+    IReadOnlyList<ExecutionPlan> Parse(string content, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

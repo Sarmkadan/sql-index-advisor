@@ -32,7 +32,7 @@ public class EndToEndIntegrationTests
         var planXml = LoadFixture("SqlServer/02_scan_with_filter_high_cost.sqlplan");
 
         // Act: Parse the plan
-        var plan = new PlanParserFactory().Parse(planXml);
+        var plan = new PlanParserFactory().Parse(planXml).Single();
 
         // Analyze with the default rule set
         var engine = new RecommendationEngine();
@@ -121,7 +121,7 @@ public class EndToEndIntegrationTests
         var allRecs = new List<IndexRecommendation>();
         foreach (var px in plans)
         {
-            var plan = new PlanParserFactory().Parse(px);
+            var plan = new PlanParserFactory().Parse(px).Single();
             var engine = new RecommendationEngine();
             var recsForPlan = engine.Analyze(plan);
             allRecs.AddRange(recsForPlan);
@@ -155,7 +155,7 @@ public class EndToEndIntegrationTests
         var planXml = LoadFixture("SqlServer/01_key_lookup_with_filter.sqlplan");
 
         // Act: Parse and analyze
-        var plan = new PlanParserFactory().Parse(planXml);
+        var plan = new PlanParserFactory().Parse(planXml).Single();
         var engine = new RecommendationEngine();
         var recs = engine.Analyze(plan);
 
@@ -183,7 +183,7 @@ public class EndToEndIntegrationTests
     {
         // Arrange: Parse a plan and get recommendations
         var planXml = LoadFixture("SqlServer/02_scan_with_filter_high_cost.sqlplan");
-        var plan = new PlanParserFactory().Parse(planXml);
+        var plan = new PlanParserFactory().Parse(planXml).Single();
         var engine = new RecommendationEngine();
         var recs = engine.Analyze(plan);
 
@@ -219,7 +219,7 @@ public class EndToEndIntegrationTests
         var planJson = LoadFixture("PostgreSQL/01_key_lookup_with_filter.json");
 
         // Act: Parse the PostgreSQL plan
-        var plan = new PlanParserFactory().Parse(planJson);
+        var plan = new PlanParserFactory().Parse(planJson).Single();
         var engine = new RecommendationEngine();
         var recs = engine.Analyze(plan);
 
@@ -252,7 +252,7 @@ public class EndToEndIntegrationTests
         var planXml = LoadFixture("SqlServer/05_parallel_plan.sqlplan");
 
         // Act: Parse and analyze
-        var plan = new PlanParserFactory().Parse(planXml);
+        var plan = new PlanParserFactory().Parse(planXml).Single();
         var engine = new RecommendationEngine();
         var recs = engine.Analyze(plan);
 
@@ -296,12 +296,12 @@ public class EndToEndIntegrationTests
         var postgresPlanJson = LoadFixture("PostgreSQL/01_key_lookup_with_filter.json");
 
         // Act: Parse and analyze SQL Server plan
-        var sqlPlan = new PlanParserFactory().Parse(sqlServerPlanXml);
+        var sqlPlan = new PlanParserFactory().Parse(sqlServerPlanXml).Single();
         var sqlEngine = new RecommendationEngine();
         var sqlRecs = sqlEngine.Analyze(sqlPlan);
 
         // Act: Parse and analyze PostgreSQL plan
-        var pgPlan = new PlanParserFactory().Parse(postgresPlanJson);
+        var pgPlan = new PlanParserFactory().Parse(postgresPlanJson).Single();
         var pgEngine = new RecommendationEngine();
         var pgRecs = pgEngine.Analyze(pgPlan);
 

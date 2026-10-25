@@ -24,7 +24,7 @@ public class IndexAnalyzerIntegrationTests
         // Arrange - Plan with Clustered Index Scan on Orders with filter on Status, CreatedAt, CustomerId
         var planContent = File.ReadAllText(
             "/home/personal/task-factory/workdir/sql-index-advisor/tests/SqlIndexAdvisor.IntegrationTests/Fixtures/SqlServer/01_key_lookup_with_filter.sqlplan");
-        var plan = _parser.Parse(planContent);
+        var plan = _parser.Parse(planContent).Single();
 
         // Act
         var recommendations = _engine.Analyze(plan);
@@ -52,7 +52,7 @@ public class IndexAnalyzerIntegrationTests
         // Arrange - Plan with PK already on Orders (PK_Orders) - low cost trivial plan
         var planContent = File.ReadAllText(
             "/home/personal/task-factory/workdir/sql-index-advisor/tests/SqlIndexAdvisor.IntegrationTests/Fixtures/SqlServer/07_trivial_plan_no_recommendations.sqlplan");
-        var plan = _parser.Parse(planContent);
+        var plan = _parser.Parse(planContent).Single();
 
         // Act
         var recommendations = _engine.Analyze(plan);
@@ -72,7 +72,7 @@ public class IndexAnalyzerIntegrationTests
         // This plan already uses an index (IX_Orders_Status_CreatedAt) but still has a filter
         var planContent = File.ReadAllText(
             "/home/personal/task-factory/workdir/sql-index-advisor/tests/SqlIndexAdvisor.IntegrationTests/Fixtures/SqlServer/08_index_scan_with_predicate.sqlplan");
-        var plan = _parser.Parse(planContent);
+        var plan = _parser.Parse(planContent).Single();
 
         // Act
         var recommendations = _engine.Analyze(plan);
@@ -98,7 +98,7 @@ public class IndexAnalyzerIntegrationTests
         // Arrange - Plan with parallel plan on Orders with filter on CreatedAt, Status
         var planContent = File.ReadAllText(
             "/home/personal/task-factory/workdir/sql-index-advisor/tests/SqlIndexAdvisor.IntegrationTests/Fixtures/SqlServer/05_parallel_plan.sqlplan");
-        var plan = _parser.Parse(planContent);
+        var plan = _parser.Parse(planContent).Single();
 
         // Act
         var recommendations = _engine.Analyze(plan);
@@ -121,7 +121,7 @@ public class IndexAnalyzerIntegrationTests
         // Arrange - Plan with range filter on LastLoginDate (Customers table)
         var planContent = File.ReadAllText(
             "/home/personal/task-factory/workdir/sql-index-advisor/tests/SqlIndexAdvisor.IntegrationTests/Fixtures/SqlServer/02_scan_with_filter_high_cost.sqlplan");
-        var plan = _parser.Parse(planContent);
+        var plan = _parser.Parse(planContent).Single();
 
         // Act
         var recommendations = _engine.Analyze(plan);
@@ -142,7 +142,7 @@ public class IndexAnalyzerIntegrationTests
         // Arrange - Plan with WHERE Country = 'US' AND IsActive = 1 AND LastLoginDate > '2026-01-01'
         var planContent = File.ReadAllText(
             "/home/personal/task-factory/workdir/sql-index-advisor/tests/SqlIndexAdvisor.IntegrationTests/Fixtures/SqlServer/02_scan_with_filter_high_cost.sqlplan");
-        var plan = _parser.Parse(planContent);
+        var plan = _parser.Parse(planContent).Single();
 
         // Act
         var recommendations = _engine.Analyze(plan);
@@ -166,7 +166,7 @@ public class IndexAnalyzerIntegrationTests
         // This test uses the existing fixture that has a sort operation
         var planContent = File.ReadAllText(
             "/home/personal/task-factory/workdir/sql-index-advisor/tests/SqlIndexAdvisor.IntegrationTests/Fixtures/SqlServer/05_parallel_plan.sqlplan");
-        var plan = _parser.Parse(planContent);
+        var plan = _parser.Parse(planContent).Single();
 
         // Act
         var recommendations = _engine.Analyze(plan);
@@ -187,7 +187,7 @@ public class IndexAnalyzerIntegrationTests
         // Arrange - Plan with WHERE CreatedAt range AND Status filter
         var planContent = File.ReadAllText(
             "/home/personal/task-factory/workdir/sql-index-advisor/tests/SqlIndexAdvisor.IntegrationTests/Fixtures/SqlServer/05_parallel_plan.sqlplan");
-        var plan = _parser.Parse(planContent);
+        var plan = _parser.Parse(planContent).Single();
 
         // Act
         var recommendations = _engine.Analyze(plan);
@@ -208,7 +208,7 @@ public class IndexAnalyzerIntegrationTests
         // Arrange - Plan with multiple range filters (Country AND IsActive AND LastLoginDate)
         var planContent = File.ReadAllText(
             "/home/personal/task-factory/workdir/sql-index-advisor/tests/SqlIndexAdvisor.IntegrationTests/Fixtures/SqlServer/02_scan_with_filter_high_cost.sqlplan");
-        var plan = _parser.Parse(planContent);
+        var plan = _parser.Parse(planContent).Single();
 
         // Act
         var recommendations = _engine.Analyze(plan);

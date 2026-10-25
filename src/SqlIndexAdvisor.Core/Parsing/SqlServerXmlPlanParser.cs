@@ -35,11 +35,11 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
     }
 
     /// <summary>
-    /// Parses SQL Server showplan XML into an execution plan.
+    /// Parses SQL Server showplan XML into one execution plan per statement that carries a plan.
     /// </summary>
     /// <param name="content">The SQL Server showplan XML content to parse.</param>
     /// <param name="cancellationToken">A token that can be used to cancel parsing.</param>
-    /// <returns>The execution plan represented by the supplied XML.</returns>
+    /// <returns>A read-only list with one execution plan per statement, in document order.</returns>
     /// <exception cref="ArgumentException">
     /// <paramref name="content"/> is <see langword="null"/> or empty.
     /// </exception>
@@ -49,7 +49,7 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
     /// <exception cref="OperationCanceledException">
     /// <paramref name="cancellationToken"/> is canceled while parsing.
     /// </exception>
-    public ExecutionPlan Parse(string content, CancellationToken cancellationToken = default)
+    public IReadOnlyList<ExecutionPlan> Parse(string content, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrEmpty(content);
 
@@ -79,13 +79,47 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
             throw new PlanParseException(SqlServerXmlPlanParserConstants.NotWellFormedXmlMessage, ex);
         }
 
-        var stmt = Descendants(doc.Root, SqlServerXmlPlanParserConstants.StmtSimpleElement).FirstOrDefault();
+        var root = doc.Root ?? throw new PlanParseException(SqlServerXmlPlanParserConstants.NotWellFormedXmlMessage);
+
+        // Each statement that carries a QueryPlan is analyzed on its own: its operators, cost, text and
+        // missing-index hints must not leak into the other statements of the batch or procedure.
+        var statements = Descendants(root, SqlServerXmlPlanParserConstants.StmtSimpleElement)
+            .Where(stmt => Descendants(stmt, SqlServerXmlPlanParserConstants.QueryPlanElement).Any())
+            .ToList();
+
+        // A document without any statement that carries a plan is treated as a single plan over the whole document.
+        if (statements.Count == 0)
+            return [BuildPlan(root, null, cancellationToken)];
+
+        var plans = new List<ExecutionPlan>(statements.Count);
+        foreach (var stmt in statements)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            plans.Add(BuildPlan(stmt, stmt, cancellationToken));
+        }
+        return plans;
+    }
+
+    /// <summary>
+    /// Builds the execution plan for one statement from the operators whose nearest enclosing statement is <paramref name="stmt"/>.
+    /// </summary>
+    /// <param name="scope">The element whose descendants are searched for operators and missing-index hints.</param>
+    /// <param name="stmt">The statement element that owns the operators, or <see langword="null"/> when the document has none.</param>
+    /// <param name="cancellationToken">A token that can be used to cancel building the plan.</param>
+    /// <returns>The execution plan of the statement.</returns>
+    /// <exception cref="OperationCanceledException"><paramref name="cancellationToken"/> is canceled while building the plan.</exception>
+    private static ExecutionPlan BuildPlan(XElement scope, XElement? stmt, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(scope);
+
         var statementText = stmt?.Attribute(SqlServerXmlPlanParserConstants.StatementTextAttribute)?.Value ?? string.Empty;
         var totalCost = ParseDouble(stmt?.Attribute(SqlServerXmlPlanParserConstants.StatementSubTreeCostAttribute)?.Value);
 
         var nodes = new List<PlanNode>();
         var byElement = new Dictionary<XElement, PlanNode>();
-        var relOps = Descendants(doc.Root, SqlServerXmlPlanParserConstants.RelOpElement).ToList();
+        var relOps = Descendants(scope, SqlServerXmlPlanParserConstants.RelOpElement)
+            .Where(relOp => NearestStatement(relOp) == stmt)
+            .ToList();
 
         foreach (var relOp in relOps)
         {
@@ -123,16 +157,27 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
                 node.Parent = parentNode;
         }
 
-        var engineHints = ParseMissingIndexes(doc.Root);
-
         return new ExecutionPlan
         {
             Dialect = PlanDialect.SqlServer,
             StatementText = statementText,
             EstimatedTotalCost = totalCost,
             Nodes = nodes,
-            EngineMissingIndexes = engineHints
+            EngineMissingIndexes = ParseMissingIndexes(scope)
         };
+    }
+
+    /// <summary>
+    /// Finds the statement element that encloses an operator.
+    /// </summary>
+    /// <param name="relOp">The operator to inspect.</param>
+    /// <returns>The nearest <c>StmtSimple</c> ancestor, or <see langword="null"/> when there is none.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="relOp"/> is <see langword="null"/>.</exception>
+    private static XElement? NearestStatement(XElement relOp)
+    {
+        ArgumentNullException.ThrowIfNull(relOp);
+
+        return relOp.Ancestors().FirstOrDefault(a => a.Name.LocalName == SqlServerXmlPlanParserConstants.StmtSimpleElement);
     }
 
     private static List<EngineMissingIndex> ParseMissingIndexes(XElement? root)

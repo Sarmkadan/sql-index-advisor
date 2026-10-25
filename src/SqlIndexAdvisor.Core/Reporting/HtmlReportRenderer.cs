@@ -19,10 +19,26 @@ public static class HtmlReportRenderer
     /// <param name="plan">The execution plan containing dialect and cost information.</param>
     /// <param name="recs">The list of index recommendations to include in the report.</param>
     /// <returns>A string containing a complete HTML document.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when plan or recs is null.</exception>
     public static string RenderHtml(ExecutionPlan plan, IReadOnlyList<IndexRecommendation> recs)
     {
         ArgumentNullException.ThrowIfNull(plan);
         ArgumentNullException.ThrowIfNull(recs);
+
+        return RenderHtml([new StatementReport(1, plan, recs)]);
+    }
+
+    /// <summary>
+    /// Renders the analysis of every statement of a plan input as one HTML document. A single statement is
+    /// rendered without a per-statement heading; several statements are rendered as consecutive sections.
+    /// </summary>
+    /// <param name="reports">The per-statement reports, in input order.</param>
+    /// <returns>A string containing a complete HTML document.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when reports is null.</exception>
+    public static string RenderHtml(IReadOnlyList<StatementReport> reports)
+    {
+        ArgumentNullException.ThrowIfNull(reports);
+
         var sb = new StringBuilder();
 
         // HTML header with inline CSS
@@ -48,6 +64,35 @@ public static class HtmlReportRenderer
         sb.AppendLine("</head>");
         sb.AppendLine("<body>");
         sb.AppendLine($"<h1>SQL Index Advisor Report</h1>");
+
+        foreach (var report in reports)
+        {
+            AppendSection(sb, report, reports.Count > 1);
+        }
+
+        sb.AppendLine("</body>");
+        sb.AppendLine("</html>");
+
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Appends the summary and recommendation table of one statement to the document body.
+    /// </summary>
+    /// <param name="sb">The builder that holds the document being rendered.</param>
+    /// <param name="report">The statement report to render.</param>
+    /// <param name="showStatementHeading">Whether to precede the section with a heading that names the statement's position.</param>
+    /// <exception cref="ArgumentNullException">Thrown when sb or report is null.</exception>
+    private static void AppendSection(StringBuilder sb, StatementReport report, bool showStatementHeading)
+    {
+        ArgumentNullException.ThrowIfNull(sb);
+        ArgumentNullException.ThrowIfNull(report);
+
+        var plan = report.Plan;
+        var recs = report.Recommendations;
+
+        if (showStatementHeading)
+            sb.AppendLine($"<h2>Statement {report.Index}</h2>");
         sb.AppendLine("<div class=\"summary\">");
         sb.AppendLine($"<p><strong>Dialect:</strong> {plan.Dialect}</p>");
         sb.AppendLine($"<p><strong>Statement cost:</strong> {plan.EstimatedTotalCost:0.###}</p>");
@@ -57,9 +102,7 @@ public static class HtmlReportRenderer
         if (recs.Count == 0)
         {
             sb.AppendLine("<p>No index recommendations. The plan looks fine or lacks the detail needed to suggest one.</p>");
-            sb.AppendLine("</body>");
-            sb.AppendLine("</html>");
-            return sb.ToString();
+            return;
         }
 
         sb.AppendLine($"<h2>{recs.Count} recommendation(s)</h2>");
@@ -99,10 +142,6 @@ public static class HtmlReportRenderer
         sb.AppendLine("</tbody>");
         sb.AppendLine("</table>");
         sb.AppendLine("<p>Impact figures are rough heuristics, not measured gains. Validate before applying.</p>");
-        sb.AppendLine("</body>");
-        sb.AppendLine("</html>");
-
-        return sb.ToString();
     }
 
     private static string ConfidenceToCssClass(string confidence)

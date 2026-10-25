@@ -4,6 +4,7 @@ internal static class PostgresJsonPlanParserConstants
 {
     public const string NodeTypePropertyName = "Node Type";
     public const string PlanPropertyName = "Plan";
+    public const string QueryTextPropertyName = "Query Text";
     public const string TotalCostPropertyName = "Total Cost";
     public const string RelationNamePropertyName = "Relation Name";
     public const string IndexNamePropertyName = "Index Name";

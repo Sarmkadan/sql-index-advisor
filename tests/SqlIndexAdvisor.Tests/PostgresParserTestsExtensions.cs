@@ -22,7 +22,7 @@ public static class PostgresParserTestsExtensions
     public static ExecutionPlan ParsePlan(this PostgresParserTests _, string json)
     {
         ArgumentNullException.ThrowIfNull(json);
-        return new PostgresJsonPlanParser().Parse(json);
+        return new PostgresJsonPlanParser().Parse(json).Single();
     }
 
     /// <summary>
