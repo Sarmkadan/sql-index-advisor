@@ -417,6 +417,120 @@ plan file ──► PlanParserFactory ──► ExecutionPlan (normalized) ─�
    absorbs the other's includes and reasons), then orders by confidence and
    estimated impact.
 
+## Built-in rules
+
+Every rule implements `IIndexRule` (`SqlIndexAdvisor.Core.Rules`). Rules only
+emit raw `IndexRecommendation`s; de-duplication and ranking happen later in
+`RecommendationMerger`. Each rule's `Name` is the value written to the
+recommendation's `Rule` field.
+
+Which rules run depends on how the engine is built:
+
+- `new RecommendationEngine()` and `new RecommendationEngine(RecommendationOptions)`
+  run `DefaultRules.All()`: `EngineHintRule`, `FullScanWithFilterRule` and
+  `ImplicitConversionRule`.
+- `DefaultRuleSet.Create(options)` returns all six rules listed below. It is
+  not used by the engine's default constructors; pass its rules to
+  `new RecommendationEngine(IEnumerable<IIndexRule>)` to run the other three
+  (`KeyLookupRule`, `MissingJoinIndexRule`, `ExpensiveSortRule`).
+
+The rules that scan the plan tree skip nodes whose `RelativeCost` is below
+their minimum share of the statement cost. Cost is always compared as a
+relative value (0..1), never as an absolute number, because SQL Server and
+Postgres costs are not comparable.
+
+### EngineHintRule (`engine-hint`)
+
+- **Dialect:** SQL Server only.
+- **Detects:** the missing-index hints the optimizer already put in the plan
+  (`plan.EngineMissingIndexes`). It does not look at individual nodes.
+- **Recommends:** the hinted table, with key columns taken from the hint's
+  equality columns followed by its inequality columns (duplicates skipped),
+  and the hint's include columns minus the key columns.
+- **Confidence:** always `High`, because the engine costed the index itself.
+  Hints with no key columns are skipped.
+- **Impact:** the hint's own `ImpactPercent`.
+
+### FullScanWithFilterRule (`fullscanwithfilter`)
+
+- **Dialect:** SQL Server and Postgres.
+- **Detects:** a full scan that carries a filter: `Table Scan`,
+  `Clustered Index Scan`, `Index Scan` (only when it has predicate columns) or
+  Postgres `Seq Scan`, on a named table with predicate columns, at least 10%
+  of statement cost, and row counts that pass the `RecommendationOptions`
+  thresholds (`MinTableRows`, `MaxSelectivity`).
+- **Recommends:** the predicate columns as the key. Output columns that are not
+  in the key become `INCLUDE` columns, so the index can cover the query.
+- **Confidence:** graded by share of statement cost (`High` at 60% or more,
+  `Medium` at 30% or more, otherwise `Low`), then adjusted by the row-count
+  statistics.
+- **Impact:** a blend of the scan's cost share and how much the filter is
+  expected to eliminate. Without row counts a neutral 50% match is assumed.
+
+### KeyLookupRule (`keylookup`)
+
+- **Dialect:** SQL Server only.
+- **Detects:** a `Key Lookup` or `RID Lookup` on a named table, with a parent
+  node, at least 10% of statement cost. The lookup is usually the inner input of
+  a Nested Loops join.
+- **Finds the seek:** the sibling node under the same parent whose operator
+  contains `Seek` and that has predicate columns. If there is none, the parent
+  node is used.
+- **Recommends:** the seek's equality columns as the key and the lookup's output
+  columns that are not equality columns as `INCLUDE` columns, so the index
+  covers the lookup. When the seek
+  names an existing index, the recommendation records it in
+  `ExistingIndexName`, meaning the existing index should be widened.
+- **Confidence:** graded by share of statement cost (`High` at 60% or more,
+  `Medium` at 30% or more, otherwise `Low`). Lookups with no equality columns
+  on the seek are skipped.
+
+### MissingJoinIndexRule (`missingjoinindex`)
+
+- **Dialect:** SQL Server and Postgres.
+- **Detects:** a scan with join predicate columns whose parent is a Nested
+  Loops, Hash Match or Merge Join, on a named table, at least 10% of statement
+  cost, and with row counts that pass the `RecommendationOptions` thresholds.
+- **Recommends:** the scan's predicate columns as the key. Its other output
+  columns become `INCLUDE` columns.
+- **Confidence:** graded by share of statement cost (`High` at 60% or more,
+  `Medium` at 30% or more, otherwise `Low`), then adjusted by row-count
+  statistics.
+- **Impact:** the scan's share of statement cost, as a percentage.
+
+### ImplicitConversionRule (`implicit-conversion`)
+
+- **Dialect:** SQL Server (`CONVERT_IMPLICIT`) and Postgres (`::` casts),
+  read from the statement text.
+- **Detects:** a conversion applied to a column in a predicate. It looks for
+  `CONVERT_IMPLICIT(...)` in the statement text, or for a column cast with
+  `::`, and keeps only names that look like column names. Only tables with
+  nodes in the plan are considered.
+- **Recommends:** no index. It sets `Kind = RecommendationKind.SchemaFix`
+  and lists the affected columns in its reason. The fix is to align the column
+  and parameter types, so an index seek is possible. The key columns are the
+  affected columns, and there are no `INCLUDE` columns.
+- **Confidence:** from the largest relative cost among the table's nodes
+  (`High` at 0.30 or more, `Medium` at 0.15 or more, otherwise `Low`).
+- **Impact:** a rough estimate based on the cost of the table's first plan
+  node.
+
+### ExpensiveSortRule (`expensivesort`)
+
+- **Dialect:** SQL Server and Postgres.
+- **Detects:** a sort operation at least 15% of statement cost. This covers
+  operators starting with `Sort` or `TopSort`, `TopN Sort`, and
+  `Stream Aggregate` when it has output columns. The sort's table is found from
+  the node or from the plan.
+- **Recommends:** the sort columns as the key, and the sort's output columns
+  that are not in the key as `INCLUDE` columns. This lets an index return rows
+  already in order.
+- **Confidence:** `High` at 50% of statement cost or more, `Medium` at 15% or
+  more, otherwise `Low`.
+- **Impact:** the sort's share of cost, scaled by the ratio of rows read to
+  rows produced (clamped to 1x-10x). A sort that processes many rows scores
+  higher.
+
 ## RecommendationEngine
 
 `RecommendationEngine` is the stage between parsing and reporting. It takes one
