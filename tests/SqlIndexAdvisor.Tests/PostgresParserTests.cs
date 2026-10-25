@@ -28,7 +28,7 @@ public class PostgresParserTests : IPostgresParserTests
     /// </summary>
     public void ParsesSeqScanFilterColumns()
     {
-        var plan = new PostgresJsonPlanParser().Parse(PostgresParserTestsConstants.SeqScanPlan);
+        var plan = new PostgresJsonPlanParser().Parse(PostgresParserTestsConstants.SeqScanPlan).Single();
         Assert.Equal(PlanDialect.Postgres, plan.Dialect);
         var scan = plan.Nodes.Single(n => n.Operator == PostgresParserTestsConstants.SeqScanOperator);
         Assert.Equal(PostgresParserTestsConstants.UsersTableName, scan.TableName);

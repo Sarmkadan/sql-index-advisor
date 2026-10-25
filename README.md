@@ -133,9 +133,9 @@ foreach (string path in Directory.EnumerateFiles(args[0], "*.*")
 {
     try
     {
-        ExecutionPlan plan = factory.Parse(File.ReadAllText(path));
-        var recs = engine.Analyze(plan);
-        Console.WriteLine($"{Path.GetFileName(path)}: {recs.Count} recommendation(s)");
+        // One file can hold several statements, so parse it into one plan per statement.
+        var recCount = factory.Parse(File.ReadAllText(path)).Sum(plan => engine.Analyze(plan).Count);
+        Console.WriteLine($"{Path.GetFileName(path)}: {recCount} recommendation(s)");
     }
     catch (PlanParseException ex)
     {
@@ -175,8 +175,8 @@ static bool AlreadyIndexed(IndexRecommendation rec, IEnumerable<(string Table, s
         ix.Keys.Length >= rec.KeyColumns.Count &&
         rec.KeyColumns.Select(Normalize).SequenceEqual(ix.Keys.Take(rec.KeyColumns.Count), StringComparer.OrdinalIgnoreCase));
 
-var plan = new PlanParserFactory().Parse(File.ReadAllText(args[0]));
-var recs = new RecommendationEngine().Analyze(plan)
+var recs = new PlanParserFactory().Parse(File.ReadAllText(args[0]))
+    .SelectMany(plan => new RecommendationEngine().Analyze(plan))
     .Where(rec => !AlreadyIndexed(rec, existing))
     .ToList();
 
@@ -217,10 +217,11 @@ if (!options.IsSuccess)
 }
 
 const int maxSuggestions = 3;
-var plan = new PlanParserFactory().Parse(File.ReadAllText(args[0]));
-
-// Recommendations arrive ranked by confidence, then impact. Filter, then cap.
-var top = new RecommendationEngine().Analyze(plan)
+// Each statement of the input is analyzed on its own. Rank the combined list by confidence, then impact. Filter, then cap.
+var top = new PlanParserFactory().Parse(File.ReadAllText(args[0]))
+    .SelectMany(plan => new RecommendationEngine().Analyze(plan))
+    .OrderByDescending(rec => rec.Confidence)
+    .ThenByDescending(rec => rec.EstimatedImpactPercent)
     .Where(rec => rec.EstimatedImpactPercent >= options.MinImpact)
     .Take(maxSuggestions)
     .ToList();

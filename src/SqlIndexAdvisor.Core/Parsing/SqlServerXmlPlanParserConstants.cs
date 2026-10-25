@@ -4,6 +4,7 @@ internal static class SqlServerXmlPlanParserConstants
 {
     public const string ShowPlanXmlMarker = "ShowPlanXML";
     public const string StmtSimpleElement = "StmtSimple";
+    public const string QueryPlanElement = "QueryPlan";
     public const string StatementTextAttribute = "StatementText";
     public const string StatementSubTreeCostAttribute = "StatementSubTreeCost";
     public const string RelOpElement = "RelOp";

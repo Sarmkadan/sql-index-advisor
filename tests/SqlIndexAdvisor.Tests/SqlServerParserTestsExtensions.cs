@@ -71,7 +71,7 @@ public static class SqlServerParserTestsExtensions
         ArgumentNullException.ThrowIfNull(test);
         ArgumentNullException.ThrowIfNull(planXml);
 
-        return new SqlServerXmlPlanParser().Parse(planXml);
+        return new SqlServerXmlPlanParser().Parse(planXml).Single();
     }
 
     /// <summary>

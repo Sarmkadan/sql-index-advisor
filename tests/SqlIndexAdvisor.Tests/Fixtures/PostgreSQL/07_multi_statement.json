@@ -1,0 +1,50 @@
+[
+  {
+    "Query Text": "SELECT * FROM customers c WHERE c.country = 'US' AND c.is_active AND c.last_login_date > '2026-01-01'",
+    "Plan": {
+      "Node Type": "Seq Scan",
+      "Relation Name": "customers",
+      "Alias": "c",
+      "Startup Cost": 0.00,
+      "Total Cost": 22.345,
+      "Plan Rows": 5000,
+      "Plan Width": 80,
+      "Actual Startup Time": 0.015,
+      "Actual Total Time": 0.567,
+      "Actual Rows": 5000,
+      "Actual Loops": 1,
+      "Output": [
+        "customer_id",
+        "name",
+        "email",
+        "country",
+        "is_active",
+        "last_login_date"
+      ],
+      "Filter": "((country = 'US'::text) AND (is_active = true) AND (last_login_date > '2026-01-01'::timestamp without time zone))",
+      "Rows Removed by Filter": 45000
+    }
+  },
+  {
+    "Query Text": "SELECT order_id, total FROM orders WHERE status = 'open' AND created_at > '2026-01-01'",
+    "Plan": {
+      "Node Type": "Seq Scan",
+      "Relation Name": "orders",
+      "Alias": "orders",
+      "Startup Cost": 0.00,
+      "Total Cost": 9.512,
+      "Plan Rows": 2000,
+      "Plan Width": 24,
+      "Actual Startup Time": 0.010,
+      "Actual Total Time": 0.312,
+      "Actual Rows": 2000,
+      "Actual Loops": 1,
+      "Output": [
+        "order_id",
+        "total"
+      ],
+      "Filter": "((status = 'open'::text) AND (created_at > '2026-01-01'::timestamp without time zone))",
+      "Rows Removed by Filter": 38000
+    }
+  }
+]

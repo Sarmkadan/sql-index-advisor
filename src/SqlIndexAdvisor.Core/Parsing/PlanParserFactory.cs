@@ -56,14 +56,19 @@ public sealed class PlanParserFactory : IPlanParserFactory
     }
 
     /// <summary>
-    /// Resolves the appropriate parser for the supplied content and parses it into an <see cref="ExecutionPlan"/>.
+    /// Resolves the appropriate parser for the supplied content and parses it into one <see cref="ExecutionPlan"/> per statement.
     /// </summary>
     /// <param name="content">The raw plan content to parse.</param>
-    /// <returns>The parsed <see cref="ExecutionPlan"/>.</returns>
+    /// <returns>A read-only list with one parsed <see cref="ExecutionPlan"/> per statement, in input order.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="content"/> is <see langword="null"/>.</exception>
     /// <exception cref="PlanParseException">
     /// Thrown when no parser can handle the content or parsing fails.
     /// </exception>
-    public ExecutionPlan Parse(string content) => Resolve(content).Parse(content);
+    public IReadOnlyList<ExecutionPlan> Parse(string content)
+    {
+        ArgumentNullException.ThrowIfNull(content);
+        return Resolve(content).Parse(content);
+    }
 
     /// <summary>
     /// Attempts to find a parser that can handle the supplied content.

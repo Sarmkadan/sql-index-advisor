@@ -73,7 +73,9 @@ user can see the "why" and judge it.
 ### Parsing (`Core/Parsing`)
 
 `IPlanParser` is two methods: `CanParse(string)` (cheap content sniff) and
-`Parse(string)`. `PlanParserFactory` walks its parser list and picks the first
+`Parse(string)`, which returns a read-only list holding one `ExecutionPlan`
+per statement in input order. A single-statement input yields a list of one.
+`PlanParserFactory` walks its parser list and picks the first
 that claims the content; format detection is trivial in practice because
 showplan XML starts with `<` and EXPLAIN JSON with `[`/`{`. The factory has a
 constructor overload taking `IEnumerable<IPlanParser>` so a new dialect (MySQL
@@ -83,10 +85,14 @@ constructor overload taking `IEnumerable<IPlanParser>` so a new dialect (MySQL
 ignoring the showplan namespace URI. Microsoft revs that URI between SQL
 Server versions; binding to it would break the parser on every release for
 zero benefit. It extracts operators (`RelOp`), their filter predicates, output
-columns, and the `MissingIndexes` block.
+columns, and the `MissingIndexes` block. Each `StmtSimple` that carries a
+`QueryPlan` becomes its own plan with its own operators, statement text, cost
+and missing-index hints; statements without a plan (such as `DECLARE`) are
+skipped.
 
 **PostgresJsonPlanParser** walks the `Plans` tree from
-`EXPLAIN (FORMAT JSON)`. Postgres does not give structured predicates - the
+`EXPLAIN (FORMAT JSON)`. Each entry of the top-level array is one statement;
+its `Query Text`, when present, becomes the statement text. Postgres does not give structured predicates - the
 `Filter` / `Index Cond` fields are strings - so column extraction is delegated
 to `PredicateColumnScanner`, a small regex tokenizer that grabs the identifier
 to the left of a comparison operator. Predicates wrapping a column in a

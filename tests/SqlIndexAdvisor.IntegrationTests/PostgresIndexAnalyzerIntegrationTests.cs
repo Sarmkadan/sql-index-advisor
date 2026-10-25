@@ -21,7 +21,7 @@ public class PostgresIndexAnalyzerIntegrationTests
         // Arrange - PostgreSQL Seq Scan with WHERE is_active = true (low selectivity)
         var planContent = File.ReadAllText(
             "/home/personal/task-factory/workdir/sql-index-advisor/tests/SqlIndexAdvisor.IntegrationTests/Fixtures/PostgreSQL/01_key_lookup_with_filter.json");
-        var plan = _parser.Parse(planContent);
+        var plan = _parser.Parse(planContent).Single();
 
         // Act
         var recommendations = _engine.Analyze(plan);

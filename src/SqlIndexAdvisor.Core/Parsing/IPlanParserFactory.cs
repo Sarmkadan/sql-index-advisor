@@ -15,10 +15,10 @@ namespace SqlIndexAdvisor.Core.Parsing
         IPlanParser Resolve(string content);
 
         /// <summary>
-        /// Parses the given plan content into an <see cref="ExecutionPlan"/>.
+        /// Parses the given plan content into one <see cref="ExecutionPlan"/> per statement.
         /// </summary>
         /// <param name="content">The raw plan content.</param>
-        /// <returns>The parsed <see cref="ExecutionPlan"/>.</returns>
-        ExecutionPlan Parse(string content);
+        /// <returns>A read-only list with one parsed <see cref="ExecutionPlan"/> per statement.</returns>
+        IReadOnlyList<ExecutionPlan> Parse(string content);
     }
 }

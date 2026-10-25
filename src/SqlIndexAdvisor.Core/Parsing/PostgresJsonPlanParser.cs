@@ -46,22 +46,26 @@ public sealed class PostgresJsonPlanParser : IPlanParser
     }
 
     /// <summary>
-    /// Parses a PostgreSQL JSON execution plan into an <see cref="ExecutionPlan"/>.
+    /// Parses a PostgreSQL JSON execution plan into one <see cref="ExecutionPlan"/> per array entry.
+    /// A top-level array holds one entry per statement; a bare top-level object is a single statement.
     /// </summary>
     /// <param name="content">The PostgreSQL JSON plan text to parse.</param>
     /// <param name="cancellationToken">A token that can cancel traversal of the execution plan.</param>
-    /// <returns>The execution plan represented by <paramref name="content"/>.</returns>
+    /// <returns>A read-only list with one execution plan per statement, in input order.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="content"/> is <see langword="null"/>.
+    /// </exception>
     /// <exception cref="ArgumentException">
-    /// <paramref name="content"/> is <see langword="null"/> or empty.
+    /// <paramref name="content"/> is empty.
     /// </exception>
     /// <exception cref="PlanParseException">
-    /// The input exceeds the supported size or nesting limits, contains malformed JSON,
-    /// or does not contain a PostgreSQL <c>Plan</c> object.
+    /// The input exceeds the supported size or nesting limits, contains malformed JSON, is an empty array,
+    /// or holds an entry that does not contain a PostgreSQL <c>Plan</c> object.
     /// </exception>
     /// <exception cref="OperationCanceledException">
     /// <paramref name="cancellationToken"/> is canceled while traversing the plan.
     /// </exception>
-    public ExecutionPlan Parse(string content, CancellationToken cancellationToken = default)
+    public IReadOnlyList<ExecutionPlan> Parse(string content, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(content);
         if (content.Length == 0)
@@ -93,28 +97,53 @@ public sealed class PostgresJsonPlanParser : IPlanParser
         using (doc)
         {
             var root = doc.RootElement;
-            // EXPLAIN JSON is normally an array with a single object holding "Plan".
-            if (root.ValueKind == JsonValueKind.Array)
+
+            // EXPLAIN JSON is an array with one object holding "Plan" per statement.
+            if (root.ValueKind != JsonValueKind.Array)
+                return [BuildPlan(root, cancellationToken)];
+
+            if (root.GetArrayLength() == 0)
+                throw new PlanParseException("Empty plan array.");
+
+            var plans = new List<ExecutionPlan>(root.GetArrayLength());
+            foreach (var entry in root.EnumerateArray())
             {
-                if (root.GetArrayLength() == 0)
-                    throw new PlanParseException("Empty plan array.");
-                root = root[0];
+                cancellationToken.ThrowIfCancellationRequested();
+                plans.Add(BuildPlan(entry, cancellationToken));
             }
-
-            if (!root.TryGetProperty(PostgresJsonPlanParserConstants.PlanPropertyName, out var planRoot))
-                throw new PlanParseException($"No '{PostgresJsonPlanParserConstants.PlanPropertyName}' property in JSON plan.");
-
-            var totalCost = ReadDouble(planRoot, PostgresJsonPlanParserConstants.TotalCostPropertyName);
-            var nodes = new List<PlanNode>();
-            Walk(planRoot, null, totalCost, nodes, 0, cancellationToken);
-
-            return new ExecutionPlan
-            {
-                Dialect = PlanDialect.Postgres,
-                EstimatedTotalCost = totalCost,
-                Nodes = nodes
-            };
+            return plans;
         }
+    }
+
+    /// <summary>
+    /// Builds the execution plan of one statement from its top-level JSON object.
+    /// </summary>
+    /// <param name="entry">The JSON object holding the <c>Plan</c> tree and, optionally, the <c>Query Text</c>.</param>
+    /// <param name="cancellationToken">A token that can cancel traversal of the execution plan.</param>
+    /// <returns>The execution plan of the statement.</returns>
+    /// <exception cref="PlanParseException">
+    /// <paramref name="entry"/> is not a JSON object, or it does not contain a <c>Plan</c> object.
+    /// </exception>
+    /// <exception cref="OperationCanceledException"><paramref name="cancellationToken"/> is canceled while traversing the plan.</exception>
+    private static ExecutionPlan BuildPlan(JsonElement entry, CancellationToken cancellationToken)
+    {
+        if (entry.ValueKind != JsonValueKind.Object)
+            throw new PlanParseException("JSON plan entry is not an object.");
+
+        if (!entry.TryGetProperty(PostgresJsonPlanParserConstants.PlanPropertyName, out var planRoot))
+            throw new PlanParseException($"No '{PostgresJsonPlanParserConstants.PlanPropertyName}' property in JSON plan.");
+
+        var totalCost = ReadDouble(planRoot, PostgresJsonPlanParserConstants.TotalCostPropertyName);
+        var nodes = new List<PlanNode>();
+        Walk(planRoot, null, totalCost, nodes, 0, cancellationToken);
+
+        return new ExecutionPlan
+        {
+            Dialect = PlanDialect.Postgres,
+            StatementText = ReadString(entry, PostgresJsonPlanParserConstants.QueryTextPropertyName) ?? string.Empty,
+            EstimatedTotalCost = totalCost,
+            Nodes = nodes
+        };
     }
 
     private static void Walk(JsonElement el, PlanNode? parent, double totalCost,

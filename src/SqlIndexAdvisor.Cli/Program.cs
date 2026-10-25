@@ -1,5 +1,6 @@
 using SqlIndexAdvisor.Core.ArgsParsing;
 using SqlIndexAdvisor.Core.Engine;
+using SqlIndexAdvisor.Core.Model;
 using SqlIndexAdvisor.Core.Parsing;
 using SqlIndexAdvisor.Core.Reporting;
 
@@ -54,26 +55,23 @@ static int Run(string[] args)
     if (string.IsNullOrWhiteSpace(content))
         throw new PlanParseException("plan content is empty.");
 
-    var plan = new PlanParserFactory().Parse(content);
-    var recs = new RecommendationEngine().Analyze(plan);
+    var plans = new PlanParserFactory().Parse(content);
+    var engine = new RecommendationEngine();
+    var reports = plans
+        .Select((plan, index) => new StatementReport(index + 1, plan, FilterByImpact(engine.Analyze(plan), parseResult.MinImpact)))
+        .ToList();
 
-    if (parseResult.MinImpact > 0)
-        recs = recs.Where(r => r.EstimatedImpactPercent >= parseResult.MinImpact).ToList();
-
-    string output = parseResult.Format switch
-    {
-        "json" => ReportRenderer.RenderJson(plan, recs, parseResult.SchemaVersion),
-        "html" => HtmlReportRenderer.RenderHtml(plan, recs),
-        "csv" => CsvReportRenderer.RenderCsv(plan, recs),
-        "markdown" => MarkdownReportRenderer.RenderMarkdown(plan, recs),
-        _ => ReportRenderer.RenderText(plan, recs),
-    };
-
-    Console.WriteLine(output);
+    Console.WriteLine(StatementReportRenderer.Render(reports, parseResult.Format, parseResult.SchemaVersion));
 
     // Exit code logic:
     // 0 = success, no findings (or findings ignored with --fail-on-findings false)
     // 1 = usage/IO error, or findings present and --fail-on-findings is true
     // 2 = parse error (already handled in catch block)
-    return parseResult.FailOnFindings && recs.Count > 0 ? 1 : 0;
+    var findingCount = reports.Sum(r => r.Recommendations.Count);
+    return parseResult.FailOnFindings && findingCount > 0 ? 1 : 0;
 }
+
+static IReadOnlyList<IndexRecommendation> FilterByImpact(IReadOnlyList<IndexRecommendation> recs, double minImpact) =>
+    minImpact > 0
+        ? recs.Where(r => r.EstimatedImpactPercent >= minImpact).ToList()
+        : recs;
