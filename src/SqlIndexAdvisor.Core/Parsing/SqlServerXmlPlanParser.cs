@@ -312,9 +312,10 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
             .Sum(counter => ParseDouble(counter.Attribute(attributeName)?.Value));
     }
 
+    // NaN and Infinity parse successfully but would poison cost ranking and relative-cost math, so treat them as missing.
     private static double ParseDouble(string? raw) =>
         double.TryParse(raw, System.Globalization.NumberStyles.Any,
-            System.Globalization.CultureInfo.InvariantCulture, out var v)
+            System.Globalization.CultureInfo.InvariantCulture, out var v) && double.IsFinite(v)
             ? v
             : 0;
 }
