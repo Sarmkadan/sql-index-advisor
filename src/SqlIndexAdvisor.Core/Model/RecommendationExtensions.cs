@@ -81,6 +81,21 @@ namespace SqlIndexAdvisor.Core.Model
             }
         }
 
+        /// <summary>
+        /// Returns a case-insensitive grouping key for the recommendation: the bare table name
+        /// (schema stripped) followed by the key columns, e.g. <c>orders(customer_id,order_date)</c>.
+        /// Recommendations with the same key target the same index shape and can be grouped together.
+        /// </summary>
+        /// <returns>A grouping key string. Does not modify the recommendation.</returns>
+        public static string ToGroupKey(this IndexRecommendation recommendation)
+        {
+            if (recommendation == null) throw new ArgumentNullException(nameof(recommendation));
+
+            var bare = recommendation.Table.Split('.').Last().ToLowerInvariant();
+            var keys = string.Join(",", recommendation.KeyColumns.Select(c => c.ToLowerInvariant()));
+            return $"{bare}({keys})";
+        }
+
         private static string BadgeFor(string? severity)
         {
             return severity?.ToLowerInvariant() switch
