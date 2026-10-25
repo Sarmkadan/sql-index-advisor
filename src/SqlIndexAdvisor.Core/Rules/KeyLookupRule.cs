@@ -1,10 +1,10 @@
-using SqlIndexAdvisor.Core.Model;
 using System;
+using SqlIndexAdvisor.Core.Model;
 
 namespace SqlIndexAdvisor.Core.Rules;
 
 /// <summary>
-/// Detects SQL Server key‑lookup / RID‑lookup patterns and recommends a covering
+/// Detects SQL Server key-lookup / RID-lookup patterns and recommends a covering
 /// index that combines the seek equality columns with the columns required by
 /// the lookup as INCLUDE columns.
 /// </summary>
@@ -23,11 +23,12 @@ public sealed class KeyLookupRule : PlanNodeVisitorBase
     protected override bool ShouldVisit(PlanNode node)
     {
         ArgumentNullException.ThrowIfNull(node);
-        // Look for a key‑lookup (or RID‑lookup) operator.
+
+        // Look for a key-lookup (or RID-lookup) operator.
         return IsKeyLookup(node)
-        && !string.IsNullOrEmpty(node.TableName)
-        && node.Parent != null
-        && node.RelativeCost >= MinRelativeCost;
+            && !string.IsNullOrEmpty(node.TableName)
+            && node.Parent != null
+            && node.RelativeCost >= MinRelativeCost;
     }
 
     /// <summary>
@@ -39,6 +40,7 @@ public sealed class KeyLookupRule : PlanNodeVisitorBase
     protected override IEnumerable<IndexRecommendation> VisitCore(PlanNode node)
     {
         ArgumentNullException.ThrowIfNull(node);
+
         throw new NotSupportedException("Key lookup analysis needs the whole plan; the plan-aware overload is used.");
     }
 
@@ -52,14 +54,15 @@ public sealed class KeyLookupRule : PlanNodeVisitorBase
     {
         ArgumentNullException.ThrowIfNull(node);
         ArgumentNullException.ThrowIfNull(plan);
+
         // In showplan the lookup hangs off a join (usually Nested Loops) whose
         // other input is the index seek that supplies the equality predicates.
         // Prefer that sibling seek; fall back to the join node's own predicate.
         var seek = plan.Nodes.FirstOrDefault(n =>
-        !ReferenceEquals(n, node)
-        && ReferenceEquals(n.Parent, node.Parent)
-        && n.Operator.Contains(KeyLookupRuleConstants.SeekOperatorMarker, StringComparison.OrdinalIgnoreCase)
-        && n.PredicateColumns.Count > 0);
+            !ReferenceEquals(n, node)
+            && ReferenceEquals(n.Parent, node.Parent)
+            && n.Operator.Contains(KeyLookupRuleConstants.SeekOperatorMarker, StringComparison.OrdinalIgnoreCase)
+            && n.PredicateColumns.Count > 0);
 
         if (seek == null)
         {
@@ -68,12 +71,14 @@ public sealed class KeyLookupRule : PlanNodeVisitorBase
 
         var equalityColumns = seek.PredicateColumns;
         if (equalityColumns.Count == 0)
+        {
             yield break;
+        }
 
         // Columns output by the lookup that are not already part of the key become INCLUDE.
         var include = node.OutputColumns
-        .Where(c => !equalityColumns.Contains(c))
-        .ToList();
+            .Where(c => !equalityColumns.Contains(c))
+            .ToList();
 
         var confidence = node.RelativeCost switch
         {
@@ -95,7 +100,8 @@ public sealed class KeyLookupRule : PlanNodeVisitorBase
             EstimatedImpactPercent = Math.Round(node.RelativeCost * KeyLookupRuleConstants.PercentScale, KeyLookupRuleConstants.ImpactDecimals),
             SourceNodeCost = node.RelativeCost,
             Confidence = confidence,
-            Reasons = {
+            Reasons =
+            {
                 string.Format(KeyLookupRuleConstants.ReasonFormat, node.Operator, node.TableName, string.Join(", ", equalityColumns))
             }
         };
@@ -109,7 +115,7 @@ public sealed class KeyLookupRule : PlanNodeVisitorBase
     private static bool IsKeyLookup(PlanNode node)
     {
         var op = node.Operator;
-        return op.Contains(KeyLookupRuleConstants.KeyLookupOperator, StringComparison.OrdinalIgnoreCase) ||
-        op.Contains(KeyLookupRuleConstants.RidLookupOperator, StringComparison.OrdinalIgnoreCase);
+        return op.Contains(KeyLookupRuleConstants.KeyLookupOperator, StringComparison.OrdinalIgnoreCase)
+            || op.Contains(KeyLookupRuleConstants.RidLookupOperator, StringComparison.OrdinalIgnoreCase);
     }
 }
