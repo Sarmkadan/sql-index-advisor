@@ -5,7 +5,7 @@ namespace SqlIndexAdvisor.Tests;
 /// <summary>
 /// Test class for ExecutionPlanExtensions methods.
 /// </summary>
-public class ExecutionPlanExtensionsTests
+public class ExecutionPlanExtensionsTests : IExecutionPlanExtensionsTests
 {
     private readonly ExecutionPlan _emptyPlan = new()
     {
