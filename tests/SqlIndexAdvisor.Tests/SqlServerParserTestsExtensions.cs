@@ -29,34 +29,34 @@ public static class SqlServerParserTestsExtensions
     {
         if (cost < 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(cost), "Cost must be non-negative");
+            throw new ArgumentOutOfRangeException(nameof(cost), SqlServerParserTestsExtensionsConstants.NegativeCostMessage);
         }
 
         var costStr = cost.ToString(CultureInfo.InvariantCulture);
-        return $"<?xml version=\"1.0\" encoding=\"utf-16\"?>" +
-               $"<ShowPlanXML xmlns=\"http://schemas.microsoft.com/sqlserver/2004/07/showplan\">" +
-               $"<BatchSequence><Batch><Statements>" +
-               $"<StmtSimple StatementText=\"SELECT * FROM dbo.Orders WHERE Status='open'\" StatementSubTreeCost=\"" + costStr + $"\">" +
+        return SqlServerParserTestsExtensionsConstants.XmlDeclaration +
+               SqlServerParserTestsExtensionsConstants.ShowPlanOpenTag +
+               SqlServerParserTestsExtensionsConstants.BatchSequenceOpenTag +
+               $"<StmtSimple StatementText=\"{SqlServerParserTestsExtensionsConstants.OrdersStatementText}\" StatementSubTreeCost=\"" + costStr + $"\">" +
                $"<QueryPlan>" +
                $"<MissingIndexes>" +
-               $"<MissingIndexGroup Impact=\"80\">" +
-               $"<MissingIndex Table=\"[Orders]\" Schema=\"[dbo]\">" +
-               $"<ColumnGroup Usage=\"EQUALITY\"><Column Name=\"[Status]\" /></ColumnGroup>" +
-               $"<ColumnGroup Usage=\"INCLUDE\"><Column Name=\"[Total]\" /></ColumnGroup>" +
+               $"<MissingIndexGroup Impact=\"{SqlServerParserTestsExtensionsConstants.DefaultImpactPercent}\">" +
+               $"<MissingIndex Table=\"[{SqlServerParserTestsExtensionsConstants.OrdersTableName}]\" Schema=\"[{SqlServerParserTestsExtensionsConstants.DefaultSchemaName}]\">" +
+               $"<ColumnGroup Usage=\"{SqlServerParserTestsExtensionsConstants.EqualityUsage}\"><Column Name=\"[{SqlServerParserTestsExtensionsConstants.StatusColumnName}]\" /></ColumnGroup>" +
+               $"<ColumnGroup Usage=\"{SqlServerParserTestsExtensionsConstants.IncludeUsage}\"><Column Name=\"[{SqlServerParserTestsExtensionsConstants.TotalColumnName}]\" /></ColumnGroup>" +
                $"</MissingIndex>" +
                $"</MissingIndexGroup>" +
                $"</MissingIndexes>" +
-               $"<RelOp PhysicalOp=\"Clustered Index Scan\" EstimateRows=\"1000\" EstimatedTotalSubtreeCost=\"" + costStr + $"\">" +
-               $"<OutputList><ColumnReference Table=\"[Orders]\" Column=\"Total\" /></OutputList>" +
+               $"<RelOp PhysicalOp=\"{SqlServerParserTestsExtensionsConstants.ClusteredIndexScanOperator}\" EstimateRows=\"{SqlServerParserTestsExtensionsConstants.OrdersTableEstimateRows}\" EstimatedTotalSubtreeCost=\"" + costStr + $"\">" +
+               $"<OutputList><ColumnReference Table=\"[{SqlServerParserTestsExtensionsConstants.OrdersTableName}]\" Column=\"{SqlServerParserTestsExtensionsConstants.TotalColumnName}\" /></OutputList>" +
                $"<IndexScan>" +
-               $"<Object Schema=\"[dbo]\" Table=\"[Orders]\" Index=\"[PK_Orders]\" />" +
-               $"<Predicate><ScalarOperator><ColumnReference Table=\"[Orders]\" Column=\"Status\" /></ScalarOperator></Predicate>" +
+               $"<Object Schema=\"[{SqlServerParserTestsExtensionsConstants.DefaultSchemaName}]\" Table=\"[{SqlServerParserTestsExtensionsConstants.OrdersTableName}]\" Index=\"[{SqlServerParserTestsExtensionsConstants.PrimaryKeyPrefix}{SqlServerParserTestsExtensionsConstants.OrdersTableName}]\" />" +
+               $"<Predicate><ScalarOperator><ColumnReference Table=\"[{SqlServerParserTestsExtensionsConstants.OrdersTableName}]\" Column=\"{SqlServerParserTestsExtensionsConstants.StatusColumnName}\" /></ScalarOperator></Predicate>" +
                $"</IndexScan>" +
                $"</RelOp>" +
                $"</QueryPlan>" +
                $"</StmtSimple>" +
-               $"</Statements></Batch></BatchSequence>" +
-               $"</ShowPlanXML>";
+               SqlServerParserTestsExtensionsConstants.BatchSequenceCloseTag +
+               SqlServerParserTestsExtensionsConstants.ShowPlanCloseTag;
     }
 
     /// <summary>
@@ -89,7 +89,7 @@ public static class SqlServerParserTestsExtensions
 
         return plan.Nodes.Count switch
         {
-            0 => throw new ArgumentException("Execution plan has no nodes", nameof(plan)),
+            0 => throw new ArgumentException(SqlServerParserTestsExtensionsConstants.NoNodesMessage, nameof(plan)),
             _ => plan.Nodes[0]
         };
     }
@@ -111,8 +111,8 @@ public static class SqlServerParserTestsExtensions
         string tableName,
         IReadOnlyList<string> equalityColumns,
         IReadOnlyList<string> includeColumns,
-        string schemaName = "dbo",
-        int impactPercent = 80)
+        string schemaName = SqlServerParserTestsExtensionsConstants.DefaultSchemaName,
+        int impactPercent = SqlServerParserTestsExtensionsConstants.DefaultImpactPercent)
     {
         ArgumentNullException.ThrowIfNull(test);
         ArgumentException.ThrowIfNullOrEmpty(tableName, nameof(tableName));
@@ -120,40 +120,40 @@ public static class SqlServerParserTestsExtensions
         ArgumentNullException.ThrowIfNull(equalityColumns, nameof(equalityColumns));
         ArgumentNullException.ThrowIfNull(includeColumns, nameof(includeColumns));
 
-        if (impactPercent is < 0 or > 100)
+        if (impactPercent is < SqlServerParserTestsExtensionsConstants.MinImpactPercent or > SqlServerParserTestsExtensionsConstants.MaxImpactPercent)
         {
-            throw new ArgumentOutOfRangeException(nameof(impactPercent), impactPercent, "Impact percent must be between 0 and 100");
+            throw new ArgumentOutOfRangeException(nameof(impactPercent), impactPercent, SqlServerParserTestsExtensionsConstants.ImpactPercentRangeMessage);
         }
 
-        var equalityColumnsXml = string.Join("", equalityColumns.Select(c => $"<Column Name=\"[{c}]\" />"));
-        var includeColumnsXml = string.Join("", includeColumns.Select(c => $"<Column Name=\"[{c}]\" />"));
+        var equalityColumnsXml = string.Join("", equalityColumns.Select(c => string.Format(CultureInfo.InvariantCulture, SqlServerParserTestsExtensionsConstants.ColumnElementTemplate, c)));
+        var includeColumnsXml = string.Join("", includeColumns.Select(c => string.Format(CultureInfo.InvariantCulture, SqlServerParserTestsExtensionsConstants.ColumnElementTemplate, c)));
 
-        return $"<?xml version=\"1.0\" encoding=\"utf-16\"?>" +
-               $"<ShowPlanXML xmlns=\"http://schemas.microsoft.com/sqlserver/2004/07/showplan\">" +
-               $"<BatchSequence><Batch><Statements>" +
-               $"<StmtSimple StatementText=\"SELECT * FROM " + schemaName + "." + tableName + "\" StatementSubTreeCost=\"2.5\">" +
+        return SqlServerParserTestsExtensionsConstants.XmlDeclaration +
+               SqlServerParserTestsExtensionsConstants.ShowPlanOpenTag +
+               SqlServerParserTestsExtensionsConstants.BatchSequenceOpenTag +
+               $"<StmtSimple StatementText=\"{SqlServerParserTestsExtensionsConstants.FromClausePrefix}" + schemaName + "." + tableName + $"\" StatementSubTreeCost=\"{SqlServerParserTestsExtensionsConstants.DefaultSubtreeCost}\">" +
                $"<QueryPlan>" +
                $"<MissingIndexes>" +
                $"<MissingIndexGroup Impact=\"" + impactPercent + "\">" +
                $"<MissingIndex Table=\"[" + tableName + "]\" Schema=\"[" + schemaName + "]\">" +
-               $"<ColumnGroup Usage=\"EQUALITY\">" +
+               $"<ColumnGroup Usage=\"{SqlServerParserTestsExtensionsConstants.EqualityUsage}\">" +
                equalityColumnsXml +
                $"</ColumnGroup>" +
-               $"<ColumnGroup Usage=\"INCLUDE\">" +
+               $"<ColumnGroup Usage=\"{SqlServerParserTestsExtensionsConstants.IncludeUsage}\">" +
                includeColumnsXml +
                $"</ColumnGroup>" +
                $"</MissingIndex>" +
                $"</MissingIndexGroup>" +
                $"</MissingIndexes>" +
-               $"<RelOp PhysicalOp=\"Clustered Index Scan\" EstimateRows=\"500\" EstimatedTotalSubtreeCost=\"2.5\">" +
-               $"<OutputList><ColumnReference Table=\"[" + schemaName + "].[" + tableName + "]\" Column=\"Id\" /></OutputList>" +
+               $"<RelOp PhysicalOp=\"{SqlServerParserTestsExtensionsConstants.ClusteredIndexScanOperator}\" EstimateRows=\"{SqlServerParserTestsExtensionsConstants.IndexedTableEstimateRows}\" EstimatedTotalSubtreeCost=\"{SqlServerParserTestsExtensionsConstants.DefaultSubtreeCost}\">" +
+               $"<OutputList><ColumnReference Table=\"[" + schemaName + "].[" + tableName + $"]\" Column=\"{SqlServerParserTestsExtensionsConstants.IdColumnName}\" /></OutputList>" +
                $"<IndexScan>" +
-               $"<Object Schema=\"[" + schemaName + "]\" Table=\"[" + tableName + "]\" Index=\"[PK_" + tableName + "]\" />" +
+               $"<Object Schema=\"[" + schemaName + "]\" Table=\"[" + tableName + "]\" Index=\"[" + SqlServerParserTestsExtensionsConstants.PrimaryKeyPrefix + tableName + "]\" />" +
                $"</IndexScan>" +
                $"</RelOp>" +
                $"</QueryPlan>" +
                $"</StmtSimple>" +
-               $"</Statements></Batch></BatchSequence>" +
-               $"</ShowPlanXML>";
+               SqlServerParserTestsExtensionsConstants.BatchSequenceCloseTag +
+               SqlServerParserTestsExtensionsConstants.ShowPlanCloseTag;
     }
 }
