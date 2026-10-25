@@ -12,7 +12,7 @@ public sealed class ImplicitConversionRule : PlanNodeVisitorBase
     /// <summary>
     /// Gets the name of this rule.
     /// </summary>
-    public override string Name => "implicit-conversion";
+    public override string Name => ImplicitConversionRuleConstants.RuleName;
 
     /// <summary>
     /// Determines whether to visit a plan node. This rule does not visit nodes directly.
@@ -108,13 +108,13 @@ public sealed class ImplicitConversionRule : PlanNodeVisitorBase
             return columns;
 
         // SQL Server: CONVERT_IMPLICIT function in statement
-        if (plan.StatementText.Contains("CONVERT_IMPLICIT", StringComparison.OrdinalIgnoreCase))
+        if (plan.StatementText.Contains(ImplicitConversionRuleConstants.ConvertImplicitFunction, StringComparison.OrdinalIgnoreCase))
         {
             columns.AddRange(ExtractColumnsFromConversion(plan.StatementText));
         }
 
         // Postgres: type mismatch casts (:: operator with different types)
-        if (plan.StatementText.Contains("::", StringComparison.Ordinal))
+        if (plan.StatementText.Contains(ImplicitConversionRuleConstants.PostgresCastOperator, StringComparison.Ordinal))
         {
             columns.AddRange(ExtractPostgresConversionColumns(plan.StatementText));
         }
@@ -127,7 +127,7 @@ public sealed class ImplicitConversionRule : PlanNodeVisitorBase
         var index = 0;
         while (index < statementText.Length)
         {
-            var start = statementText.IndexOf("CONVERT_IMPLICIT", index, StringComparison.OrdinalIgnoreCase);
+            var start = statementText.IndexOf(ImplicitConversionRuleConstants.ConvertImplicitFunction, index, StringComparison.OrdinalIgnoreCase);
             if (start < 0)
                 break;
 
@@ -162,7 +162,7 @@ public sealed class ImplicitConversionRule : PlanNodeVisitorBase
                     continue;
                 }
             }
-            index = start + "CONVERT_IMPLICIT".Length;
+            index = start + ImplicitConversionRuleConstants.ConvertImplicitFunction.Length;
         }
     }
 
@@ -171,7 +171,7 @@ public sealed class ImplicitConversionRule : PlanNodeVisitorBase
         var index = 0;
         while (index < statementText.Length)
         {
-            var castIndex = statementText.IndexOf("::", index, StringComparison.Ordinal);
+            var castIndex = statementText.IndexOf(ImplicitConversionRuleConstants.PostgresCastOperator, index, StringComparison.Ordinal);
             if (castIndex < 0)
                 break;
 
@@ -188,7 +188,7 @@ public sealed class ImplicitConversionRule : PlanNodeVisitorBase
                 yield return columnName.Trim('[', ']');
             }
 
-            index = castIndex + 2;
+            index = castIndex + ImplicitConversionRuleConstants.PostgresCastOperator.Length;
         }
     }
 
