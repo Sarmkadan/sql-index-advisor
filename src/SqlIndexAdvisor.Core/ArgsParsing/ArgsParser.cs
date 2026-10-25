@@ -80,7 +80,7 @@ public static class ArgsParser
             ArgumentNullException.ThrowIfNull(message);
             if (message.Length == 0)
                 throw new ArgumentException("Message cannot be empty.", nameof(message));
-            return new(null, false, "text", false, 0) { HelpMessage = message };
+            return new(null, false, ArgsParserConstants.TextFormat, false, 0) { HelpMessage = message };
         }
 
         /// <summary>
@@ -93,7 +93,7 @@ public static class ArgsParser
             ArgumentNullException.ThrowIfNull(message);
             if (message.Length == 0)
                 throw new ArgumentException("Message cannot be empty.", nameof(message));
-            return new(null, false, "text", false, 0) { ErrorMessage = message };
+            return new(null, false, ArgsParserConstants.TextFormat, false, 0) { ErrorMessage = message };
         }
     }
 
@@ -130,7 +130,7 @@ public static class ArgsParser
         }
 
         var useStdin = false;
-        var format = "text";
+        var format = ArgsParserConstants.TextFormat;
         var formatSpecified = false;
         var failOnFindings = false;
         Confidence? failOn = null;
@@ -146,75 +146,75 @@ public static class ArgsParser
             var a = args[i];
             switch (a)
             {
-                case "--stdin":
+                case ArgsParserConstants.StdinFlag:
                     useStdin = true;
                     if (activity is not null)
-                        AddOptionEvent(activity, "--stdin", useStdin);
+                        AddOptionEvent(activity, ArgsParserConstants.StdinFlag, useStdin);
                     break;
 
-                case "--plan":
+                case ArgsParserConstants.PlanFlag:
                     // Explicit plan flag – expects a value.
-                    var planPath = RequireValue(args, ref i, "--plan");
+                    var planPath = RequireValue(args, ref i, ArgsParserConstants.PlanFlag);
                     if (path is not null)
                         throw new ArgumentException("multiple plan sources specified (positional argument and --plan).");
                     path = ValidateAndResolvePath(planPath);
                     if (activity is not null)
-                        AddOptionEvent(activity, "--plan", path);
+                        AddOptionEvent(activity, ArgsParserConstants.PlanFlag, path);
                     break;
 
-                case "--format":
-                    format = RequireValue(args, ref i, "--format").ToLowerInvariant();
+                case ArgsParserConstants.FormatFlag:
+                    format = RequireValue(args, ref i, ArgsParserConstants.FormatFlag).ToLowerInvariant();
                     formatSpecified = true;
                     if (activity is not null)
-                        AddOptionEvent(activity, "--format", format);
+                        AddOptionEvent(activity, ArgsParserConstants.FormatFlag, format);
                     break;
 
-                case "--min-impact":
-                    var raw = RequireValue(args, ref i, "--min-impact");
+                case ArgsParserConstants.MinImpactFlag:
+                    var raw = RequireValue(args, ref i, ArgsParserConstants.MinImpactFlag);
                     if (!double.TryParse(raw, System.Globalization.CultureInfo.InvariantCulture, out minImpact))
                         throw new ArgumentException($"--min-impact expects a number, got '{raw}'.");
                     if (!double.IsFinite(minImpact) || minImpact < 0 || minImpact > 100)
                         throw new ArgumentException($"--min-impact must be between 0 and 100, got '{raw}'.");
                     if (activity is not null)
-                        AddOptionEvent(activity, "--min-impact", minImpact);
+                        AddOptionEvent(activity, ArgsParserConstants.MinImpactFlag, minImpact);
                     break;
 
-                case "--fail-on-findings":
+                case ArgsParserConstants.FailOnFindingsFlag:
                     failOnFindings = true;
                     if (activity is not null)
-                        AddOptionEvent(activity, "--fail-on-findings", failOnFindings);
+                        AddOptionEvent(activity, ArgsParserConstants.FailOnFindingsFlag, failOnFindings);
                     break;
 
-                case "--fail-on":
-                    var failOnRaw = RequireValue(args, ref i, "--fail-on");
+                case ArgsParserConstants.FailOnFlag:
+                    var failOnRaw = RequireValue(args, ref i, ArgsParserConstants.FailOnFlag);
                     failOn = ParseSeverity(failOnRaw);
                     if (activity is not null)
-                        AddOptionEvent(activity, "--fail-on", failOnRaw);
+                        AddOptionEvent(activity, ArgsParserConstants.FailOnFlag, failOnRaw);
                     break;
 
-                case "--sqlserver":
+                case ArgsParserConstants.SqlServerFlag:
                     sqlServerFlag = true;
                     if (activity is not null)
-                        AddOptionEvent(activity, "--sqlserver", sqlServerFlag);
+                        AddOptionEvent(activity, ArgsParserConstants.SqlServerFlag, sqlServerFlag);
                     break;
 
-                case "--postgres":
+                case ArgsParserConstants.PostgresFlag:
                     postgresFlag = true;
                     if (activity is not null)
-                        AddOptionEvent(activity, "--postgres", postgresFlag);
+                        AddOptionEvent(activity, ArgsParserConstants.PostgresFlag, postgresFlag);
                     break;
 
-                case "--version":
+                case ArgsParserConstants.VersionFlag:
                     // Version is treated as a help screen that only shows version info.
                     if (activity is not null)
-                        AddOptionEvent(activity, "--version", Version);
+                        AddOptionEvent(activity, ArgsParserConstants.VersionFlag, Version);
                     var versionResult = ParseResult.Help($"sql-index-advisor version {Version}");
                     if (activity is not null)
                         AddParseResultEvent(activity, versionResult);
                     return versionResult;
 
-                case "-h":
-                case "--help":
+                case ArgsParserConstants.HelpShortFlag:
+                case ArgsParserConstants.HelpFlag:
                     if (activity is not null)
                         AddOptionEvent(activity, a, true);
                     var helpResult = ParseResult.Help(Usage);
@@ -224,7 +224,7 @@ public static class ArgsParser
 
                 default:
                     // Positional argument – treat as plan file unless it looks like an unknown option.
-                    if (a.StartsWith('-') && a != "-")
+                    if (a.StartsWith('-') && a != ArgsParserConstants.StdinPath)
                         throw new ArgumentException($"unknown option '{a}'.");
                     if (path is not null)
                         throw new ArgumentException("multiple plan sources specified.");
@@ -240,7 +240,7 @@ public static class ArgsParser
             throw new ArgumentException("cannot specify both --sqlserver and --postgres.");
 
         // Validate format.
-        if (format is not ("text" or "json" or "html" or "csv"))
+        if (format is not (ArgsParserConstants.TextFormat or ArgsParserConstants.JsonFormat or ArgsParserConstants.HtmlFormat or ArgsParserConstants.CsvFormat))
             throw new ArgumentException($"--format must be 'text', 'json', 'html', or 'csv', got '{format}'.");
 
         // Validate stdin vs file path conflict.
@@ -268,9 +268,9 @@ public static class ArgsParser
     private static Confidence ParseSeverity(string raw) =>
         raw.ToLowerInvariant() switch
         {
-            "low" => Confidence.Low,
-            "medium" => Confidence.Medium,
-            "high" => Confidence.High,
+            ArgsParserConstants.LowSeverity => Confidence.Low,
+            ArgsParserConstants.MediumSeverity => Confidence.Medium,
+            ArgsParserConstants.HighSeverity => Confidence.High,
             _ => throw new ArgumentException($"--fail-on expects low, medium or high, got '{raw}'.")
         };
 
@@ -344,7 +344,7 @@ public static class ArgsParser
     {
         ArgumentException.ThrowIfNullOrEmpty(path);
 
-        if (path == "-")
+        if (path == ArgsParserConstants.StdinPath)
             return path;
 
         // Normalize path separators for consistent checking.
@@ -391,7 +391,7 @@ public static class ArgsParser
         if (path.Length == 0)
             throw new ArgumentException("Path cannot be empty.", nameof(path));
 
-        if (path == "-")
+        if (path == ArgsParserConstants.StdinPath)
         {
             return Console.In.ReadToEnd();
         }
