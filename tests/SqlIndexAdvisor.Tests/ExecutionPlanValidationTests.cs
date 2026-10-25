@@ -18,19 +18,19 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.SqlServer,
-            StatementText = "SELECT * FROM users",
-            EstimatedTotalCost = 100,
+            StatementText = ExecutionPlanValidationTestsConstants.SelectAllUsersStatement,
+            EstimatedTotalCost = ExecutionPlanValidationTestsConstants.ValidEstimatedTotalCost,
             Nodes =
             {
                 new PlanNode
                 {
-                    Operator = "Seq Scan",
-                    TableName = "users",
-                    EstimatedRows = 50,
-                    EstimatedRowsRead = 500000,
-                    RelativeCost = 0.9,
-                    PredicateColumns = { "country", "is_active" },
-                    OutputColumns = { "id", "email", "country" }
+                    Operator = ExecutionPlanValidationTestsConstants.SeqScanOperator,
+                    TableName = ExecutionPlanValidationTestsConstants.UsersTable,
+                    EstimatedRows = ExecutionPlanValidationTestsConstants.SeqScanEstimatedRows,
+                    EstimatedRowsRead = ExecutionPlanValidationTestsConstants.SeqScanEstimatedRowsRead,
+                    RelativeCost = ExecutionPlanValidationTestsConstants.SeqScanRelativeCost,
+                    PredicateColumns = { ExecutionPlanValidationTestsConstants.CountryColumn, ExecutionPlanValidationTestsConstants.IsActiveColumn },
+                    OutputColumns = { ExecutionPlanValidationTestsConstants.IdColumn, ExecutionPlanValidationTestsConstants.EmailColumn, ExecutionPlanValidationTestsConstants.CountryColumn }
                 }
             }
         };
@@ -65,19 +65,19 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.SqlServer,
-            StatementText = "SELECT * FROM users",
-            EstimatedTotalCost = 100,
+            StatementText = ExecutionPlanValidationTestsConstants.SelectAllUsersStatement,
+            EstimatedTotalCost = ExecutionPlanValidationTestsConstants.ValidEstimatedTotalCost,
             Nodes =
             {
                 new PlanNode
                 {
-                    Operator = "Seq Scan",
-                    TableName = "users",
-                    EstimatedRows = 50,
-                    EstimatedRowsRead = 500000,
-                    RelativeCost = 0.9,
-                    PredicateColumns = { "country", "is_active" },
-                    OutputColumns = { "id", "email", "country" }
+                    Operator = ExecutionPlanValidationTestsConstants.SeqScanOperator,
+                    TableName = ExecutionPlanValidationTestsConstants.UsersTable,
+                    EstimatedRows = ExecutionPlanValidationTestsConstants.SeqScanEstimatedRows,
+                    EstimatedRowsRead = ExecutionPlanValidationTestsConstants.SeqScanEstimatedRowsRead,
+                    RelativeCost = ExecutionPlanValidationTestsConstants.SeqScanRelativeCost,
+                    PredicateColumns = { ExecutionPlanValidationTestsConstants.CountryColumn, ExecutionPlanValidationTestsConstants.IsActiveColumn },
+                    OutputColumns = { ExecutionPlanValidationTestsConstants.IdColumn, ExecutionPlanValidationTestsConstants.EmailColumn, ExecutionPlanValidationTestsConstants.CountryColumn }
                 }
             }
         };
@@ -112,19 +112,19 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.SqlServer,
-            StatementText = "SELECT * FROM users",
-            EstimatedTotalCost = 100,
+            StatementText = ExecutionPlanValidationTestsConstants.SelectAllUsersStatement,
+            EstimatedTotalCost = ExecutionPlanValidationTestsConstants.ValidEstimatedTotalCost,
             Nodes =
             {
                 new PlanNode
                 {
-                    Operator = "Seq Scan",
-                    TableName = "users",
-                    EstimatedRows = 50,
-                    EstimatedRowsRead = 500000,
-                    RelativeCost = 0.9,
-                    PredicateColumns = { "country", "is_active" },
-                    OutputColumns = { "id", "email", "country" }
+                    Operator = ExecutionPlanValidationTestsConstants.SeqScanOperator,
+                    TableName = ExecutionPlanValidationTestsConstants.UsersTable,
+                    EstimatedRows = ExecutionPlanValidationTestsConstants.SeqScanEstimatedRows,
+                    EstimatedRowsRead = ExecutionPlanValidationTestsConstants.SeqScanEstimatedRowsRead,
+                    RelativeCost = ExecutionPlanValidationTestsConstants.SeqScanRelativeCost,
+                    PredicateColumns = { ExecutionPlanValidationTestsConstants.CountryColumn, ExecutionPlanValidationTestsConstants.IsActiveColumn },
+                    OutputColumns = { ExecutionPlanValidationTestsConstants.IdColumn, ExecutionPlanValidationTestsConstants.EmailColumn, ExecutionPlanValidationTestsConstants.CountryColumn }
                 }
             }
         };
@@ -159,19 +159,19 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.SqlServer,
-            StatementText = "SELECT * FROM users",
-            EstimatedTotalCost = -100,
+            StatementText = ExecutionPlanValidationTestsConstants.SelectAllUsersStatement,
+            EstimatedTotalCost = ExecutionPlanValidationTestsConstants.NegativeEstimatedTotalCost,
             Nodes =
             {
                 new PlanNode
                 {
-                    Operator = "Seq Scan",
-                    TableName = "users",
-                    EstimatedRows = 50,
-                    EstimatedRowsRead = 500000,
-                    RelativeCost = 0.9,
-                    PredicateColumns = { "country", "is_active" },
-                    OutputColumns = { "id", "email", "country" }
+                    Operator = ExecutionPlanValidationTestsConstants.SeqScanOperator,
+                    TableName = ExecutionPlanValidationTestsConstants.UsersTable,
+                    EstimatedRows = ExecutionPlanValidationTestsConstants.SeqScanEstimatedRows,
+                    EstimatedRowsRead = ExecutionPlanValidationTestsConstants.SeqScanEstimatedRowsRead,
+                    RelativeCost = ExecutionPlanValidationTestsConstants.SeqScanRelativeCost,
+                    PredicateColumns = { ExecutionPlanValidationTestsConstants.CountryColumn, ExecutionPlanValidationTestsConstants.IsActiveColumn },
+                    OutputColumns = { ExecutionPlanValidationTestsConstants.IdColumn, ExecutionPlanValidationTestsConstants.EmailColumn, ExecutionPlanValidationTestsConstants.CountryColumn }
                 }
             }
         };
@@ -189,10 +189,10 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
         // Arrange
         var plan = new ExecutionPlan
         {
-            Dialect = (PlanDialect)999,
-            StatementText = "SELECT * FROM users",
-            EstimatedTotalCost = 100,
-            Nodes = { new PlanNode { Operator = "Seq Scan" } }
+            Dialect = (PlanDialect)ExecutionPlanValidationTestsConstants.InvalidDialectValue,
+            StatementText = ExecutionPlanValidationTestsConstants.SelectAllUsersStatement,
+            EstimatedTotalCost = ExecutionPlanValidationTestsConstants.ValidEstimatedTotalCost,
+            Nodes = { new PlanNode { Operator = ExecutionPlanValidationTestsConstants.SeqScanOperator } }
         };
 
         // Act
@@ -200,7 +200,7 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
 
         // Assert
         Assert.Single(problems);
-        Assert.Contains("Invalid Dialect value", problems[0]);
+        Assert.Contains(ExecutionPlanValidationTestsConstants.InvalidDialectMessage, problems[0]);
     }
 
     /// <summary>
@@ -213,9 +213,9 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.SqlServer,
-            StatementText = "SELECT * FROM users",
+            StatementText = ExecutionPlanValidationTestsConstants.SelectAllUsersStatement,
             EstimatedTotalCost = double.NaN,
-            Nodes = { new PlanNode { Operator = "Seq Scan" } }
+            Nodes = { new PlanNode { Operator = ExecutionPlanValidationTestsConstants.SeqScanOperator } }
         };
 
         // Act
@@ -223,7 +223,7 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
 
         // Assert
         Assert.Single(problems);
-        Assert.Contains("EstimatedTotalCost cannot be NaN", problems[0]);
+        Assert.Contains(ExecutionPlanValidationTestsConstants.EstimatedTotalCostNaNMessage, problems[0]);
     }
 
     /// <summary>
@@ -236,9 +236,9 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.SqlServer,
-            StatementText = "SELECT * FROM users",
+            StatementText = ExecutionPlanValidationTestsConstants.SelectAllUsersStatement,
             EstimatedTotalCost = double.PositiveInfinity,
-            Nodes = { new PlanNode { Operator = "Seq Scan" } }
+            Nodes = { new PlanNode { Operator = ExecutionPlanValidationTestsConstants.SeqScanOperator } }
         };
 
         // Act
@@ -246,7 +246,7 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
 
         // Assert
         Assert.Single(problems);
-        Assert.Contains("EstimatedTotalCost cannot be infinite", problems[0]);
+        Assert.Contains(ExecutionPlanValidationTestsConstants.EstimatedTotalCostInfiniteMessage, problems[0]);
     }
 
     /// <summary>
@@ -259,8 +259,8 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.SqlServer,
-            StatementText = "SELECT * FROM users",
-            EstimatedTotalCost = 100,
+            StatementText = ExecutionPlanValidationTestsConstants.SelectAllUsersStatement,
+            EstimatedTotalCost = ExecutionPlanValidationTestsConstants.ValidEstimatedTotalCost,
             Nodes = null
         };
 
@@ -269,7 +269,7 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
 
         // Assert
         Assert.Single(problems);
-        Assert.Contains("Nodes collection cannot be null", problems[0]);
+        Assert.Contains(ExecutionPlanValidationTestsConstants.NodesNullMessage, problems[0]);
     }
 
     /// <summary>
@@ -282,8 +282,8 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.SqlServer,
-            StatementText = "SELECT * FROM users",
-            EstimatedTotalCost = 100,
+            StatementText = ExecutionPlanValidationTestsConstants.SelectAllUsersStatement,
+            EstimatedTotalCost = ExecutionPlanValidationTestsConstants.ValidEstimatedTotalCost,
             Nodes = { null }
         };
 
@@ -292,7 +292,7 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
 
         // Assert
         Assert.Single(problems);
-        Assert.Contains("Nodes[0] cannot be null", problems[0]);
+        Assert.Contains(ExecutionPlanValidationTestsConstants.NullNodeMessage, problems[0]);
     }
 
     /// <summary>
@@ -305,8 +305,8 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.SqlServer,
-            StatementText = "SELECT * FROM users",
-            EstimatedTotalCost = 100,
+            StatementText = ExecutionPlanValidationTestsConstants.SelectAllUsersStatement,
+            EstimatedTotalCost = ExecutionPlanValidationTestsConstants.ValidEstimatedTotalCost,
             Nodes = { new PlanNode { Operator = "" } }
         };
 
@@ -315,7 +315,7 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
 
         // Assert
         Assert.Single(problems);
-        Assert.Contains("Nodes[0].Operator cannot be null or empty", problems[0]);
+        Assert.Contains(ExecutionPlanValidationTestsConstants.EmptyOperatorMessage, problems[0]);
     }
 
     /// <summary>
@@ -328,9 +328,9 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.SqlServer,
-            StatementText = "SELECT * FROM users",
-            EstimatedTotalCost = 100,
-            Nodes = { new PlanNode { Operator = "Seq Scan", EstimatedRows = -1 } }
+            StatementText = ExecutionPlanValidationTestsConstants.SelectAllUsersStatement,
+            EstimatedTotalCost = ExecutionPlanValidationTestsConstants.ValidEstimatedTotalCost,
+            Nodes = { new PlanNode { Operator = ExecutionPlanValidationTestsConstants.SeqScanOperator, EstimatedRows = ExecutionPlanValidationTestsConstants.NegativeEstimatedRows } }
         };
 
         // Act
@@ -338,7 +338,7 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
 
         // Assert
         Assert.Single(problems);
-        Assert.Contains("Nodes[0].EstimatedRows cannot be negative", problems[0]);
+        Assert.Contains(ExecutionPlanValidationTestsConstants.NegativeEstimatedRowsMessage, problems[0]);
     }
 
     /// <summary>
@@ -351,9 +351,9 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.SqlServer,
-            StatementText = "SELECT * FROM users",
-            EstimatedTotalCost = 100,
-            Nodes = { new PlanNode { Operator = "Seq Scan", EstimatedRows = double.NaN } }
+            StatementText = ExecutionPlanValidationTestsConstants.SelectAllUsersStatement,
+            EstimatedTotalCost = ExecutionPlanValidationTestsConstants.ValidEstimatedTotalCost,
+            Nodes = { new PlanNode { Operator = ExecutionPlanValidationTestsConstants.SeqScanOperator, EstimatedRows = double.NaN } }
         };
 
         // Act
@@ -361,7 +361,7 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
 
         // Assert
         Assert.Single(problems);
-        Assert.Contains("Nodes[0].EstimatedRows cannot be NaN", problems[0]);
+        Assert.Contains(ExecutionPlanValidationTestsConstants.NaNEstimatedRowsMessage, problems[0]);
     }
 
     /// <summary>
@@ -374,9 +374,9 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.SqlServer,
-            StatementText = "SELECT * FROM users",
-            EstimatedTotalCost = 100,
-            Nodes = { new PlanNode { Operator = "Seq Scan", RelativeCost = 1.5 } }
+            StatementText = ExecutionPlanValidationTestsConstants.SelectAllUsersStatement,
+            EstimatedTotalCost = ExecutionPlanValidationTestsConstants.ValidEstimatedTotalCost,
+            Nodes = { new PlanNode { Operator = ExecutionPlanValidationTestsConstants.SeqScanOperator, RelativeCost = ExecutionPlanValidationTestsConstants.OutOfRangeRelativeCost } }
         };
 
         // Act
@@ -384,7 +384,7 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
 
         // Assert
         Assert.Single(problems);
-        Assert.Contains("Nodes[0].RelativeCost must be between 0 and 1", problems[0]);
+        Assert.Contains(ExecutionPlanValidationTestsConstants.OutOfRangeRelativeCostMessage, problems[0]);
     }
 
     /// <summary>
@@ -397,9 +397,9 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.SqlServer,
-            StatementText = "SELECT * FROM users",
-            EstimatedTotalCost = 100,
-            Nodes = { new PlanNode { Operator = "Seq Scan", PredicateColumns = null } }
+            StatementText = ExecutionPlanValidationTestsConstants.SelectAllUsersStatement,
+            EstimatedTotalCost = ExecutionPlanValidationTestsConstants.ValidEstimatedTotalCost,
+            Nodes = { new PlanNode { Operator = ExecutionPlanValidationTestsConstants.SeqScanOperator, PredicateColumns = null } }
         };
 
         // Act
@@ -407,7 +407,7 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
 
         // Assert
         Assert.Single(problems);
-        Assert.Contains("Nodes[0].PredicateColumns cannot be null", problems[0]);
+        Assert.Contains(ExecutionPlanValidationTestsConstants.NullPredicateColumnsMessage, problems[0]);
     }
 
     /// <summary>
@@ -420,9 +420,9 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.SqlServer,
-            StatementText = "SELECT * FROM users",
-            EstimatedTotalCost = 100,
-            Nodes = { new PlanNode { Operator = "Seq Scan", PredicateColumns = { } }
+            StatementText = ExecutionPlanValidationTestsConstants.SelectAllUsersStatement,
+            EstimatedTotalCost = ExecutionPlanValidationTestsConstants.ValidEstimatedTotalCost,
+            Nodes = { new PlanNode { Operator = ExecutionPlanValidationTestsConstants.SeqScanOperator, PredicateColumns = { } }
             }
         };
 
@@ -443,8 +443,8 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.SqlServer,
-            StatementText = "SELECT * FROM users",
-            EstimatedTotalCost = 100,
+            StatementText = ExecutionPlanValidationTestsConstants.SelectAllUsersStatement,
+            EstimatedTotalCost = ExecutionPlanValidationTestsConstants.ValidEstimatedTotalCost,
             EngineMissingIndexes = null
         };
 
@@ -453,7 +453,7 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
 
         // Assert
         Assert.Single(problems);
-        Assert.Contains("EngineMissingIndexes collection cannot be null", problems[0]);
+        Assert.Contains(ExecutionPlanValidationTestsConstants.NullEngineMissingIndexesMessage, problems[0]);
     }
 
     /// <summary>
@@ -466,8 +466,8 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.SqlServer,
-            StatementText = "SELECT * FROM users",
-            EstimatedTotalCost = 100,
+            StatementText = ExecutionPlanValidationTestsConstants.SelectAllUsersStatement,
+            EstimatedTotalCost = ExecutionPlanValidationTestsConstants.ValidEstimatedTotalCost,
             EngineMissingIndexes = { null }
         };
 
@@ -476,7 +476,7 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
 
         // Assert
         Assert.Single(problems);
-        Assert.Contains("EngineMissingIndexes[0] cannot be null", problems[0]);
+        Assert.Contains(ExecutionPlanValidationTestsConstants.NullMissingIndexMessage, problems[0]);
     }
 
     /// <summary>
@@ -489,8 +489,8 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.SqlServer,
-            StatementText = "SELECT * FROM users",
-            EstimatedTotalCost = 100,
+            StatementText = ExecutionPlanValidationTestsConstants.SelectAllUsersStatement,
+            EstimatedTotalCost = ExecutionPlanValidationTestsConstants.ValidEstimatedTotalCost,
             EngineMissingIndexes = { new EngineMissingIndex { Table = "" } }
         };
 
@@ -499,7 +499,7 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
 
         // Assert
         Assert.Single(problems);
-        Assert.Contains("EngineMissingIndexes[0].Table cannot be null or empty", problems[0]);
+        Assert.Contains(ExecutionPlanValidationTestsConstants.EmptyMissingIndexTableMessage, problems[0]);
     }
 
     /// <summary>
@@ -512,9 +512,9 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.SqlServer,
-            StatementText = "SELECT * FROM users",
-            EstimatedTotalCost = 100,
-            EngineMissingIndexes = { new EngineMissingIndex { Table = "users", ImpactPercent = 150 } }
+            StatementText = ExecutionPlanValidationTestsConstants.SelectAllUsersStatement,
+            EstimatedTotalCost = ExecutionPlanValidationTestsConstants.ValidEstimatedTotalCost,
+            EngineMissingIndexes = { new EngineMissingIndex { Table = ExecutionPlanValidationTestsConstants.UsersTable, ImpactPercent = ExecutionPlanValidationTestsConstants.OutOfRangeImpactPercent } }
         };
 
         // Act
@@ -522,7 +522,7 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
 
         // Assert
         Assert.Single(problems);
-        Assert.Contains("EngineMissingIndexes[0].ImpactPercent must be between 0 and 100", problems[0]);
+        Assert.Contains(ExecutionPlanValidationTestsConstants.OutOfRangeImpactPercentMessage, problems[0]);
     }
 
     /// <summary>
@@ -535,19 +535,19 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.Postgres,
-            StatementText = "SELECT * FROM users WHERE active = true",
-            EstimatedTotalCost = 45.5,
+            StatementText = ExecutionPlanValidationTestsConstants.PostgresActiveUsersStatement,
+            EstimatedTotalCost = ExecutionPlanValidationTestsConstants.PostgresEstimatedTotalCost,
             Nodes =
             {
                 new PlanNode
                 {
-                    Operator = "Seq Scan",
-                    TableName = "users",
-                    EstimatedRows = 1000,
-                    EstimatedRowsRead = 1000,
-                    RelativeCost = 0.85,
-                    PredicateColumns = { "active" },
-                    OutputColumns = { "id", "name", "email" }
+                    Operator = ExecutionPlanValidationTestsConstants.SeqScanOperator,
+                    TableName = ExecutionPlanValidationTestsConstants.UsersTable,
+                    EstimatedRows = ExecutionPlanValidationTestsConstants.PostgresEstimatedRows,
+                    EstimatedRowsRead = ExecutionPlanValidationTestsConstants.PostgresEstimatedRowsRead,
+                    RelativeCost = ExecutionPlanValidationTestsConstants.PostgresRelativeCost,
+                    PredicateColumns = { ExecutionPlanValidationTestsConstants.ActiveColumn },
+                    OutputColumns = { ExecutionPlanValidationTestsConstants.IdColumn, ExecutionPlanValidationTestsConstants.NameColumn, ExecutionPlanValidationTestsConstants.EmailColumn }
                 }
             }
         };
@@ -569,9 +569,9 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.SqlServer,
-            StatementText = "SELECT * FROM users",
-            EstimatedTotalCost = -50,
-            Nodes = { new PlanNode { Operator = "Seq Scan" } }
+            StatementText = ExecutionPlanValidationTestsConstants.SelectAllUsersStatement,
+            EstimatedTotalCost = ExecutionPlanValidationTestsConstants.NegativeEstimatedTotalCostAlt,
+            Nodes = { new PlanNode { Operator = ExecutionPlanValidationTestsConstants.SeqScanOperator } }
         };
 
         // Act
@@ -591,19 +591,19 @@ public class ExecutionPlanValidationTests : IExecutionPlanValidationTests
         var plan = new ExecutionPlan
         {
             Dialect = PlanDialect.SqlServer,
-            StatementText = "SELECT * FROM users",
-            EstimatedTotalCost = 100,
+            StatementText = ExecutionPlanValidationTestsConstants.SelectAllUsersStatement,
+            EstimatedTotalCost = ExecutionPlanValidationTestsConstants.ValidEstimatedTotalCost,
             Nodes =
             {
                 new PlanNode
                 {
-                    Operator = "Index Scan",
-                    TableName = "users",
-                    EstimatedRows = 10,
-                    EstimatedRowsRead = 10,
-                    RelativeCost = 0.1,
-                    PredicateColumns = { "id" },
-                    OutputColumns = { "id", "name" }
+                    Operator = ExecutionPlanValidationTestsConstants.IndexScanOperator,
+                    TableName = ExecutionPlanValidationTestsConstants.UsersTable,
+                    EstimatedRows = ExecutionPlanValidationTestsConstants.IndexScanEstimatedRows,
+                    EstimatedRowsRead = ExecutionPlanValidationTestsConstants.IndexScanEstimatedRowsRead,
+                    RelativeCost = ExecutionPlanValidationTestsConstants.IndexScanRelativeCost,
+                    PredicateColumns = { ExecutionPlanValidationTestsConstants.IdColumn },
+                    OutputColumns = { ExecutionPlanValidationTestsConstants.IdColumn, ExecutionPlanValidationTestsConstants.NameColumn }
                 }
             }
         };
