@@ -15,7 +15,7 @@ public sealed class MissingJoinIndexRule : PlanNodeVisitorBase
     /// <summary>
     /// A join with full scan cheaper than this share of the statement isn't worth an index.
     /// </summary>
-    private const double MinRelativeCost = 0.10;
+    private const double MinRelativeCost = MissingJoinIndexRuleConstants.MinRelativeCost;
 
     private readonly RecommendationOptions _options;
 
@@ -74,8 +74,8 @@ public sealed class MissingJoinIndexRule : PlanNodeVisitorBase
         var rows = ScanRowStats.From(node);
         var baseline = node.RelativeCost switch
         {
-            >= 0.60 => Confidence.High,
-            >= 0.30 => Confidence.Medium,
+            >= MissingJoinIndexRuleConstants.HighConfidenceRelativeCost => Confidence.High,
+            >= MissingJoinIndexRuleConstants.MediumConfidenceRelativeCost => Confidence.Medium,
             _ => Confidence.Low
         };
 
@@ -84,15 +84,17 @@ public sealed class MissingJoinIndexRule : PlanNodeVisitorBase
             Table = node.TableName!,
             KeyColumns = node.PredicateColumns.ToList(),
             IncludeColumns = include,
-            EstimatedImpactPercent = Math.Round(node.RelativeCost * 100.0, 1),
+            EstimatedImpactPercent = Math.Round(node.RelativeCost * MissingJoinIndexRuleConstants.PercentScale, MissingJoinIndexRuleConstants.ImpactDecimals),
             SourceNodeCost = node.RelativeCost,
             Confidence = rows.AdjustConfidence(baseline, _options),
             Reasons =
             [
-                $"Scan on {node.TableName} with join predicate on " +
-                $"({string.Join(", ", node.PredicateColumns)}) is part of a {node.Parent!.Operator} join " +
-                $"and is ~{node.RelativeCost * 100:0}% of statement cost. " +
-                "An index on the join predicate columns would eliminate the full scan.",
+                string.Format(
+                    MissingJoinIndexRuleConstants.ReasonFormat,
+                    node.TableName,
+                    string.Join(", ", node.PredicateColumns),
+                    node.Parent!.Operator,
+                    node.RelativeCost * MissingJoinIndexRuleConstants.PercentScale),
                 .. rows.Describe(_options)
             ]
         };
@@ -109,8 +111,8 @@ public sealed class MissingJoinIndexRule : PlanNodeVisitorBase
             return false;
 
         var parentOp = parent.Operator;
-        return parentOp.Contains("Nested Loops", StringComparison.OrdinalIgnoreCase) ||
-               parentOp.Contains("Hash Match", StringComparison.OrdinalIgnoreCase) ||
-               parentOp.Contains("Merge Join", StringComparison.OrdinalIgnoreCase);
+        return parentOp.Contains(MissingJoinIndexRuleConstants.NestedLoopsOperator, StringComparison.OrdinalIgnoreCase) ||
+               parentOp.Contains(MissingJoinIndexRuleConstants.HashMatchOperator, StringComparison.OrdinalIgnoreCase) ||
+               parentOp.Contains(MissingJoinIndexRuleConstants.MergeJoinOperator, StringComparison.OrdinalIgnoreCase);
     }
 }
