@@ -10,36 +10,36 @@ public class ExecutionPlanTests : IExecutionPlanTests
     private readonly ExecutionPlan _samplePlan = new()
     {
         Dialect = PlanDialect.SqlServer,
-        StatementText = "SELECT * FROM Users WHERE Name = 'test'",
-        EstimatedTotalCost = 123.45,
+        StatementText = ExecutionPlanTestsConstants.UsersByNameStatement,
+        EstimatedTotalCost = ExecutionPlanTestsConstants.SamplePlanEstimatedTotalCost,
         Nodes = new List<PlanNode>
         {
             new PlanNode
             {
-                Operator = "Clustered Index Scan",
-                TableName = "dbo.Users",
-                IndexName = "PK_Users",
-                EstimatedRows = 1000,
-                EstimatedRowsRead = 1000
+                Operator = ExecutionPlanTestsConstants.ClusteredIndexScanOperator,
+                TableName = ExecutionPlanTestsConstants.UsersTable,
+                IndexName = ExecutionPlanTestsConstants.PrimaryKeyUsersIndex,
+                EstimatedRows = ExecutionPlanTestsConstants.SamplePlanUsersEstimatedRows,
+                EstimatedRowsRead = ExecutionPlanTestsConstants.SamplePlanUsersEstimatedRows
             },
             new PlanNode
             {
-                Operator = "Clustered Index Scan",
-                TableName = "dbo.Orders",
+                Operator = ExecutionPlanTestsConstants.ClusteredIndexScanOperator,
+                TableName = ExecutionPlanTestsConstants.OrdersTable,
                 IndexName = null,
-                EstimatedRows = 500,
-                EstimatedRowsRead = 500
+                EstimatedRows = ExecutionPlanTestsConstants.SamplePlanOrdersEstimatedRows,
+                EstimatedRowsRead = ExecutionPlanTestsConstants.SamplePlanOrdersEstimatedRows
             }
         },
         EngineMissingIndexes = new List<EngineMissingIndex>
         {
             new EngineMissingIndex
             {
-                Table = "dbo.Users",
-                ImpactPercent = 95.5,
-                EqualityColumns = new List<string> { "Name", "Email" },
+                Table = ExecutionPlanTestsConstants.UsersTable,
+                ImpactPercent = ExecutionPlanTestsConstants.SamplePlanImpactPercent,
+                EqualityColumns = new List<string> { ExecutionPlanTestsConstants.NameColumn, ExecutionPlanTestsConstants.EmailColumn },
                 InequalityColumns = new List<string>(),
-                IncludeColumns = new List<string> { "CreatedDate" }
+                IncludeColumns = new List<string> { ExecutionPlanTestsConstants.CreatedDateColumn }
             }
         }
     };
@@ -118,10 +118,10 @@ public class ExecutionPlanTests : IExecutionPlanTests
     public void StatementText_SetAndGet_ReturnsCorrectValue()
     {
         // Arrange & Act
-        var plan = new ExecutionPlan { StatementText = "SELECT * FROM Products WHERE Price > 100" };
+        var plan = new ExecutionPlan { StatementText = ExecutionPlanTestsConstants.ProductsByPriceStatement };
 
         // Assert
-        Assert.Equal("SELECT * FROM Products WHERE Price > 100", plan.StatementText);
+        Assert.Equal(ExecutionPlanTestsConstants.ProductsByPriceStatement, plan.StatementText);
     }
 
     /// <summary>
@@ -157,10 +157,10 @@ public class ExecutionPlanTests : IExecutionPlanTests
     public void EstimatedTotalCost_SetAndGet_ReturnsCorrectValue()
     {
         // Arrange & Act
-        var plan = new ExecutionPlan { EstimatedTotalCost = 999.99 };
+        var plan = new ExecutionPlan { EstimatedTotalCost = ExecutionPlanTestsConstants.MaxEstimatedTotalCost };
 
         // Assert
-        Assert.Equal(999.99, plan.EstimatedTotalCost);
+        Assert.Equal(ExecutionPlanTestsConstants.MaxEstimatedTotalCost, plan.EstimatedTotalCost);
     }
 
     /// <summary>
@@ -183,10 +183,10 @@ public class ExecutionPlanTests : IExecutionPlanTests
     public void EstimatedTotalCost_WithNegativeValue_ReturnsNegativeValue()
     {
         // Act
-        var plan = new ExecutionPlan { EstimatedTotalCost = -1.5 };
+        var plan = new ExecutionPlan { EstimatedTotalCost = ExecutionPlanTestsConstants.NegativeEstimatedTotalCost };
 
         // Assert
-        Assert.Equal(-1.5, plan.EstimatedTotalCost);
+        Assert.Equal(ExecutionPlanTestsConstants.NegativeEstimatedTotalCost, plan.EstimatedTotalCost);
     }
 
     /// <summary>
@@ -198,8 +198,8 @@ public class ExecutionPlanTests : IExecutionPlanTests
         // Arrange
         var nodes = new List<PlanNode>
         {
-            new PlanNode { Operator = "Index Scan" },
-            new PlanNode { Operator = "Filter" }
+            new PlanNode { Operator = ExecutionPlanTestsConstants.IndexScanOperator },
+            new PlanNode { Operator = ExecutionPlanTestsConstants.FilterOperator }
         };
 
         // Arrange & Act
@@ -207,9 +207,9 @@ public class ExecutionPlanTests : IExecutionPlanTests
 
         // Assert
         Assert.NotNull(plan.Nodes);
-        Assert.Equal(2, plan.Nodes.Count);
-        Assert.Equal("Index Scan", plan.Nodes[0].Operator);
-        Assert.Equal("Filter", plan.Nodes[1].Operator);
+        Assert.Equal(ExecutionPlanTestsConstants.TwoItemCollectionCount, plan.Nodes.Count);
+        Assert.Equal(ExecutionPlanTestsConstants.IndexScanOperator, plan.Nodes[0].Operator);
+        Assert.Equal(ExecutionPlanTestsConstants.FilterOperator, plan.Nodes[1].Operator);
     }
 
     /// <summary>
@@ -249,8 +249,8 @@ public class ExecutionPlanTests : IExecutionPlanTests
         // Arrange
         var missingIndexes = new List<EngineMissingIndex>
         {
-            new EngineMissingIndex { Table = "Table1", ImpactPercent = 50 },
-            new EngineMissingIndex { Table = "Table2", ImpactPercent = 75 }
+            new EngineMissingIndex { Table = ExecutionPlanTestsConstants.Table1, ImpactPercent = ExecutionPlanTestsConstants.MissingIndexImpactPercent },
+            new EngineMissingIndex { Table = ExecutionPlanTestsConstants.Table2, ImpactPercent = ExecutionPlanTestsConstants.OtherMissingIndexImpactPercent }
         };
 
         // Arrange & Act
@@ -258,9 +258,9 @@ public class ExecutionPlanTests : IExecutionPlanTests
 
         // Assert
         Assert.NotNull(plan.EngineMissingIndexes);
-        Assert.Equal(2, plan.EngineMissingIndexes.Count);
-        Assert.Equal("Table1", plan.EngineMissingIndexes[0].Table);
-        Assert.Equal("Table2", plan.EngineMissingIndexes[1].Table);
+        Assert.Equal(ExecutionPlanTestsConstants.TwoItemCollectionCount, plan.EngineMissingIndexes.Count);
+        Assert.Equal(ExecutionPlanTestsConstants.Table1, plan.EngineMissingIndexes[0].Table);
+        Assert.Equal(ExecutionPlanTestsConstants.Table2, plan.EngineMissingIndexes[1].Table);
     }
 
     /// <summary>
@@ -308,7 +308,7 @@ public class ExecutionPlanTests : IExecutionPlanTests
     public void SamplePlan_HasCorrectStatementText()
     {
         // Assert
-        Assert.Equal("SELECT * FROM Users WHERE Name = 'test'", _samplePlan.StatementText);
+        Assert.Equal(ExecutionPlanTestsConstants.UsersByNameStatement, _samplePlan.StatementText);
     }
 
     /// <summary>
@@ -318,7 +318,7 @@ public class ExecutionPlanTests : IExecutionPlanTests
     public void SamplePlan_HasCorrectEstimatedTotalCost()
     {
         // Assert
-        Assert.Equal(123.45, _samplePlan.EstimatedTotalCost);
+        Assert.Equal(ExecutionPlanTestsConstants.SamplePlanEstimatedTotalCost, _samplePlan.EstimatedTotalCost);
     }
 
     /// <summary>
@@ -328,7 +328,7 @@ public class ExecutionPlanTests : IExecutionPlanTests
     public void SamplePlan_HasCorrectNodesCount()
     {
         // Assert
-        Assert.Equal(2, _samplePlan.Nodes.Count);
+        Assert.Equal(ExecutionPlanTestsConstants.SamplePlanNodeCount, _samplePlan.Nodes.Count);
     }
 
     /// <summary>
@@ -338,7 +338,7 @@ public class ExecutionPlanTests : IExecutionPlanTests
     public void SamplePlan_HasCorrectEngineMissingIndexesCount()
     {
         // Assert
-        Assert.Equal(1, _samplePlan.EngineMissingIndexes.Count);
+        Assert.Equal(ExecutionPlanTestsConstants.SamplePlanEngineMissingIndexCount, _samplePlan.EngineMissingIndexes.Count);
     }
 
     /// <summary>
@@ -398,12 +398,12 @@ public class ExecutionPlanTests : IExecutionPlanTests
     public void PlanNode_WithParentProperty_LinksCorrectly()
     {
         // Arrange
-        var parentNode = new PlanNode { Operator = "Parent" };
-        var childNode = new PlanNode { Operator = "Child", Parent = parentNode };
+        var parentNode = new PlanNode { Operator = ExecutionPlanTestsConstants.ParentOperator };
+        var childNode = new PlanNode { Operator = ExecutionPlanTestsConstants.ChildOperator, Parent = parentNode };
 
         // Assert
         Assert.NotNull(childNode.Parent);
-        Assert.Equal("Parent", childNode.Parent.Operator);
+        Assert.Equal(ExecutionPlanTestsConstants.ParentOperator, childNode.Parent.Operator);
         Assert.Null(parentNode.Parent); // parentNode has no parent
     }
 
@@ -414,7 +414,7 @@ public class ExecutionPlanTests : IExecutionPlanTests
     public void PlanNode_IsScan_WithScanOperator_ReturnsTrue()
     {
         // Arrange
-        var scanNode = new PlanNode { Operator = "Clustered Index Scan" };
+        var scanNode = new PlanNode { Operator = ExecutionPlanTestsConstants.ClusteredIndexScanOperator };
 
         // Assert
         Assert.True(scanNode.IsScan);
@@ -427,7 +427,7 @@ public class ExecutionPlanTests : IExecutionPlanTests
     public void PlanNode_IsScan_WithIndexOnlyScanOperator_ReturnsFalse()
     {
         // Arrange
-        var indexOnlyNode = new PlanNode { Operator = "Index Only Scan" };
+        var indexOnlyNode = new PlanNode { Operator = ExecutionPlanTestsConstants.IndexOnlyScanOperator };
 
         // Assert
         Assert.False(indexOnlyNode.IsScan);
@@ -440,7 +440,7 @@ public class ExecutionPlanTests : IExecutionPlanTests
     public void PlanNode_IsScan_WithNonScanOperator_ReturnsFalse()
     {
         // Arrange
-        var filterNode = new PlanNode { Operator = "Filter" };
+        var filterNode = new PlanNode { Operator = ExecutionPlanTestsConstants.FilterOperator };
 
         // Assert
         Assert.False(filterNode.IsScan);
@@ -455,19 +455,19 @@ public class ExecutionPlanTests : IExecutionPlanTests
         // Arrange & Act
         var missingIndex = new EngineMissingIndex
         {
-            Table = "dbo.TestTable",
-            ImpactPercent = 87.3,
-            EqualityColumns = new List<string> { "Col1", "Col2" },
-            InequalityColumns = new List<string> { "Col3" },
-            IncludeColumns = new List<string> { "Col4", "Col5", "Col6" }
+            Table = ExecutionPlanTestsConstants.TestTable,
+            ImpactPercent = ExecutionPlanTestsConstants.TestTableImpactPercent,
+            EqualityColumns = new List<string> { ExecutionPlanTestsConstants.Col1Column, ExecutionPlanTestsConstants.Col2Column },
+            InequalityColumns = new List<string> { ExecutionPlanTestsConstants.Col3Column },
+            IncludeColumns = new List<string> { ExecutionPlanTestsConstants.Col4Column, ExecutionPlanTestsConstants.Col5Column, ExecutionPlanTestsConstants.Col6Column }
         };
 
         // Assert
-        Assert.Equal("dbo.TestTable", missingIndex.Table);
-        Assert.Equal(87.3, missingIndex.ImpactPercent);
-        Assert.Equal(2, missingIndex.EqualityColumns.Count);
-        Assert.Equal("Col1", missingIndex.EqualityColumns[0]);
-        Assert.Equal("Col3", missingIndex.InequalityColumns[0]);
-        Assert.Equal(3, missingIndex.IncludeColumns.Count);
+        Assert.Equal(ExecutionPlanTestsConstants.TestTable, missingIndex.Table);
+        Assert.Equal(ExecutionPlanTestsConstants.TestTableImpactPercent, missingIndex.ImpactPercent);
+        Assert.Equal(ExecutionPlanTestsConstants.TestTableEqualityColumnCount, missingIndex.EqualityColumns.Count);
+        Assert.Equal(ExecutionPlanTestsConstants.Col1Column, missingIndex.EqualityColumns[0]);
+        Assert.Equal(ExecutionPlanTestsConstants.Col3Column, missingIndex.InequalityColumns[0]);
+        Assert.Equal(ExecutionPlanTestsConstants.TestTableIncludeColumnCount, missingIndex.IncludeColumns.Count);
     }
 }
