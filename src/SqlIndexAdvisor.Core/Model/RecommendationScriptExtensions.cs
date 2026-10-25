@@ -19,6 +19,8 @@ public static class RecommendationScriptExtensions
     /// <returns>A SQL script that creates the index.</returns>
     public static string ToCreateIndexSql(this IndexRecommendation recommendation, SqlDialect dialect)
     {
+        ArgumentNullException.ThrowIfNull(recommendation);
+
         var tableName = recommendation.Table;
         var keyColumns = string.Join(", ", recommendation.KeyColumns);
         var includeColumns = string.Join(", ", recommendation.IncludeColumns);
