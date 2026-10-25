@@ -17,21 +17,21 @@ public class RecommendationMergerTests : IRecommendationMergerTests
         {
             new IndexRecommendation
             {
-                Table = "Users",
-                KeyColumns = new List<string> { "Country", "IsActive" },
-                IncludeColumns = new List<string> { "Email", "Name" },
-                EstimatedImpactPercent = 50.0,
+                Table = RecommendationMergerTestsConstants.UsersTable,
+                KeyColumns = new List<string> { RecommendationMergerTestsConstants.CountryColumn, RecommendationMergerTestsConstants.IsActiveColumn },
+                IncludeColumns = new List<string> { RecommendationMergerTestsConstants.EmailColumn, RecommendationMergerTestsConstants.NameColumn },
+                EstimatedImpactPercent = RecommendationMergerTestsConstants.BaseImpactPercent,
                 Confidence = Confidence.High,
-                Reasons = new List<string> { "FullScanWithFilterRule" }
+                Reasons = new List<string> { RecommendationMergerTestsConstants.FullScanWithFilterRuleReason }
             },
             new IndexRecommendation
             {
-                Table = "Users",
-                KeyColumns = new List<string> { "Country", "IsActive", "CreatedAt" },
-                IncludeColumns = new List<string> { "TotalOrders" },
-                EstimatedImpactPercent = 75.0,
+                Table = RecommendationMergerTestsConstants.UsersTable,
+                KeyColumns = new List<string> { RecommendationMergerTestsConstants.CountryColumn, RecommendationMergerTestsConstants.IsActiveColumn, RecommendationMergerTestsConstants.CreatedAtColumn },
+                IncludeColumns = new List<string> { RecommendationMergerTestsConstants.TotalOrdersColumn },
+                EstimatedImpactPercent = RecommendationMergerTestsConstants.PeakImpactPercent,
                 Confidence = Confidence.High,
-                Reasons = new List<string> { "ExpensiveSortRule" }
+                Reasons = new List<string> { RecommendationMergerTestsConstants.ExpensiveSortRuleReason }
             }
         };
 
@@ -42,20 +42,20 @@ public class RecommendationMergerTests : IRecommendationMergerTests
         var result = Assert.Single(merged);
 
         // Verify the wider index was kept
-        Assert.Equal("Users", result.Table);
-        Assert.Equal(new[] { "Country", "IsActive", "CreatedAt" }, result.KeyColumns);
+        Assert.Equal(RecommendationMergerTestsConstants.UsersTable, result.Table);
+        Assert.Equal(new[] { RecommendationMergerTestsConstants.CountryColumn, RecommendationMergerTestsConstants.IsActiveColumn, RecommendationMergerTestsConstants.CreatedAtColumn }, result.KeyColumns);
 
         // Verify includes were merged
-        Assert.Contains("Email", result.IncludeColumns);
-        Assert.Contains("Name", result.IncludeColumns);
-        Assert.Contains("TotalOrders", result.IncludeColumns);
+        Assert.Contains(RecommendationMergerTestsConstants.EmailColumn, result.IncludeColumns);
+        Assert.Contains(RecommendationMergerTestsConstants.NameColumn, result.IncludeColumns);
+        Assert.Contains(RecommendationMergerTestsConstants.TotalOrdersColumn, result.IncludeColumns);
 
         // Verify impact and confidence were preserved
-        Assert.Equal(75.0, result.EstimatedImpactPercent);
+        Assert.Equal(RecommendationMergerTestsConstants.PeakImpactPercent, result.EstimatedImpactPercent);
         Assert.Equal(Confidence.High, result.Confidence);
 
         // Verify reasons were merged
-        Assert.Equal(3, result.Reasons.Count);
+        Assert.Equal(RecommendationMergerTestsConstants.ExpectedMergedReasonCount, result.Reasons.Count);
     }
 
     [Fact]
@@ -66,21 +66,21 @@ public class RecommendationMergerTests : IRecommendationMergerTests
         {
             new IndexRecommendation
             {
-                Table = "Orders",
-                KeyColumns = new List<string> { "Status", "OrderDate" },
-                IncludeColumns = new List<string> { "Total" },
-                EstimatedImpactPercent = 60.0,
+                Table = RecommendationMergerTestsConstants.OrdersTable,
+                KeyColumns = new List<string> { RecommendationMergerTestsConstants.StatusColumn, RecommendationMergerTestsConstants.OrderDateColumn },
+                IncludeColumns = new List<string> { RecommendationMergerTestsConstants.TotalColumn },
+                EstimatedImpactPercent = RecommendationMergerTestsConstants.ModerateImpactPercent,
                 Confidence = Confidence.Medium,
-                Reasons = new List<string> { "Rule1" }
+                Reasons = new List<string> { RecommendationMergerTestsConstants.Rule1Reason }
             },
             new IndexRecommendation
             {
-                Table = "Orders",
-                KeyColumns = new List<string> { "Status", "OrderDate" },
-                IncludeColumns = new List<string> { "CustomerId" },
-                EstimatedImpactPercent = 65.0,
+                Table = RecommendationMergerTestsConstants.OrdersTable,
+                KeyColumns = new List<string> { RecommendationMergerTestsConstants.StatusColumn, RecommendationMergerTestsConstants.OrderDateColumn },
+                IncludeColumns = new List<string> { RecommendationMergerTestsConstants.CustomerIdColumn },
+                EstimatedImpactPercent = RecommendationMergerTestsConstants.HighImpactPercent,
                 Confidence = Confidence.High,
-                Reasons = new List<string> { "Rule2" }
+                Reasons = new List<string> { RecommendationMergerTestsConstants.Rule2Reason }
             }
         };
 
@@ -90,19 +90,19 @@ public class RecommendationMergerTests : IRecommendationMergerTests
         // Assert: Should have only one recommendation
         var result = Assert.Single(merged);
 
-        Assert.Equal("Orders", result.Table);
-        Assert.Equal(new[] { "Status", "OrderDate" }, result.KeyColumns);
+        Assert.Equal(RecommendationMergerTestsConstants.OrdersTable, result.Table);
+        Assert.Equal(new[] { RecommendationMergerTestsConstants.StatusColumn, RecommendationMergerTestsConstants.OrderDateColumn }, result.KeyColumns);
 
         // Includes should be merged
-        Assert.Contains("Total", result.IncludeColumns);
-        Assert.Contains("CustomerId", result.IncludeColumns);
+        Assert.Contains(RecommendationMergerTestsConstants.TotalColumn, result.IncludeColumns);
+        Assert.Contains(RecommendationMergerTestsConstants.CustomerIdColumn, result.IncludeColumns);
 
         // Max impact and confidence should be used
-        Assert.Equal(65.0, result.EstimatedImpactPercent);
+        Assert.Equal(RecommendationMergerTestsConstants.HighImpactPercent, result.EstimatedImpactPercent);
         Assert.Equal(Confidence.High, result.Confidence);
 
         // Reasons should be merged
-        Assert.Equal(3, result.Reasons.Count);
+        Assert.Equal(RecommendationMergerTestsConstants.ExpectedMergedReasonCount, result.Reasons.Count);
     }
 
     [Fact]
@@ -113,21 +113,21 @@ public class RecommendationMergerTests : IRecommendationMergerTests
         {
             new IndexRecommendation
             {
-                Table = "Users",
-                KeyColumns = new List<string> { "Country" },
+                Table = RecommendationMergerTestsConstants.UsersTable,
+                KeyColumns = new List<string> { RecommendationMergerTestsConstants.CountryColumn },
                 IncludeColumns = new List<string>(),
-                EstimatedImpactPercent = 50.0,
+                EstimatedImpactPercent = RecommendationMergerTestsConstants.BaseImpactPercent,
                 Confidence = Confidence.High,
-                Reasons = new List<string> { "Rule1" }
+                Reasons = new List<string> { RecommendationMergerTestsConstants.Rule1Reason }
             },
             new IndexRecommendation
             {
-                Table = "Orders",
-                KeyColumns = new List<string> { "Country" },
+                Table = RecommendationMergerTestsConstants.OrdersTable,
+                KeyColumns = new List<string> { RecommendationMergerTestsConstants.CountryColumn },
                 IncludeColumns = new List<string>(),
-                EstimatedImpactPercent = 60.0,
+                EstimatedImpactPercent = RecommendationMergerTestsConstants.ModerateImpactPercent,
                 Confidence = Confidence.High,
-                Reasons = new List<string> { "Rule2" }
+                Reasons = new List<string> { RecommendationMergerTestsConstants.Rule2Reason }
             }
         };
 
@@ -135,7 +135,7 @@ public class RecommendationMergerTests : IRecommendationMergerTests
         var merged = RecommendationMerger.Merge(recommendations);
 
         // Assert: Should have both recommendations
-        Assert.Equal(2, merged.Count);
+        Assert.Equal(RecommendationMergerTestsConstants.ExpectedUnmergedCount, merged.Count);
     }
 
     [Fact]
@@ -146,21 +146,21 @@ public class RecommendationMergerTests : IRecommendationMergerTests
         {
             new IndexRecommendation
             {
-                Table = "Users",
-                KeyColumns = new List<string> { "Country", "Name" },
+                Table = RecommendationMergerTestsConstants.UsersTable,
+                KeyColumns = new List<string> { RecommendationMergerTestsConstants.CountryColumn, RecommendationMergerTestsConstants.NameColumn },
                 IncludeColumns = new List<string>(),
-                EstimatedImpactPercent = 50.0,
+                EstimatedImpactPercent = RecommendationMergerTestsConstants.BaseImpactPercent,
                 Confidence = Confidence.High,
-                Reasons = new List<string> { "Rule1" }
+                Reasons = new List<string> { RecommendationMergerTestsConstants.Rule1Reason }
             },
             new IndexRecommendation
             {
-                Table = "Users",
-                KeyColumns = new List<string> { "Status", "OrderDate" },
+                Table = RecommendationMergerTestsConstants.UsersTable,
+                KeyColumns = new List<string> { RecommendationMergerTestsConstants.StatusColumn, RecommendationMergerTestsConstants.OrderDateColumn },
                 IncludeColumns = new List<string>(),
-                EstimatedImpactPercent = 60.0,
+                EstimatedImpactPercent = RecommendationMergerTestsConstants.ModerateImpactPercent,
                 Confidence = Confidence.High,
-                Reasons = new List<string> { "Rule2" }
+                Reasons = new List<string> { RecommendationMergerTestsConstants.Rule2Reason }
             }
         };
 
@@ -168,7 +168,7 @@ public class RecommendationMergerTests : IRecommendationMergerTests
         var merged = RecommendationMerger.Merge(recommendations);
 
         // Assert: Should have both recommendations
-        Assert.Equal(2, merged.Count);
+        Assert.Equal(RecommendationMergerTestsConstants.ExpectedUnmergedCount, merged.Count);
     }
 
     [Fact]
@@ -190,12 +190,12 @@ public class RecommendationMergerTests : IRecommendationMergerTests
         // Arrange
         var recommendation = new IndexRecommendation
         {
-            Table = "Users",
-            KeyColumns = new List<string> { "Id" },
-            IncludeColumns = new List<string> { "Name" },
-            EstimatedImpactPercent = 50.0,
+            Table = RecommendationMergerTestsConstants.UsersTable,
+            KeyColumns = new List<string> { RecommendationMergerTestsConstants.IdColumn },
+            IncludeColumns = new List<string> { RecommendationMergerTestsConstants.NameColumn },
+            EstimatedImpactPercent = RecommendationMergerTestsConstants.BaseImpactPercent,
             Confidence = Confidence.High,
-            Reasons = new List<string> { "Rule1" }
+            Reasons = new List<string> { RecommendationMergerTestsConstants.Rule1Reason }
         };
         var recommendations = new List<IndexRecommendation> { recommendation };
 
@@ -215,21 +215,21 @@ public class RecommendationMergerTests : IRecommendationMergerTests
         {
             new IndexRecommendation
             {
-                Table = "Users",
-                KeyColumns = new List<string> { "Country", "Name" },
+                Table = RecommendationMergerTestsConstants.UsersTable,
+                KeyColumns = new List<string> { RecommendationMergerTestsConstants.CountryColumn, RecommendationMergerTestsConstants.NameColumn },
                 IncludeColumns = new List<string>(),
-                EstimatedImpactPercent = 50.0,
+                EstimatedImpactPercent = RecommendationMergerTestsConstants.BaseImpactPercent,
                 Confidence = Confidence.High,
-                Reasons = new List<string> { "Rule1" }
+                Reasons = new List<string> { RecommendationMergerTestsConstants.Rule1Reason }
             },
             new IndexRecommendation
             {
-                Table = "Users",
-                KeyColumns = new List<string> { "Name", "Country" },
+                Table = RecommendationMergerTestsConstants.UsersTable,
+                KeyColumns = new List<string> { RecommendationMergerTestsConstants.NameColumn, RecommendationMergerTestsConstants.CountryColumn },
                 IncludeColumns = new List<string>(),
-                EstimatedImpactPercent = 60.0,
+                EstimatedImpactPercent = RecommendationMergerTestsConstants.ModerateImpactPercent,
                 Confidence = Confidence.High,
-                Reasons = new List<string> { "Rule2" }
+                Reasons = new List<string> { RecommendationMergerTestsConstants.Rule2Reason }
             }
         };
 
@@ -237,7 +237,7 @@ public class RecommendationMergerTests : IRecommendationMergerTests
         var merged = RecommendationMerger.Merge(recommendations);
 
         // Assert: Should have both recommendations (reordered columns are not considered matching)
-        Assert.Equal(2, merged.Count);
+        Assert.Equal(RecommendationMergerTestsConstants.ExpectedUnmergedCount, merged.Count);
     }
 
     [Fact]
@@ -248,21 +248,21 @@ public class RecommendationMergerTests : IRecommendationMergerTests
         {
             new IndexRecommendation
             {
-                Table = "Orders",
-                KeyColumns = new List<string> { "CustomerId", "OrderDate" },
-                IncludeColumns = new List<string> { "TotalAmount", "Status" },
-                EstimatedImpactPercent = 50.0,
+                Table = RecommendationMergerTestsConstants.OrdersTable,
+                KeyColumns = new List<string> { RecommendationMergerTestsConstants.CustomerIdColumn, RecommendationMergerTestsConstants.OrderDateColumn },
+                IncludeColumns = new List<string> { RecommendationMergerTestsConstants.TotalAmountColumn, RecommendationMergerTestsConstants.StatusColumn },
+                EstimatedImpactPercent = RecommendationMergerTestsConstants.BaseImpactPercent,
                 Confidence = Confidence.Medium,
-                Reasons = new List<string> { "KeyLookupRule" }
+                Reasons = new List<string> { RecommendationMergerTestsConstants.KeyLookupRuleReason }
             },
             new IndexRecommendation
             {
-                Table = "Orders",
-                KeyColumns = new List<string> { "CustomerId", "OrderDate", "ProductId" },
-                IncludeColumns = new List<string> { "TotalAmount", "Quantity", "Price" },
-                EstimatedImpactPercent = 75.0,
+                Table = RecommendationMergerTestsConstants.OrdersTable,
+                KeyColumns = new List<string> { RecommendationMergerTestsConstants.CustomerIdColumn, RecommendationMergerTestsConstants.OrderDateColumn, RecommendationMergerTestsConstants.ProductIdColumn },
+                IncludeColumns = new List<string> { RecommendationMergerTestsConstants.TotalAmountColumn, RecommendationMergerTestsConstants.QuantityColumn, RecommendationMergerTestsConstants.PriceColumn },
+                EstimatedImpactPercent = RecommendationMergerTestsConstants.PeakImpactPercent,
                 Confidence = Confidence.High,
-                Reasons = new List<string> { "FullScanWithFilterRule" }
+                Reasons = new List<string> { RecommendationMergerTestsConstants.FullScanWithFilterRuleReason }
             }
         };
 
@@ -272,18 +272,18 @@ public class RecommendationMergerTests : IRecommendationMergerTests
         // Assert: Should have only one recommendation (the wider one)
         var result = Assert.Single(merged);
 
-        Assert.Equal("Orders", result.Table);
-        Assert.Equal(new[] { "CustomerId", "OrderDate", "ProductId" }, result.KeyColumns);
+        Assert.Equal(RecommendationMergerTestsConstants.OrdersTable, result.Table);
+        Assert.Equal(new[] { RecommendationMergerTestsConstants.CustomerIdColumn, RecommendationMergerTestsConstants.OrderDateColumn, RecommendationMergerTestsConstants.ProductIdColumn }, result.KeyColumns);
 
         // Verify includes were merged and deduplicated
-        Assert.Contains("TotalAmount", result.IncludeColumns);
-        Assert.Contains("Status", result.IncludeColumns);
-        Assert.Contains("Quantity", result.IncludeColumns);
-        Assert.Contains("Price", result.IncludeColumns);
-        Assert.Equal(4, result.IncludeColumns.Count);
+        Assert.Contains(RecommendationMergerTestsConstants.TotalAmountColumn, result.IncludeColumns);
+        Assert.Contains(RecommendationMergerTestsConstants.StatusColumn, result.IncludeColumns);
+        Assert.Contains(RecommendationMergerTestsConstants.QuantityColumn, result.IncludeColumns);
+        Assert.Contains(RecommendationMergerTestsConstants.PriceColumn, result.IncludeColumns);
+        Assert.Equal(RecommendationMergerTestsConstants.ExpectedMergedIncludeCount, result.IncludeColumns.Count);
 
         // Verify impact and confidence were preserved
-        Assert.Equal(75.0, result.EstimatedImpactPercent);
+        Assert.Equal(RecommendationMergerTestsConstants.PeakImpactPercent, result.EstimatedImpactPercent);
         Assert.Equal(Confidence.High, result.Confidence);
     }
 
@@ -295,21 +295,21 @@ public class RecommendationMergerTests : IRecommendationMergerTests
         {
             new IndexRecommendation
             {
-                Table = "Products",
-                KeyColumns = new List<string> { "Category", "Price" },
-                IncludeColumns = new List<string> { "Name", "Description" },
-                EstimatedImpactPercent = 40.0,
+                Table = RecommendationMergerTestsConstants.ProductsTable,
+                KeyColumns = new List<string> { RecommendationMergerTestsConstants.CategoryColumn, RecommendationMergerTestsConstants.PriceColumn },
+                IncludeColumns = new List<string> { RecommendationMergerTestsConstants.NameColumn, RecommendationMergerTestsConstants.DescriptionColumn },
+                EstimatedImpactPercent = RecommendationMergerTestsConstants.LowerImpactPercent,
                 Confidence = Confidence.Medium,
-                Reasons = new List<string> { "Rule1" }
+                Reasons = new List<string> { RecommendationMergerTestsConstants.Rule1Reason }
             },
             new IndexRecommendation
             {
-                Table = "Products",
-                KeyColumns = new List<string> { "Category", "Price", "StockQuantity" },
+                Table = RecommendationMergerTestsConstants.ProductsTable,
+                KeyColumns = new List<string> { RecommendationMergerTestsConstants.CategoryColumn, RecommendationMergerTestsConstants.PriceColumn, RecommendationMergerTestsConstants.StockQuantityColumn },
                 IncludeColumns = new List<string>(),
-                EstimatedImpactPercent = 60.0,
+                EstimatedImpactPercent = RecommendationMergerTestsConstants.ModerateImpactPercent,
                 Confidence = Confidence.High,
-                Reasons = new List<string> { "Rule2" }
+                Reasons = new List<string> { RecommendationMergerTestsConstants.Rule2Reason }
             }
         };
 
@@ -319,10 +319,10 @@ public class RecommendationMergerTests : IRecommendationMergerTests
         // Assert: Should have only one recommendation
         var result = Assert.Single(merged);
 
-        Assert.Equal("Products", result.Table);
-        Assert.Equal(new[] { "Category", "Price", "StockQuantity" }, result.KeyColumns);
-        Assert.Equal(new[] { "Name", "Description" }, result.IncludeColumns);
-        Assert.Equal(60.0, result.EstimatedImpactPercent);
+        Assert.Equal(RecommendationMergerTestsConstants.ProductsTable, result.Table);
+        Assert.Equal(new[] { RecommendationMergerTestsConstants.CategoryColumn, RecommendationMergerTestsConstants.PriceColumn, RecommendationMergerTestsConstants.StockQuantityColumn }, result.KeyColumns);
+        Assert.Equal(new[] { RecommendationMergerTestsConstants.NameColumn, RecommendationMergerTestsConstants.DescriptionColumn }, result.IncludeColumns);
+        Assert.Equal(RecommendationMergerTestsConstants.ModerateImpactPercent, result.EstimatedImpactPercent);
         Assert.Equal(Confidence.High, result.Confidence);
     }
 
@@ -334,30 +334,30 @@ public class RecommendationMergerTests : IRecommendationMergerTests
         {
             new IndexRecommendation
             {
-                Table = "Sales",
-                KeyColumns = new List<string> { "Region" },
-                IncludeColumns = new List<string> { "Count" },
-                EstimatedImpactPercent = 30.0,
+                Table = RecommendationMergerTestsConstants.SalesTable,
+                KeyColumns = new List<string> { RecommendationMergerTestsConstants.RegionColumn },
+                IncludeColumns = new List<string> { RecommendationMergerTestsConstants.CountColumn },
+                EstimatedImpactPercent = RecommendationMergerTestsConstants.LowImpactPercent,
                 Confidence = Confidence.Low,
-                Reasons = new List<string> { "Rule1" }
+                Reasons = new List<string> { RecommendationMergerTestsConstants.Rule1Reason }
             },
             new IndexRecommendation
             {
-                Table = "Sales",
-                KeyColumns = new List<string> { "Region", "Year" },
-                IncludeColumns = new List<string> { "Quarter" },
-                EstimatedImpactPercent = 50.0,
+                Table = RecommendationMergerTestsConstants.SalesTable,
+                KeyColumns = new List<string> { RecommendationMergerTestsConstants.RegionColumn, RecommendationMergerTestsConstants.YearColumn },
+                IncludeColumns = new List<string> { RecommendationMergerTestsConstants.QuarterColumn },
+                EstimatedImpactPercent = RecommendationMergerTestsConstants.BaseImpactPercent,
                 Confidence = Confidence.Medium,
-                Reasons = new List<string> { "Rule2" }
+                Reasons = new List<string> { RecommendationMergerTestsConstants.Rule2Reason }
             },
             new IndexRecommendation
             {
-                Table = "Sales",
-                KeyColumns = new List<string> { "Region", "Year", "Month" },
-                IncludeColumns = new List<string> { "Day" },
-                EstimatedImpactPercent = 80.0,
+                Table = RecommendationMergerTestsConstants.SalesTable,
+                KeyColumns = new List<string> { RecommendationMergerTestsConstants.RegionColumn, RecommendationMergerTestsConstants.YearColumn, RecommendationMergerTestsConstants.MonthColumn },
+                IncludeColumns = new List<string> { RecommendationMergerTestsConstants.DayColumn },
+                EstimatedImpactPercent = RecommendationMergerTestsConstants.MaxImpactPercent,
                 Confidence = Confidence.High,
-                Reasons = new List<string> { "Rule3" }
+                Reasons = new List<string> { RecommendationMergerTestsConstants.Rule3Reason }
             }
         };
 
@@ -367,20 +367,20 @@ public class RecommendationMergerTests : IRecommendationMergerTests
         // Assert: Should have only one recommendation (the widest one)
         var result = Assert.Single(merged);
 
-        Assert.Equal("Sales", result.Table);
-        Assert.Equal(new[] { "Region", "Year", "Month" }, result.KeyColumns);
+        Assert.Equal(RecommendationMergerTestsConstants.SalesTable, result.Table);
+        Assert.Equal(new[] { RecommendationMergerTestsConstants.RegionColumn, RecommendationMergerTestsConstants.YearColumn, RecommendationMergerTestsConstants.MonthColumn }, result.KeyColumns);
 
         // Verify all include columns were merged
-        Assert.Contains("Count", result.IncludeColumns);
-        Assert.Contains("Quarter", result.IncludeColumns);
-        Assert.Contains("Day", result.IncludeColumns);
-        Assert.Equal(3, result.IncludeColumns.Count);
+        Assert.Contains(RecommendationMergerTestsConstants.CountColumn, result.IncludeColumns);
+        Assert.Contains(RecommendationMergerTestsConstants.QuarterColumn, result.IncludeColumns);
+        Assert.Contains(RecommendationMergerTestsConstants.DayColumn, result.IncludeColumns);
+        Assert.Equal(RecommendationMergerTestsConstants.ExpectedMultiMergeIncludeCount, result.IncludeColumns.Count);
 
         // Verify max impact and confidence were used
-        Assert.Equal(80.0, result.EstimatedImpactPercent);
+        Assert.Equal(RecommendationMergerTestsConstants.MaxImpactPercent, result.EstimatedImpactPercent);
         Assert.Equal(Confidence.High, result.Confidence);
 
         // Verify all reasons were merged (3 original + 2 heuristic notes from 2 merges)
-        Assert.Equal(5, result.Reasons.Count);
+        Assert.Equal(RecommendationMergerTestsConstants.ExpectedMultiMergeReasonCount, result.Reasons.Count);
     }
 }
