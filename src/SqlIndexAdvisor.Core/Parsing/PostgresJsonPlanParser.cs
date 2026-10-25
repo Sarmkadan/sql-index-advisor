@@ -132,6 +132,8 @@ public sealed class PostgresJsonPlanParser : IPlanParser
 
         if (!entry.TryGetProperty(PostgresJsonPlanParserConstants.PlanPropertyName, out var planRoot))
             throw new PlanParseException($"No '{PostgresJsonPlanParserConstants.PlanPropertyName}' property in JSON plan.");
+        if (planRoot.ValueKind != JsonValueKind.Object)
+            throw new PlanParseException($"'{PostgresJsonPlanParserConstants.PlanPropertyName}' property in JSON plan is not an object.");
 
         var totalCost = ReadDouble(planRoot, PostgresJsonPlanParserConstants.TotalCostPropertyName);
         var nodes = new List<PlanNode>();
@@ -154,6 +156,8 @@ public sealed class PostgresJsonPlanParser : IPlanParser
         if (currentDepth > MaxNestingDepth)
             throw new PlanParseException(
                 $"Plan nesting depth exceeds the allowed limit of {MaxNestingDepth} levels.");
+        if (el.ValueKind != JsonValueKind.Object)
+            throw new PlanParseException("JSON plan node is not an object.");
 
         var nodeType = ReadString(el, PostgresJsonPlanParserConstants.NodeTypePropertyName) ?? "Unknown";
         var nodeCost = ReadDouble(el, PostgresJsonPlanParserConstants.TotalCostPropertyName);
