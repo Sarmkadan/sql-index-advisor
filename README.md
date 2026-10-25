@@ -385,6 +385,52 @@ Notes on the generated DDL:
 - Postgres output uses `CREATE INDEX CONCURRENTLY`, which cannot run inside a
   transaction block. Run it outside `BEGIN ... COMMIT`.
 
+## Supported execution plan parsers
+
+Two parsers implement `IPlanParser` in `SqlIndexAdvisor.Core.Parsing`:
+
+| Parser | Input | Claims the content when | Result |
+| --- | --- | --- | --- |
+| `SqlServerXmlPlanParser` | SQL Server showplan XML (`.sqlplan`) | After leading whitespace the text starts with `<` and contains `ShowPlanXML` or `StmtSimple` (case-insensitive). | One `ExecutionPlan` per statement that carries a plan, in document order. |
+| `PostgresJsonPlanParser` | PostgreSQL `EXPLAIN (FORMAT JSON)` output | After leading whitespace the text starts with `[` or `{` and contains a `"Node Type"` or `"Plan"` property name (case-insensitive). | One `ExecutionPlan` per top-level array entry; a bare top-level object is a single statement. |
+
+The XML and JSON checks cannot both match the same content, because they
+require different first characters.
+
+### How `PlanParserFactory` selects a parser
+
+`PlanParserFactory` (`SqlIndexAdvisor.Core.Parsing`) does not look at file
+names or command-line flags. It sniffs the content:
+
+1. It walks its registered parsers in order and asks each one `CanParse(content)`.
+2. The first parser that returns `true` is used. Its `Parse` method produces the plans.
+3. If no parser claims the content, `PlanParseException` is thrown. Its message lists the
+   parsers that were tried. The CLI reports this as exit code `2`.
+
+The parameterless constructor registers `SqlServerXmlPlanParser` first and
+`PostgresJsonPlanParser` second. The CLI uses this default set. To use a
+different set or order, pass your own parsers to the
+`PlanParserFactory(IEnumerable<IPlanParser>)` constructor. This is how a new
+dialect is added: implement `IPlanParser` and register it there.
+
+Related members:
+
+| Member | Behavior |
+| --- | --- |
+| `Parse(string)` | Resolves the parser and returns `IReadOnlyList<ExecutionPlan>`. Throws `PlanParseException` when nothing matches. |
+| `Resolve(string)` | Returns the matching `IPlanParser`. Throws `PlanParseException` when nothing matches. |
+| `TryResolve(string, out IPlanParser?)` | Returns `false` instead of throwing when nothing matches. |
+| `RegisteredParserNames` | Type names of the registered parsers, in order. |
+
+Edge cases:
+
+- `null` input throws `ArgumentNullException`.
+- Empty input (`""`) throws `ArgumentException` from the first parser's `CanParse`.
+- Whitespace-only input matches no parser, so it throws `PlanParseException`.
+- A parser can still throw `PlanParseException` from `Parse` after it has
+  claimed the content, for example for malformed XML or JSON, a missing `Plan`
+  object, or input over the size or nesting limits.
+
 ## How it works
 
 ```
