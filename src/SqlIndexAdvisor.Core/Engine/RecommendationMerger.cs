@@ -35,7 +35,7 @@ public static class RecommendationMerger
         // Filter out index recommendations that include columns with implicit conversions
         var filteredRecommendations = recommendations
             .Where(rec => rec.Kind == RecommendationKind.SchemaFix ||
-                         !rec.KeyColumns.Any(col => implicitConversionColumns.Contains(col)))
+                          !rec.KeyColumns.Any(col => implicitConversionColumns.Contains(col)))
             .ToList();
 
         var kept = new List<IndexRecommendation>();
