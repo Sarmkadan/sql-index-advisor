@@ -24,6 +24,41 @@ public sealed class ExpensiveSortRule : PlanNodeVisitorBase
     private const double HighConfidenceThreshold = 0.50;
 
     /// <summary>
+    /// Scale factor converting a relative cost (0..1) into a percentage.
+    /// </summary>
+    private const double PercentScale = 100.0;
+
+    /// <summary>
+    /// Lower bound for the row-amplification factor used in impact estimation.
+    /// </summary>
+    private const double MinRowFactor = 1.0;
+
+    /// <summary>
+    /// Upper bound for the row-amplification factor used in impact estimation.
+    /// </summary>
+    private const double MaxRowFactor = 10.0;
+
+    /// <summary>
+    /// Row-amplification factor at which the row term reaches its full weight.
+    /// </summary>
+    private const double RowFactorSaturation = 5.0;
+
+    /// <summary>
+    /// Impact weight that every sort contributes regardless of row volume.
+    /// </summary>
+    private const double BaseImpactWeight = 0.3;
+
+    /// <summary>
+    /// Impact weight contributed by the row-amplification term.
+    /// </summary>
+    private const double RowImpactWeight = 0.7;
+
+    /// <summary>
+    /// Floor for the estimated row count, guarding against division by zero.
+    /// </summary>
+    private const double MinEstimatedRows = 1.0;
+
+    /// <summary>
     /// Determines whether the specified plan node should be visited by this rule.
     /// </summary>
     /// <param name="node">The plan node to evaluate.</param>
@@ -87,7 +122,7 @@ public sealed class ExpensiveSortRule : PlanNodeVisitorBase
             Confidence = confidence,
             Reasons = new List<string>
             {
-                $"Sort operation ({node.Operator}) on {tableName} is ~{node.RelativeCost * 100:0}% of statement cost. " +
+                $"Sort operation ({node.Operator}) on {tableName} is ~{node.RelativeCost * PercentScale:0}% of statement cost. " +
                 $"Creating an index on ({string.Join(", ", sortColumns)}) can eliminate or reduce this expensive sort."
             }
         };
@@ -197,10 +232,10 @@ public sealed class ExpensiveSortRule : PlanNodeVisitorBase
     private static double EstimateImpact(PlanNode node)
     {
         ArgumentNullException.ThrowIfNull(node);
-        var baseline = node.RelativeCost * 100.0;
-        var rowFactor = Math.Clamp(node.EstimatedRowsRead / Math.Max(node.EstimatedRows, 1), 1.0, 10.0);
+        var baseline = node.RelativeCost * PercentScale;
+        var rowFactor = Math.Clamp(node.EstimatedRowsRead / Math.Max(node.EstimatedRows, MinEstimatedRows), MinRowFactor, MaxRowFactor);
         // Blend: even a small sort can be worth eliminating
-        var factor = 0.3 + 0.7 * Math.Min(rowFactor, 5.0) / 5.0;
+        var factor = BaseImpactWeight + RowImpactWeight * Math.Min(rowFactor, RowFactorSaturation) / RowFactorSaturation;
         return Math.Round(baseline * factor, 1);
     }
 }
