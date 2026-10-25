@@ -42,19 +42,34 @@ psql -qAt -c "EXPLAIN (FORMAT JSON) SELECT ..." mydb \
 
 # only show recommendations worth at least 25% estimated impact
 dotnet run --project src/SqlIndexAdvisor.Cli -- plan.sqlplan --min-impact 25
+
+# write an HTML report (the CLI prints to stdout, so redirect it)
+dotnet run --project src/SqlIndexAdvisor.Cli -- plan.sqlplan --format html > report.html
+
+# CI gate: exit 1 if any recommendation is printed
+dotnet run --project src/SqlIndexAdvisor.Cli -- plan.sqlplan --fail-on-findings
+
+# CI gate: exit 1 only for high-confidence recommendations
+dotnet run --project src/SqlIndexAdvisor.Cli -- plan.sqlplan --fail-on high
+
+# version and usage
+dotnet run --project src/SqlIndexAdvisor.Cli -- --version
+dotnet run --project src/SqlIndexAdvisor.Cli -- --help
 ```
 
-Options:
+Synopsis:
 
-| Option | Meaning |
-| --- | --- |
-| `<plan-file>` | Path to the plan file. Format is auto-detected. |
-| `--stdin` | Read the plan from standard input instead. |
-| `--format text\|json` | Output format (default `text`). |
-| `--min-impact <n>` | Hide recommendations below this estimated impact percent. |
+```
+sql-index-advisor <plan-file>|-|--stdin [--format text|json|html|csv] [--min-impact <n>]
+                  [--fail-on-findings] [--fail-on low|medium|high]
+```
 
-Exit codes: `0` success, `1` usage/IO error, `2` the input could not be parsed
-as a supported plan format.
+The full flag list, including path rules and exit codes, is in
+[Options reference](#options-reference).
+
+Exit codes: `0` success (including `--help` and `--version`), `1` usage or I/O
+error, or a `--fail-on-findings` / `--fail-on` gate tripped, `2` the input could
+not be parsed as a supported plan format.
 
 ## Example output
 
@@ -83,18 +98,22 @@ library, by the rule set and the filters you apply to the returned list.
 
 | Option | Type / default | Effect |
 | --- | --- | --- |
-| `<plan-file>` or `--plan <path>` | path, required unless `--stdin` | Plan to analyze. Mutually exclusive with `--stdin`. |
-| `--stdin` (or `-`) | flag | Read the plan from standard input. |
-| `--format text\|json\|html\|csv` | default `text` | Output format. The CLI does not accept `markdown` (see Limitations). |
-| `--min-impact <n>` | number, default `0` (no filter) | Hide recommendations whose `EstimatedImpactPercent` is below `n`. |
-| `--fail-on-findings` | flag | Exit `1` when at least one recommendation is printed. |
-| `--fail-on low\|medium\|high` | severity, default off | Exit `1` when any recommendation's severity (its confidence) is at or above the given level. |
-| `--sqlserver` / `--postgres` | flags | Accepted, mutually exclusive, currently ignored - the dialect is auto-detected. |
-| `--version`, `-h` / `--help` | flags | Print version or usage. |
+| `<plan-file>` or `--plan <path>` | path, required unless `--stdin` or `-` | Plan to analyze. Only one plan source may be given. The path must be relative to the current directory: `..` segments, UNC paths and paths outside the working directory are rejected with exit `1`. |
+| `--stdin` or `-` | flag | Read the plan from standard input. `-` also works in place of a file path. Cannot be combined with a file path. |
+| `--format text\|json\|html\|csv` | default `text`, case-insensitive | Output format. `markdown` is rejected by the CLI (see Limitations); any other value exits `1`. |
+| `--min-impact <n>` | number from 0 to 100, default `0` (no filter) | Hide recommendations whose `EstimatedImpactPercent` is below `n`. A non-numeric or out-of-range value exits `1`. |
+| `--fail-on-findings` | flag | Exit `1` when at least one recommendation is printed (after `--min-impact` filtering). |
+| `--fail-on low\|medium\|high` | severity, default off | Exit `1` when any printed recommendation's severity (its confidence) is at or above the given level. Case-insensitive. |
+| `--sqlserver` / `--postgres` | flags | Accepted but otherwise ignored - the dialect is auto-detected. Specifying both exits `1`. |
+| `--version` | flag | Print `sql-index-advisor version 1.0.0` and exit `0`. |
+| `-h` / `--help` | flags | Print usage and exit `0`. Running with no arguments prints usage and exits `1`. |
 
-Exit codes: `0` success, `1` usage/IO error **or** findings present with
-`--fail-on-findings` (so `1` is not always an error there - check the output),
-`2` the input could not be parsed.
+An unknown option (for example `--foo`) or a flag without its value exits `1`.
+
+Exit codes: `0` success (including `--help` and `--version`), `1` usage or I/O
+error, or a `--fail-on-findings` / `--fail-on` gate tripped (so `1` is not always
+an error there - check the output), `2` the input could not be parsed (including
+an empty plan).
 
 There is no option for a maximum number of suggestions, for excluding existing
 indexes, or for analyzing a directory. The scenarios below show how to get
