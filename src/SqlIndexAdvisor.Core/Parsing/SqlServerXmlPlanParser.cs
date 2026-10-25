@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Xml;
 using System.Xml.Linq;
-using System.Threading;
 using SqlIndexAdvisor.Core.Model;
 
 namespace SqlIndexAdvisor.Core.Parsing;
@@ -128,7 +128,9 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
             var estRows = ParseDouble(relOp.Attribute(SqlServerXmlPlanParserConstants.EstimateRowsAttribute)?.Value);
             var node = new PlanNode
             {
-                Operator = relOp.Attribute(SqlServerXmlPlanParserConstants.PhysicalOpAttribute)?.Value ?? relOp.Attribute(SqlServerXmlPlanParserConstants.LogicalOpAttribute)?.Value ?? SqlServerXmlPlanParserConstants.UnknownOperator,
+                Operator = relOp.Attribute(SqlServerXmlPlanParserConstants.PhysicalOpAttribute)?.Value
+                    ?? relOp.Attribute(SqlServerXmlPlanParserConstants.LogicalOpAttribute)?.Value
+                    ?? SqlServerXmlPlanParserConstants.UnknownOperator,
                 EstimatedRows = estRows,
                 EstimatedRowsRead = ParseDouble(relOp.Attribute(SqlServerXmlPlanParserConstants.EstimatedRowsReadAttribute)?.Value),
                 TableCardinality = ParseDouble(relOp.Attribute(SqlServerXmlPlanParserConstants.TableCardinalityAttribute)?.Value),
@@ -190,8 +192,10 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
             var impact = ParseDouble(group.Attribute(SqlServerXmlPlanParserConstants.ImpactAttribute)?.Value);
             foreach (var idx in Descendants(group, SqlServerXmlPlanParserConstants.MissingIndexElement))
             {
-                var bareTable = idx.Attribute(SqlServerXmlPlanParserConstants.TableAttribute)?.Value?.Trim(SqlServerXmlPlanParserConstants.BracketOpen[0], SqlServerXmlPlanParserConstants.BracketClose[0]) ?? string.Empty;
-                var schema = idx.Attribute(SqlServerXmlPlanParserConstants.SchemaAttribute)?.Value?.Trim(SqlServerXmlPlanParserConstants.BracketOpen[0], SqlServerXmlPlanParserConstants.BracketClose[0]);
+                var bareTable = idx.Attribute(SqlServerXmlPlanParserConstants.TableAttribute)?.Value
+                    ?.Trim(SqlServerXmlPlanParserConstants.BracketOpen[0], SqlServerXmlPlanParserConstants.BracketClose[0]) ?? string.Empty;
+                var schema = idx.Attribute(SqlServerXmlPlanParserConstants.SchemaAttribute)?.Value
+                    ?.Trim(SqlServerXmlPlanParserConstants.BracketOpen[0], SqlServerXmlPlanParserConstants.BracketClose[0]);
                 var table = string.IsNullOrEmpty(schema) ? bareTable : $"{schema}{SqlServerXmlPlanParserConstants.SchemaTableSeparator}{bareTable}";
                 var eq = new List<string>();
                 var ineq = new List<string>();
@@ -200,7 +204,8 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
                 {
                     var usage = col.Attribute(SqlServerXmlPlanParserConstants.UsageAttribute)?.Value ?? string.Empty;
                     var names = Descendants(col, SqlServerXmlPlanParserConstants.ColumnElement)
-                        .Select(c => c.Attribute(SqlServerXmlPlanParserConstants.NameAttribute)?.Value?.Trim(SqlServerXmlPlanParserConstants.BracketOpen[0], SqlServerXmlPlanParserConstants.BracketClose[0]) ?? string.Empty)
+                        .Select(c => c.Attribute(SqlServerXmlPlanParserConstants.NameAttribute)?.Value
+                            ?.Trim(SqlServerXmlPlanParserConstants.BracketOpen[0], SqlServerXmlPlanParserConstants.BracketClose[0]) ?? string.Empty)
                         .Where(n => n.Length > 0);
                     var target = usage switch
                     {
@@ -229,8 +234,10 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
 
         var obj = Descendants(relOp, SqlServerXmlPlanParserConstants.ObjectElement).FirstOrDefault();
         if (obj is null) return null;
-        var table = obj.Attribute(SqlServerXmlPlanParserConstants.TableAttribute)?.Value?.Trim(SqlServerXmlPlanParserConstants.BracketOpen[0], SqlServerXmlPlanParserConstants.BracketClose[0]);
-        var schema = obj.Attribute(SqlServerXmlPlanParserConstants.SchemaAttribute)?.Value?.Trim(SqlServerXmlPlanParserConstants.BracketOpen[0], SqlServerXmlPlanParserConstants.BracketClose[0]);
+        var table = obj.Attribute(SqlServerXmlPlanParserConstants.TableAttribute)?.Value
+            ?.Trim(SqlServerXmlPlanParserConstants.BracketOpen[0], SqlServerXmlPlanParserConstants.BracketClose[0]);
+        var schema = obj.Attribute(SqlServerXmlPlanParserConstants.SchemaAttribute)?.Value
+            ?.Trim(SqlServerXmlPlanParserConstants.BracketOpen[0], SqlServerXmlPlanParserConstants.BracketClose[0]);
         if (string.IsNullOrEmpty(table)) return null;
         return string.IsNullOrEmpty(schema) ? table : $"{schema}{SqlServerXmlPlanParserConstants.SchemaTableSeparator}{table}";
     }
@@ -253,7 +260,8 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
         {
             foreach (var c in Descendants(pred, SqlServerXmlPlanParserConstants.ColumnReferenceElement))
             {
-                var name = c.Attribute(SqlServerXmlPlanParserConstants.ColumnAttribute)?.Value?.Trim(SqlServerXmlPlanParserConstants.BracketOpen[0], SqlServerXmlPlanParserConstants.BracketClose[0]);
+                var name = c.Attribute(SqlServerXmlPlanParserConstants.ColumnAttribute)?.Value
+                    ?.Trim(SqlServerXmlPlanParserConstants.BracketOpen[0], SqlServerXmlPlanParserConstants.BracketClose[0]);
                 if (!string.IsNullOrEmpty(name) && !cols.Contains(name))
                     cols.Add(name);
             }
@@ -270,7 +278,8 @@ public sealed class SqlServerXmlPlanParser : IPlanParser
         if (outputList is null) return cols;
         foreach (var c in Descendants(outputList, SqlServerXmlPlanParserConstants.ColumnReferenceElement))
         {
-            var name = c.Attribute(SqlServerXmlPlanParserConstants.ColumnAttribute)?.Value?.Trim(SqlServerXmlPlanParserConstants.BracketOpen[0], SqlServerXmlPlanParserConstants.BracketClose[0]);
+            var name = c.Attribute(SqlServerXmlPlanParserConstants.ColumnAttribute)?.Value
+                ?.Trim(SqlServerXmlPlanParserConstants.BracketOpen[0], SqlServerXmlPlanParserConstants.BracketClose[0]);
             if (!string.IsNullOrEmpty(name) && !cols.Contains(name))
                 cols.Add(name);
         }
