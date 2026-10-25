@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Security;
 using System.Text;
+using SqlIndexAdvisor.Core.Model;
 
 namespace SqlIndexAdvisor.Core.ArgsParsing;
 
@@ -62,6 +63,12 @@ public static class ArgsParser
         /// Schema version of the output (default <c>1.0</c>).
         /// </summary>
         public string SchemaVersion { get; init; } = "1.0";
+
+        /// <summary>
+        /// Lowest recommendation confidence (severity) that makes the run fail, set by <c>--fail-on</c>;
+        /// <c>null</c> when the option was not supplied.
+        /// </summary>
+        public Confidence? FailOn { get; init; }
 
         /// <summary>
         /// Creates a <see cref="ParseResult"/> that signals the help screen should be shown.
@@ -126,6 +133,7 @@ public static class ArgsParser
         var format = "text";
         var formatSpecified = false;
         var failOnFindings = false;
+        Confidence? failOn = null;
         var minImpact = 0.0;
         string? path = null;
 
@@ -175,6 +183,13 @@ public static class ArgsParser
                     failOnFindings = true;
                     if (activity is not null)
                         AddOptionEvent(activity, "--fail-on-findings", failOnFindings);
+                    break;
+
+                case "--fail-on":
+                    var failOnRaw = RequireValue(args, ref i, "--fail-on");
+                    failOn = ParseSeverity(failOnRaw);
+                    if (activity is not null)
+                        AddOptionEvent(activity, "--fail-on", failOnRaw);
                     break;
 
                 case "--sqlserver":
@@ -238,11 +253,26 @@ public static class ArgsParser
                 Tag("format", format));
         }
 
-        var result = new ParseResult(path, useStdin, format, failOnFindings, minImpact);
+        var result = new ParseResult(path, useStdin, format, failOnFindings, minImpact) { FailOn = failOn };
         if (activity is not null)
             AddParseResultEvent(activity, result);
         return result;
     }
+
+    /// <summary>
+    /// Maps a <c>--fail-on</c> value (<c>low</c>, <c>medium</c> or <c>high</c>) to a confidence level.
+    /// </summary>
+    /// <param name="raw">The raw option value.</param>
+    /// <returns>The matching <see cref="Confidence"/> level.</returns>
+    /// <exception cref="ArgumentException">When the value is not a known severity.</exception>
+    private static Confidence ParseSeverity(string raw) =>
+        raw.ToLowerInvariant() switch
+        {
+            "low" => Confidence.Low,
+            "medium" => Confidence.Medium,
+            "high" => Confidence.High,
+            _ => throw new ArgumentException($"--fail-on expects low, medium or high, got '{raw}'.")
+        };
 
     private static ParseResult TraceErrorResult(System.Diagnostics.Activity? activity, string message)
     {
@@ -383,9 +413,9 @@ public static class ArgsParser
 sql-index-advisor - recommend missing indexes from a query execution plan
 
 USAGE:
-sql-index-advisor <plan-file> [--format text|json|html|csv] [--min-impact <n>] [--fail-on-findings]
+sql-index-advisor <plan-file> [--format text|json|html|csv] [--min-impact <n>] [--fail-on-findings] [--fail-on <severity>]
 sql-index-advisor - [--format text|json|html|csv] < input.json
-sql-index-advisor --stdin [--format text|json|html|csv] [--fail-on-findings]
+sql-index-advisor --stdin [--format text|json|html|csv] [--fail-on-findings] [--fail-on <severity>]
 
 ARGUMENTS:
 <plan-file> Path to a SQL Server showplan XML or Postgres EXPLAIN (FORMAT JSON) file.
@@ -397,6 +427,7 @@ OPTIONS:
 --format <fmt> Output format: text (default), json, html, or csv.
 --min-impact <n> Hide recommendations below this estimated impact percent.
 --fail-on-findings Exit with code 1 if recommendations are found, 0 otherwise.
+--fail-on <severity> Exit with code 1 if any recommendation's severity (its confidence) is at or above <severity>: low, medium, or high.
 --sqlserver Use SQL Server specific parsing (mutually exclusive with --postgres).
 --postgres Use PostgreSQL specific parsing (mutually exclusive with --sqlserver).
 --version Show version information.

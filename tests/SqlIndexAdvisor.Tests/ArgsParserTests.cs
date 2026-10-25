@@ -1,5 +1,6 @@
 using System.Text;
 using SqlIndexAdvisor.Core.ArgsParsing;
+using SqlIndexAdvisor.Core.Model;
 using Xunit;
 
 namespace SqlIndexAdvisor.Tests;
@@ -619,5 +620,39 @@ public class ArgsParserTests
         Assert.NotEmpty(result);
         Assert.Contains("ShowPlanXML", result);
         Assert.Contains("MissingIndexes", result);
+    }
+
+    /// <summary>
+    /// Tests that <c>--fail-on</c> accepts a severity name case-insensitively and stores it as the threshold.
+    /// </summary>
+    [Fact]
+    public void Parse_FailOnMedium_SetsFailOnThreshold()
+    {
+        // Act
+        var result = ArgsParser.Parse(new[] { "--stdin", "--fail-on", "Medium" });
+
+        // Assert
+        Assert.Equal(Confidence.Medium, result.FailOn);
+    }
+
+    /// <summary>
+    /// Tests that an unknown <c>--fail-on</c> severity is rejected.
+    /// </summary>
+    [Fact]
+    public void Parse_FailOnUnknownSeverity_ThrowsArgumentException()
+    {
+        // Act & Assert
+        var ex = Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { "--stdin", "--fail-on", "critical" }));
+        Assert.Contains("low, medium or high", ex.Message);
+    }
+
+    /// <summary>
+    /// Tests that <c>--fail-on</c> without a value is rejected.
+    /// </summary>
+    [Fact]
+    public void Parse_FailOnWithoutValue_ThrowsArgumentException()
+    {
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => ArgsParser.Parse(new[] { "--stdin", "--fail-on" }));
     }
 }

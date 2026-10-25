@@ -65,10 +65,14 @@ static int Run(string[] args)
 
     // Exit code logic:
     // 0 = success, no findings (or findings ignored with --fail-on-findings false)
-    // 1 = usage/IO error, or findings present and --fail-on-findings is true
+    // 1 = usage/IO error, or findings present and --fail-on-findings is true,
+    //     or a recommendation at or above the --fail-on severity exists
     // 2 = parse error (already handled in catch block)
     var findingCount = reports.Sum(r => r.Recommendations.Count);
-    return parseResult.FailOnFindings && findingCount > 0 ? 1 : 0;
+    var failOnFindings = parseResult.FailOnFindings && findingCount > 0;
+    var failOnSeverity = parseResult.FailOn is { } threshold
+        && reports.Any(r => r.Recommendations.Any(rec => rec.Confidence >= threshold));
+    return failOnFindings || failOnSeverity ? 1 : 0;
 }
 
 static IReadOnlyList<IndexRecommendation> FilterByImpact(IReadOnlyList<IndexRecommendation> recs, double minImpact) =>

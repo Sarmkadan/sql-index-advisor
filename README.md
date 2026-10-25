@@ -88,6 +88,7 @@ library, by the rule set and the filters you apply to the returned list.
 | `--format text\|json\|html\|csv` | default `text` | Output format. The CLI does not accept `markdown` (see Limitations). |
 | `--min-impact <n>` | number, default `0` (no filter) | Hide recommendations whose `EstimatedImpactPercent` is below `n`. |
 | `--fail-on-findings` | flag | Exit `1` when at least one recommendation is printed. |
+| `--fail-on low\|medium\|high` | severity, default off | Exit `1` when any recommendation's severity (its confidence) is at or above the given level. |
 | `--sqlserver` / `--postgres` | flags | Accepted, mutually exclusive, currently ignored - the dialect is auto-detected. |
 | `--version`, `-h` / `--help` | flags | Print version or usage. |
 
