@@ -290,6 +290,125 @@ Console.WriteLine(CsvReportRenderer.RenderCsv(plan, recs));
   `MarkdownReportRenderer` exists and is used from code.
 - **`--sqlserver` / `--postgres` do nothing** beyond the mutual-exclusion check.
 
+## Report renderers
+
+The text, JSON, HTML, CSV and Markdown output all come from the renderers in
+`SqlIndexAdvisor.Core.Reporting`. The CLI chooses one with `--format`, and
+`StatementReportRenderer.Render(reports, format)` dispatches to the same
+renderers. Each one can also be called directly from code.
+
+| Renderer | Entry point | Output | CLI `--format` |
+| --- | --- | --- | --- |
+| `ReportRenderer` | `RenderText`, `RenderJson` | Plain text; JSON document | `text`, `json` |
+| `HtmlReportRenderer` | `RenderHtml(plan, recs)`, `RenderHtml(IReadOnlyList<StatementReport>)` | One self-contained HTML5 page | `html` |
+| `CsvReportRenderer` | `RenderCsv(plan, recs)` | RFC 4180 CSV, one row per recommendation | `csv` |
+| `MarkdownReportRenderer` | `RenderMarkdown(plan, recs)` | GitHub-flavored Markdown with a table and `sql` blocks | none (code only, see below) |
+| `DdlRenderer` | `RenderCreateIndex(recommendation, dialect)` | Executable `CREATE INDEX` for one dialect | none (used inside other formats) |
+
+`DdlRenderer` lives in `src/SqlIndexAdvisor.Core/Reporting/`, but its namespace
+is `SqlIndexAdvisor.Core.Model`.
+
+Every renderer takes the `ExecutionPlan` (for the dialect and cost) and the
+recommendations. Input with several statements is rendered one section per
+statement, except for CSV (see below).
+
+### Which CREATE statement goes where
+
+Two different `CREATE INDEX` forms exist. Use the Markdown `sql` block or the
+JSON `ddl` field for DDL you intend to run.
+
+| Output | Source of the statement | Dialect-aware | Quoting, `ONLINE`, `CONCURRENTLY` |
+| --- | --- | --- | --- |
+| Text report | `IIndexRecommendation.ToCreateStatement` | No | None |
+| JSON `createStatement` | `ToCreateStatement` | No | None |
+| JSON `ddl` | `DdlRenderer` | Yes | Yes |
+| CSV `CreateStatement` column | `ToCreateStatement` | No | None |
+| HTML "Create Statement" cell | `ToCreateStatement` | No | None |
+| Markdown ```` ```sql ```` block | `DdlRenderer` | Yes | Yes |
+
+`ToCreateStatement` always produces `CREATE INDEX <name> ON <table> (<keys>)
+INCLUDE (...);` with no identifier quoting. It ignores the dialect argument.
+
+### CSV (`CsvReportRenderer`)
+
+The header is `Confidence,ImpactPercent,CreateStatement,Reasons`, followed by one
+row per recommendation:
+
+- `Confidence` is the enum name (`High`, `Medium`, `Low`).
+- `ImpactPercent` is `EstimatedImpactPercent` formatted with the `0.#` pattern and
+  the invariant culture, so `82.5` is written with a dot.
+- `CreateStatement` is the short form from the table above. It contains commas, so
+  it is always quoted.
+- `Reasons` are joined with `; `.
+
+A field is wrapped in double quotes when it contains `"`, `,`, CR or LF, and
+inner double quotes are doubled. Other fields are written as-is. Lines end with
+the platform newline (`AppendLine`).
+
+Example (wrapped here for readability; each row is one line in the output):
+
+```csv
+Confidence,ImpactPercent,CreateStatement,Reasons
+High,82.5,"CREATE INDEX IX_Orders_Status_CreatedAt ON dbo.Orders (Status, CreatedAt) INCLUDE (CustomerId, Total);","Optimizer reported a missing index with 82.5% estimated impact.; Clustered Index Scan on dbo.Orders carries a filter on (Status, CreatedAt) and is ~100% of statement cost."
+```
+
+With several statements, the header is written once and the rows of every
+statement follow. The CSV has no statement column, so the rows of different
+statements cannot be told apart. Use JSON or the text report when you need that.
+
+### HTML (`HtmlReportRenderer`)
+
+- The page is self-contained: the CSS is inline, and there are no scripts, fonts
+  or external images. It can be opened offline or attached to a CI artifact.
+- The structure is an `<h1>` title, a summary paragraph (dialect, statement cost,
+  operator count), and a table with the columns `#`, `Confidence`, `Impact %`,
+  `Create Statement` and `Reasons`.
+- Each row gets a CSS class from its confidence: `high` (green), `medium`
+  (yellow), `low` (red). Any other value gets `unknown` (grey).
+- The create statement and each reason are HTML-encoded. The other cells contain
+  only enum names and numbers.
+- With no recommendations, a paragraph replaces the table.
+- With several statements, each one gets an `<h2>Statement N</h2>` heading. A
+  single statement has no heading.
+- Costs and impact percentages are formatted with the current culture, so a
+  German locale writes `82,5%`. CSV and Markdown always use the invariant culture.
+
+### Markdown (`MarkdownReportRenderer`)
+
+The document contains, in order:
+
+1. `# SQL Index Advisor Report`
+2. A bullet list with the dialect and estimated total cost.
+3. `## Recommendations` and one GitHub table. Its columns are described in
+   [read the output columns](#scenario-read-the-output-columns). The impact column
+   is right-aligned.
+4. For each recommendation, a `### <table>` heading followed by a ```` ```sql ````
+   block holding the `DdlRenderer` statement.
+
+In table cells, `|` is written as `\|`. With no recommendations, only the table
+header is written, with no rows and no `sql` blocks.
+
+The CLI rejects `--format markdown`. The format is still implemented: call
+`StatementReportRenderer.Render(reports, "markdown")` from code, or call
+`MarkdownReportRenderer.RenderMarkdown` for one statement. With several statements,
+`StatementReportRenderer` writes a `## Statement N of M: <summary>` section per
+statement.
+
+### DDL (`DdlRenderer`)
+
+`RenderCreateIndex(recommendation, dialect)` returns one executable statement.
+
+- **SQL Server**: `CREATE NONCLUSTERED INDEX IX_... ON dbo.Orders (...) INCLUDE (...) WITH (ONLINE = ON);`
+  The index name starts with `IX_` and is at most 128 characters.
+- **PostgreSQL**: `CREATE INDEX CONCURRENTLY ix_... ON ... (...) INCLUDE (...);`
+  The index name is lowercase and at most 63 characters.
+
+Names longer than the limit are cut and given a 6-character hash suffix. An
+identifier is quoted only when needed: `[...]` in SQL Server, `"..."` in
+PostgreSQL. Simple names and `schema.table` are left bare. A null argument throws
+`ArgumentNullException`, and a dialect other than SQL Server or PostgreSQL throws
+`ArgumentOutOfRangeException`.
+
 ## Getting started
 
 To use the library from your own code instead of the CLI, reference
